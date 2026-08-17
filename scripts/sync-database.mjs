@@ -1,14 +1,14 @@
 import 'dotenv/config'
 import { createClient } from '@libsql/client'
 
-const remoteUrl = process.env.TURSO_DATABASE_URL
-const remoteAuthToken = process.env.TURSO_AUTH_TOKEN
+const remoteUrl = process.env.TURSO_REMOTE_URL || (!process.env.TURSO_DATABASE_URL?.startsWith('file:') ? process.env.TURSO_DATABASE_URL : null)
+const remoteAuthToken = process.env.TURSO_REMOTE_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN
 
-if (!remoteUrl || remoteUrl.startsWith('file:')) {
-  console.error('⚠️  TURSO_DATABASE_URL is not set to a remote Turso URL.')
+if (!remoteUrl) {
+  console.error('⚠️  TURSO_REMOTE_URL or remote TURSO_DATABASE_URL is not configured.')
   console.log('To migrate to Turso Cloud, set your credentials in .env:')
-  console.log('   TURSO_DATABASE_URL=libsql://your-db-name.turso.io')
-  console.log('   TURSO_AUTH_TOKEN=your-token-here\n')
+  console.log('   TURSO_REMOTE_URL=libsql://your-db-name.turso.io')
+  console.log('   TURSO_REMOTE_AUTH_TOKEN=your-token-here\n')
   process.exit(1)
 }
 

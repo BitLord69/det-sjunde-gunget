@@ -38,7 +38,7 @@ export default defineNuxtConfig({
       { code: 'sv', name: 'Svenska', file: 'sv.json' },
       { code: 'en', name: 'English', file: 'en.json' },
     ],
-    langDir: 'locales',
+    langDir: '../i18n/locales',
   },
   colorMode: {
     preference: 'system',

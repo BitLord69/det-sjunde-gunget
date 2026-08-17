@@ -25,7 +25,10 @@ const { data: gigsData, refresh: refreshGigs } = await useFetch('/api/gigs')
 const { data: bandMembers, refresh: refreshBand } = await useFetch('/api/band')
 const { data: galleryItems, refresh: refreshGallery } = await useFetch('/api/gallery')
 const { data: songsData, refresh: refreshSongs } = await useFetch('/api/songs')
-const { data: adminUsers, refresh: refreshAdmins } = await useFetch('/api/admin/users')
+const { data: adminUsers, refresh: refreshAdmins } = await useFetch('/api/admin/users', {
+  default: () => [],
+  ignoreResponseError: true,
+})
 
 // ---------------- GIGS CRUD ----------------
 const editingGig = ref<any | null>(null)

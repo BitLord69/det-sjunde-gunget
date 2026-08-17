@@ -71,10 +71,7 @@ const handlePasswordChange = async () => {
                 <span v-else>{{ adminUser.name.charAt(0) }}</span>
               </div>
             </div>
-            <div class="hidden md:flex flex-col text-left leading-tight">
-              <span class="font-bold text-primary">{{ adminUser.name }}</span>
-              <span class="text-[10px] text-base-content/60">{{ adminUser.role }}</span>
-            </div>
+            <span class="font-bold text-primary">{{ adminUser.name }}</span>
           </div>
 
           <!-- Change Password Button -->

@@ -43,25 +43,6 @@ export const useAdminAuth = () => {
     }
   }
 
-  const socialLogin = async (provider: string, memberId?: string, email?: string, name?: string) => {
-    isLoading.value = true
-    authError.value = null
-    try {
-      const data = await $fetch<{ success: boolean; user: AdminUser }>('/api/auth/social-login', {
-        method: 'POST',
-        body: { provider, memberId, email, name },
-      })
-      adminUser.value = data.user
-      return { success: true, user: data.user }
-    } catch (err: any) {
-      const msg = err?.data?.message || 'Social inloggning misslyckades.'
-      authError.value = msg
-      return { success: false, error: msg }
-    } finally {
-      isLoading.value = false
-    }
-  }
-
   const changePassword = async (currentPassword: string, newPassword: string) => {
     isLoading.value = true
     authError.value = null
@@ -97,7 +78,6 @@ export const useAdminAuth = () => {
     authError,
     fetchUser,
     login,
-    socialLogin,
     changePassword,
     logout,
   }

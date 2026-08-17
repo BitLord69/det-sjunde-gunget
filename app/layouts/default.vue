@@ -120,7 +120,7 @@ const handleNewsletter = async () => {
 
           <!-- Admin Login Shortcut -->
           <NuxtLink
-            to="/admin"
+            to="/admin/login"
             class="flex items-center gap-1 text-[11px] font-mono text-base-content/60 hover:text-primary transition-colors py-0.5 px-2 rounded hover:bg-base-200"
             title="Band Admin (Janis, Bosse, Marcus, Jonas)"
           >
@@ -290,7 +290,7 @@ const handleNewsletter = async () => {
               <span class="text-xs text-base-content/40">›</span>
             </NuxtLink>
             <NuxtLink
-              to="/admin"
+              to="/admin/login"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-base-content/70 border-t border-base-content/10 pt-3"
               @click="isMobileMenuOpen = false"
             >

@@ -9,7 +9,7 @@ useSeoMeta({
 })
 
 const route = useRoute()
-const { login, socialLogin, isLoading, authError } = useAdminAuth()
+const { login, isLoading, authError } = useAdminAuth()
 
 const identifier = ref('')
 const password = ref('')
@@ -17,16 +17,6 @@ const isSocialLoading = ref(false)
 
 const handleLogin = async () => {
   const result = await login(identifier.value, password.value)
-  if (result.success) {
-    const redirectPath = (route.query.redirect as string) || '/admin'
-    await navigateTo(redirectPath)
-  }
-}
-
-const handleQuickLogin = async (memberId: string) => {
-  isSocialLoading.value = true
-  const result = await socialLogin('band_quick', memberId)
-  isSocialLoading.value = false
   if (result.success) {
     const redirectPath = (route.query.redirect as string) || '/admin'
     await navigateTo(redirectPath)
@@ -154,43 +144,6 @@ onMounted(() => {
             </svg>
             <span>GitHub</span>
           </button>
-        </div>
-
-        <!-- Band Members 1-Click Quick Login -->
-        <div class="bg-base-300/60 p-3 rounded-2xl border border-primary/20 space-y-2">
-          <div class="text-[11px] text-center font-bold text-secondary uppercase tracking-wider">
-            Snabbval för bandet (1 klick)
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              class="btn btn-ghost btn-xs bg-base-100 hover:bg-primary hover:text-primary-content text-[11px] font-bold rounded-lg border border-primary/20 flex items-center justify-start gap-1.5 px-2"
-              @click="handleQuickLogin('admin-janis')"
-            >
-              <span>🎤</span> Janis (Sång)
-            </button>
-            <button
-              type="button"
-              class="btn btn-ghost btn-xs bg-base-100 hover:bg-primary hover:text-primary-content text-[11px] font-bold rounded-lg border border-primary/20 flex items-center justify-start gap-1.5 px-2"
-              @click="handleQuickLogin('admin-bosse')"
-            >
-              <span>🎸</span> Bosse (Bas)
-            </button>
-            <button
-              type="button"
-              class="btn btn-ghost btn-xs bg-base-100 hover:bg-primary hover:text-primary-content text-[11px] font-bold rounded-lg border border-primary/20 flex items-center justify-start gap-1.5 px-2"
-              @click="handleQuickLogin('admin-marcus')"
-            >
-              <span>⚡</span> Marcus (Gitarr)
-            </button>
-            <button
-              type="button"
-              class="btn btn-ghost btn-xs bg-base-100 hover:bg-primary hover:text-primary-content text-[11px] font-bold rounded-lg border border-primary/20 flex items-center justify-start gap-1.5 px-2"
-              @click="handleQuickLogin('admin-jonas')"
-            >
-              <span>🥁</span> Jonas (Trummor)
-            </button>
-          </div>
         </div>
       </div>
 

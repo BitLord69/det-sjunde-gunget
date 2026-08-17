@@ -1,8 +1,8 @@
 import { eq, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
-import { db } from '../../../server/db/client'
-import { admins } from '../../../server/db/schema'
-import { createAdminSession } from '../../../server/utils/auth'
+import { db } from '../../../db/client'
+import { admins } from '../../../db/schema'
+import { createAdminSession } from '../../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)

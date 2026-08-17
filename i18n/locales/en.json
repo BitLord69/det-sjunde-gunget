@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "home": "Home",
+    "gigs": "Gigs",
+    "music": "Music",
+    "band": "The Band",
+    "gallery": "Gallery",
+    "fan_central": "Fan Central",
+    "book": "Book Us"
+  },
+  "tagline": "Blues, rock, and just the right amount of racket.",
+  "hero": {
+    "sub": "Blues from the seventh groove",
+    "title": "Det 7:e Gunget",
+    "desc": "Four gents over 50 who still believe a great riff beats workplace wellness perks. Covers, originals, and just the right amount of noise.",
+    "cta_gigs": "Upcoming Gigs",
+    "cta_music": "Play Jukebox"
+  },
+  "gigs": {
+    "title": "Next Show",
+    "subtitle": "Upcoming Tour Dates",
+    "all_gigs": "View All Gigs",
+    "book_cta": "Book us for your venue or party",
+    "no_upcoming": "Warming up the tube amps and tuning strings. New dates coming soon!"
+  },
+  "glasses_mode": {
+    "tooltip": "Left your reading glasses in the guitar case? Click for high contrast & larger text!",
+    "active": "Reading Glasses: ON",
+    "inactive": "Reading Glasses: OFF"
+  },
+  "volume_knob": {
+    "label": "Master Volume",
+    "max_msg": "Volume cranked to 11! Pure rock 'n roll!"
+  },
+  "newsletter": {
+    "title": "The Gunget Newsletter",
+    "desc": "Get notified about new shows, releases, and rehearsal banter. No spam — just blues.",
+    "placeholder": "Your email address",
+    "button": "Subscribe",
+    "success": "Thanks! You're on the list."
+  }
+}

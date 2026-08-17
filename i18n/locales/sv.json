@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "home": "Hem",
+    "gigs": "Gig",
+    "music": "Musik",
+    "band": "Bandet",
+    "gallery": "Galleri",
+    "fan_central": "Fan Central",
+    "book": "Boka oss"
+  },
+  "tagline": "Blues, rock och lagom mycket oväsen.",
+  "hero": {
+    "sub": "Blues från den sjunde himlen",
+    "title": "Det 7:e Gunget",
+    "desc": "Fyra herrar över 50 som fortfarande tycker att ett bra riff slår friskvård. Covers, egna låtar och precis lagom mycket oväsen.",
+    "cta_gigs": "Kommande gig",
+    "cta_music": "Lyssna i jukeboxen"
+  },
+  "gigs": {
+    "title": "Nästa sväng",
+    "subtitle": "Kommande gig",
+    "all_gigs": "Se alla våra gig",
+    "book_cta": "Boka oss till ditt event",
+    "no_upcoming": "Just nu laddar vi förstärkare och stämmer gitarrer. Fler datum kommer snart!"
+  },
+  "glasses_mode": {
+    "tooltip": "Glömt läsglasögonen i gitarrfodralet? Klicka här för större text!",
+    "active": "Läsglasögon: PÅ",
+    "inactive": "Läsglasögon: AV"
+  },
+  "volume_knob": {
+    "label": "Volym",
+    "max_msg": "Volymen står på 11! Nu svänger det ordentligt!"
+  },
+  "newsletter": {
+    "title": "Gungets nyhetsbrev",
+    "desc": "Få koll på nya gig, låtsläpp och bandskvaller direkt i inkorgen. Inget spam – bara blues.",
+    "placeholder": "Din e-postadress",
+    "button": "Skriv upp mig",
+    "success": "Tack! Du är nu uppskriven."
+  }
+}

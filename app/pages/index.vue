@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 useSeoMeta({
   title: 'Det 7:e Gunget | Blues och rock med glimt i ögat',
@@ -102,22 +102,22 @@ const formatGigDate = (dateVal: number | string | Date) => {
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-primary/30 text-neutral-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               <span class="font-bold text-primary text-sm">4</span>
-              <span class="text-neutral-content/70 font-medium">musiker</span>
+              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.musicians') }}</span>
             </div>
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-secondary/30 text-neutral-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-secondary" />
               <span class="font-bold text-secondary text-sm">50+</span>
-              <span class="text-neutral-content/70 font-medium">snittålder</span>
+              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.avg_age') }}</span>
             </div>
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-accent/30 text-neutral-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-accent" />
               <span class="font-bold text-accent text-sm">100%</span>
-              <span class="text-neutral-content/70 font-medium">tungt gung</span>
+              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.groove') }}</span>
             </div>
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-primary/30 text-neutral-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-primary" />
               <span class="font-bold text-primary text-sm">11</span>
-              <span class="text-neutral-content/70 font-medium">volym</span>
+              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.volume') }}</span>
             </div>
           </div>
 
@@ -143,7 +143,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
               priority
             />
             <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-neutral/90 border border-primary/40 px-4 py-1.5 rounded-full text-xs font-mono text-primary shadow-lg tracking-wider whitespace-nowrap">
-              ✦ Äkta svensk bluesrock sedan replokalen ✦
+              {{ t('hero.badge_tag') }}
             </div>
           </div>
         </div>
@@ -155,17 +155,17 @@ const formatGigDate = (dateVal: number | string | Date) => {
     <section id="gigs" class="mx-auto max-w-7xl px-6 lg:px-10 scroll-mt-24">
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-4 border-b border-primary/20 gap-4">
         <div>
-          <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">Turné & Scener</span>
+          <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">{{ t('gigs.section_tag') }}</span>
           <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty">
             {{ t('gigs.subtitle') }}
           </h2>
         </div>
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
           <p class="text-sm text-base-content/70 max-w-md">
-            Ta med dansskorna och ett glatt humör. Här listar vi var vi ställer upp stärkarna nästa gång.
+            {{ t('gigs.desc') }}
           </p>
           <NuxtLink to="/gigs" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
-            Se alla gig & arkiv →
+            {{ t('gigs.all_gigs') }} →
           </NuxtLink>
         </div>
       </div>
@@ -260,9 +260,9 @@ const formatGigDate = (dateVal: number | string | Date) => {
     <section id="music" class="mx-auto max-w-7xl px-6 lg:px-10 scroll-mt-24">
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-4 border-b border-primary/20 gap-4">
         <div>
-          <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">Jukebox & Inspelningar</span>
+          <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">{{ t('music.section_tag') }}</span>
           <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty">
-            Lyssna på Gunget
+            {{ t('music.title') }}
           </h2>
         </div>
 
@@ -275,7 +275,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
               :class="songFilter === 'all' ? 'bg-primary text-primary-content font-bold' : 'text-base-content/70 hover:text-primary'"
               @click="songFilter = 'all'"
             >
-              Alla låtar
+              {{ t('music.all') }}
             </button>
             <button
               type="button"
@@ -283,7 +283,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
               :class="songFilter === 'original' ? 'bg-primary text-primary-content font-bold' : 'text-base-content/70 hover:text-primary'"
               @click="songFilter = 'original'"
             >
-              Eget hantverk
+              {{ t('music.original') }}
             </button>
             <button
               type="button"
@@ -291,12 +291,12 @@ const formatGigDate = (dateVal: number | string | Date) => {
               :class="songFilter === 'cover' ? 'bg-primary text-primary-content font-bold' : 'text-base-content/70 hover:text-primary'"
               @click="songFilter = 'cover'"
             >
-              Klassiker
+              {{ t('music.cover') }}
             </button>
           </div>
 
           <NuxtLink to="/music" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
-            Hela Låtskatten →
+            {{ t('music.all_music') }} →
           </NuxtLink>
         </div>
       </div>
@@ -366,17 +366,17 @@ const formatGigDate = (dateVal: number | string | Date) => {
     <section id="band" class="mx-auto max-w-7xl px-6 lg:px-10 scroll-mt-24">
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-4 border-b border-primary/20 gap-4">
         <div>
-          <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">Herrarna över 50</span>
+          <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">{{ t('band.section_tag') }}</span>
           <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty">
-            Möt Bandet
+            {{ t('band.title') }}
           </h2>
         </div>
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
           <p class="text-sm text-base-content/70 max-w-md">
-            Fyra rutinerade musiker som samlat på sig för mycket förstärkare, för många gitarrpedaler och en ohejdad kärlek till blues.
+            {{ t('band.desc') }}
           </p>
           <NuxtLink to="/about" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
-            Läs om medlemmarna & utrustning →
+            {{ t('band.all_band') }} →
           </NuxtLink>
         </div>
       </div>
@@ -408,26 +408,26 @@ const formatGigDate = (dateVal: number | string | Date) => {
               {{ member.role }}
             </span>
             <p class="text-xs text-base-content/80 leading-relaxed mb-6">
-              {{ member.bioSv }}
+              {{ locale === 'en' && member.bioEn ? member.bioEn : member.bioSv }}
             </p>
           </div>
 
           <!-- Quirky Gear & Band Stats -->
           <div class="space-y-2 pt-4 border-t border-base-content/10 text-[11px]">
             <div v-if="member.gearSv" class="flex flex-col">
-              <span class="font-bold text-secondary">🎸 Vapen:</span>
-              <span class="text-base-content/70">{{ member.gearSv }}</span>
+              <span class="font-bold text-secondary">🎸 {{ locale === 'en' ? 'Gear:' : 'Vapen:' }}</span>
+              <span class="text-base-content/70">{{ locale === 'en' && member.gearEn ? member.gearEn : member.gearSv }}</span>
             </div>
             <div v-if="member.favoriteChord" class="flex flex-col">
-              <span class="font-bold text-secondary">🎵 Favoritackord:</span>
+              <span class="font-bold text-secondary">🎵 {{ locale === 'en' ? 'Favorite chord:' : 'Favoritackord:' }}</span>
               <span class="text-base-content/70">{{ member.favoriteChord }}</span>
             </div>
             <div v-if="member.weaknessSv" class="flex flex-col">
-              <span class="font-bold text-secondary">⚠️ Svaghet:</span>
+              <span class="font-bold text-secondary">⚠️ {{ locale === 'en' ? 'Weakness:' : 'Svaghet:' }}</span>
               <span class="text-base-content/70">{{ member.weaknessSv }}</span>
             </div>
             <div v-if="member.coffeeConsumption" class="flex flex-col">
-              <span class="font-bold text-secondary">☕ Kaffestats:</span>
+              <span class="font-bold text-secondary">☕ {{ locale === 'en' ? 'Coffee consumption:' : 'Kaffestats:' }}</span>
               <span class="text-base-content/70">{{ member.coffeeConsumption }}</span>
             </div>
           </div>
@@ -442,18 +442,18 @@ const formatGigDate = (dateVal: number | string | Date) => {
         <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-primary/20 gap-4">
           <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/20 text-secondary text-xs font-bold uppercase tracking-widest mb-2">
-              <span>💨</span> Humorsektionen
+              <span>💨</span> {{ t('fan_central.section_tag') }}
             </div>
             <h2 class="text-3xl sm:text-5xl font-heading text-primary text-gritty">
-              Fan Central
+              {{ t('fan_central.title') }}
             </h2>
           </div>
           <div class="flex flex-col sm:flex-row sm:items-center gap-4">
             <p class="text-sm text-base-content/80 max-w-md">
-              Vi älskar våra fans i publiken – och vi älskar bordsfläktarna som håller oss vid liv under sommargigen. Här hyllar vi båda!
+              {{ t('fan_central.desc') }}
             </p>
             <NuxtLink to="/fancentral" class="btn btn-secondary btn-sm rounded-full font-bold flex-shrink-0">
-              Till Fan Central →
+              {{ t('fan_central.open_fan_central') }} →
             </NuxtLink>
           </div>
         </div>
@@ -601,29 +601,29 @@ const formatGigDate = (dateVal: number | string | Date) => {
         <!-- Left: Pitch & Details -->
         <div class="space-y-6">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold uppercase tracking-widest">
-            <span>✉️</span> Boka Det 7:e Gunget
+            <span>✉️</span> {{ t('contact.section_tag') }}
           </div>
 
           <h2 class="text-3xl sm:text-5xl font-heading text-primary text-gritty">
-            Låt oss svänga till er tillställning!
+            {{ t('contact.title') }}
           </h2>
 
           <p class="text-base text-neutral-content/80 leading-relaxed">
-            Vi spelar på bluesklubbar, festivaler, pubar, företagsfester och privata 50-årsfester. Vi tar med oss all nödvändig utrustning, bra stämning och precis lagom mycket oväsen.
+            {{ t('contact.desc') }}
           </p>
 
           <div class="space-y-3 text-sm font-medium pt-2">
             <div class="flex items-center gap-3">
-              <span class="text-primary font-bold">📍 Utgår från:</span>
-              <span>Ängelholm & Skåne med omnejd</span>
+              <span class="text-primary font-bold">📍 {{ locale === 'en' ? 'Based in:' : 'Utgår från:' }}</span>
+              <span>{{ locale === 'en' ? 'Ängelholm & all of Skåne' : 'Ängelholm & Skåne med omnejd' }}</span>
             </div>
             <div class="flex items-center gap-3">
-              <span class="text-primary font-bold">🎸 Repertoar:</span>
-              <span>Klassisk chicagoblues, swamp-rock & egna alster</span>
+              <span class="text-primary font-bold">🎸 {{ locale === 'en' ? 'Repertoire:' : 'Repertoar:' }}</span>
+              <span>{{ locale === 'en' ? 'Classic Chicago blues, swamp-rock & originals' : 'Klassisk chicagoblues, swamp-rock & egna alster' }}</span>
             </div>
             <div class="flex items-center gap-3">
-              <span class="text-primary font-bold">⚡ Utrustning:</span>
-              <span>Full backline & PA kan medtagas vid behov</span>
+              <span class="text-primary font-bold">⚡ {{ locale === 'en' ? 'Equipment:' : 'Utrustning:' }}</span>
+              <span>{{ locale === 'en' ? 'Full backline & PA can be provided' : 'Full backline & PA kan medtagas vid behov' }}</span>
             </div>
           </div>
         </div>
@@ -635,18 +635,18 @@ const formatGigDate = (dateVal: number | string | Date) => {
             <input v-model="form.honeypot" type="text" class="hidden" tabindex="-1" autocomplete="off" />
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">Ditt namn *</label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">{{ t('contact.name_label') }}</label>
               <input
                 v-model="form.name"
                 type="text"
                 required
-                placeholder="Janis Svensson"
+                :placeholder="t('contact.name_placeholder')"
                 class="input input-bordered w-full bg-base-200 text-neutral-content focus:border-primary text-sm"
               />
             </div>
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">E-postadress *</label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">{{ t('contact.email_label') }}</label>
               <input
                 v-model="form.email"
                 type="email"
@@ -658,17 +658,16 @@ const formatGigDate = (dateVal: number | string | Date) => {
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">Typ av event</label>
+                <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">{{ t('contact.event_type_label') }}</label>
                 <select v-model="form.eventType" class="select select-bordered w-full bg-base-200 text-neutral-content focus:border-primary text-sm">
-                  <option>Klubb / pub</option>
-                  <option>Festival</option>
-                  <option>Privatfest / 50-årsfest</option>
-                  <option>Företagsevent</option>
-                  <option>Annat</option>
+                  <option>{{ t('contact.event_club') }}</option>
+                  <option>{{ t('contact.event_festival') }}</option>
+                  <option>{{ t('contact.event_private') }}</option>
+                  <option>{{ t('contact.event_corporate') }}</option>
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">Önskat datum</label>
+                <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">{{ t('contact.date_label') }}</label>
                 <input
                   v-model="form.date"
                   type="date"
@@ -678,12 +677,12 @@ const formatGigDate = (dateVal: number | string | Date) => {
             </div>
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">Meddelande / detaljer *</label>
+              <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">{{ t('contact.message_label') }}</label>
               <textarea
                 v-model="form.message"
                 required
                 rows="4"
-                placeholder="Berätta lite om platsen, publiken och vad ni är ute efter!"
+                :placeholder="t('contact.message_placeholder')"
                 class="textarea textarea-bordered w-full bg-base-200 text-neutral-content focus:border-primary text-sm"
               />
             </div>
@@ -693,16 +692,13 @@ const formatGigDate = (dateVal: number | string | Date) => {
               class="btn btn-primary w-full font-bold shadow-lg shadow-primary/20 text-base"
               :disabled="formLoading"
             >
-              {{ formLoading ? 'Skickar förfrågan...' : 'Skicka bokningsförfrågan →' }}
+              {{ formLoading ? '...' : t('contact.send_button') }}
             </button>
           </form>
 
           <div v-else class="text-center py-10 space-y-4">
             <span class="text-5xl">🎸</span>
-            <h3 class="text-2xl font-heading text-primary font-bold">Tack för din förfrågan!</h3>
-            <p class="text-sm text-neutral-content/80 max-w-sm mx-auto">
-              Vi återkommer så fort vi hunnit stänga av förstärkarna och läst våra mejl.
-            </p>
+            <h3 class="text-2xl font-heading text-primary font-bold">{{ t('contact.success_msg') }}</h3>
           </div>
         </div>
       </div>

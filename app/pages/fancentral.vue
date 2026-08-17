@@ -17,9 +17,6 @@ const fanItems = computed(() => {
   <div class="mx-auto max-w-7xl px-6 py-12 lg:px-10 space-y-16">
     <!-- Header -->
     <div class="space-y-4 max-w-3xl">
-      <NuxtLink to="/" class="text-xs font-bold uppercase tracking-widest text-secondary hover:text-primary transition-colors inline-flex items-center gap-1">
-        <span>←</span> Hem
-      </NuxtLink>
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/15 text-secondary text-xs font-bold uppercase tracking-widest">
         <span>💨</span> Humorsektionen
       </div>

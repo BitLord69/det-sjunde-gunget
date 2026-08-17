@@ -3,40 +3,115 @@
     "home": "Home",
     "gigs": "Gigs",
     "music": "Music",
-    "band": "The Band",
+    "band": "The band",
     "gallery": "Gallery",
     "fan_central": "Fan Central",
-    "book": "Book Us"
+    "book": "Book us"
   },
-  "tagline": "Blues, rock, and just the right amount of racket.",
+  "tagline": "Blues, rock, and just the right amount of noise.",
+  "ticker": {
+    "next_gig": "Next gig:"
+  },
   "hero": {
     "sub": "Blues from the seventh groove",
     "title": "Det 7:e Gunget",
     "desc": "Four gents over 50 who still believe a great riff beats workplace wellness perks. Covers, originals, and just the right amount of noise.",
-    "cta_gigs": "Upcoming Gigs",
-    "cta_music": "Play Jukebox"
+    "cta_gigs": "Upcoming gigs",
+    "cta_music": "Play jukebox",
+    "stats": {
+      "musicians": "musicians",
+      "avg_age": "average age",
+      "groove": "heavy groove",
+      "volume": "volume"
+    },
+    "badge_tag": "✦ Authentic Swedish blues rock straight from the rehearsal room ✦"
   },
   "gigs": {
-    "title": "Next Show",
-    "subtitle": "Upcoming Tour Dates",
-    "all_gigs": "View All Gigs",
+    "section_tag": "Tour & stages",
+    "title": "Next show",
+    "subtitle": "Upcoming gigs",
+    "desc": "Bring your dancing shoes and a good mood. Here's where we set up our amps next.",
+    "all_gigs": "View all gigs & archive",
     "book_cta": "Book us for your venue or party",
+    "tickets": "Tickets",
+    "door": "At the door",
     "no_upcoming": "Warming up the tube amps and tuning strings. New dates coming soon!"
   },
+  "band": {
+    "section_tag": "The lineup",
+    "title": "Meet the band",
+    "desc": "Four personalities, one tight groove.",
+    "all_band": "Read all bios & gear specs"
+  },
+  "music": {
+    "section_tag": "Jukebox & recordings",
+    "title": "The song catalogue",
+    "desc": "Listen to our originals and sweaty live interpretations of classic blues-rock favorites.",
+    "all": "All songs",
+    "original": "Originals (Side A)",
+    "cover": "Covers (Side B)",
+    "all_music": "Open full jukebox",
+    "jukebox_model": "Model 1957 • All-tube hi-fi",
+    "now_playing": "Now playing",
+    "select_track": "Select a song on the title strips or keypad",
+    "side_a": "Side A (originals)",
+    "side_b": "Side B (covers)",
+    "insert_coin": "Insert coin",
+    "free_play": "Free play active",
+    "credits": "Credits",
+    "open_in": "Open in"
+  },
+  "gallery": {
+    "section_tag": "Live & studio",
+    "title": "Moments & stage shots",
+    "desc": "Polaroids, live snapshots and sweat from stages in Skåne.",
+    "all_gallery": "Open picture gallery"
+  },
+  "fan_central": {
+    "section_tag": "The community",
+    "title": "Fan Central & table fans",
+    "desc": "Whether you're a devoted blues lover or an actual motorized desk fan — you belong here.",
+    "open_fan_central": "To Fan Central"
+  },
+  "contact": {
+    "section_tag": "Booking & inquiries",
+    "title": "Book Det 7:e Gunget",
+    "desc": "Pub, festival, corporate gig or private party? We bring the amps, the grit, and the groove.",
+    "name_label": "Your name / organization *",
+    "name_placeholder": "E.g. Janis Svensson / Club organizers",
+    "email_label": "Email address *",
+    "event_type_label": "Event type",
+    "event_club": "Gig / Club / Pub",
+    "event_festival": "Festival / Open air",
+    "event_private": "Private party / Birthday",
+    "event_corporate": "Corporate event",
+    "date_label": "Desired date",
+    "message_label": "Message / details *",
+    "message_placeholder": "Tell us about the venue, expected audience, and schedule...",
+    "send_button": "Send booking inquiry →",
+    "success_msg": "Thank you for your inquiry! We'll get back to you shortly."
+  },
   "glasses_mode": {
-    "tooltip": "Left your reading glasses in the guitar case? Click for high contrast & larger text!",
-    "active": "Reading Glasses: ON",
-    "inactive": "Reading Glasses: OFF"
+    "tooltip": "Left your reading glasses in the guitar case? Click for larger text!",
+    "active": "Reading glasses: ON",
+    "inactive": "Reading glasses: OFF"
   },
   "volume_knob": {
-    "label": "Master Volume",
+    "short_label": "Volume",
+    "label": "Master volume",
     "max_msg": "Volume cranked to 11! Pure rock 'n roll!"
   },
   "newsletter": {
-    "title": "The Gunget Newsletter",
+    "title": "The Gunget newsletter",
     "desc": "Get notified about new shows, releases, and rehearsal banter. No spam — just blues.",
     "placeholder": "Your email address",
     "button": "Subscribe",
     "success": "Thanks! You're on the list."
+  },
+  "footer": {
+    "tagline": "Blues, rock, and just the right amount of noise. Based in Ängelholm and touring Skåne.",
+    "quick_links": "Quick links",
+    "follow_us": "Follow us",
+    "rights": "All rights reserved."
   }
 }

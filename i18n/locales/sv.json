@@ -9,19 +9,87 @@
     "book": "Boka oss"
   },
   "tagline": "Blues, rock och lagom mycket oväsen.",
+  "ticker": {
+    "next_gig": "Nästa gig:"
+  },
   "hero": {
     "sub": "Blues från den sjunde himlen",
     "title": "Det 7:e Gunget",
     "desc": "Fyra herrar över 50 som fortfarande tycker att ett bra riff slår friskvård. Covers, egna låtar och precis lagom mycket oväsen.",
     "cta_gigs": "Kommande gig",
-    "cta_music": "Lyssna i jukeboxen"
+    "cta_music": "Lyssna i jukeboxen",
+    "stats": {
+      "musicians": "musiker",
+      "avg_age": "snittålder",
+      "groove": "tungt gung",
+      "volume": "volym"
+    },
+    "badge_tag": "✦ Äkta svensk bluesrock sedan replokalen ✦"
   },
   "gigs": {
+    "section_tag": "Turné & scener",
     "title": "Nästa sväng",
     "subtitle": "Kommande gig",
-    "all_gigs": "Se alla våra gig",
+    "desc": "Ta med dansskorna och ett glatt humör. Här listar vi var vi ställer upp stärkarna nästa gång.",
+    "all_gigs": "Se alla gig & arkiv",
     "book_cta": "Boka oss till ditt event",
+    "tickets": "Biljetter",
+    "door": "I dörren",
     "no_upcoming": "Just nu laddar vi förstärkare och stämmer gitarrer. Fler datum kommer snart!"
+  },
+  "band": {
+    "section_tag": "Laguppställning",
+    "title": "Möt gänget",
+    "desc": "Fyra personligheter, ett tajt gung.",
+    "all_band": "Läs alla bios & utrustning"
+  },
+  "music": {
+    "section_tag": "Jukebox & inspelningar",
+    "title": "Hela låtskatten",
+    "desc": "Lyssna på våra egna kompositioner och svettiga tolkningar av gamla klassiker.",
+    "all": "Alla låtar",
+    "original": "Egna låtar (A-sidan)",
+    "cover": "Covers (B-sidan)",
+    "all_music": "Öppna hela jukeboxen",
+    "jukebox_model": "Modell 1957 • Rörbestyckad hi-fi",
+    "now_playing": "Spelar nu",
+    "select_track": "Välj en låt från titelremsorna eller knappsatsen",
+    "side_a": "A-sida (egna låtar)",
+    "side_b": "B-sida (covers)",
+    "insert_coin": "Mata in slant",
+    "free_play": "Frispel aktivt",
+    "credits": "Krediter",
+    "open_in": "Öppna i"
+  },
+  "gallery": {
+    "section_tag": "Live & studio",
+    "title": "Ögonblick & scenbilder",
+    "desc": "Polaroider, liveögonblick och svett från scener i Skåne.",
+    "all_gallery": "Öppna bildgalleri"
+  },
+  "fan_central": {
+    "section_tag": "Gemenskapen",
+    "title": "Fan Central & bordsfläktar",
+    "desc": "Oavsett om du är en hängiven bluesälskare eller en faktisk bordsfläkt på tre hastigheter – här platsar du.",
+    "open_fan_central": "Till Fan Central"
+  },
+  "contact": {
+    "section_tag": "Bokning & förfrågningar",
+    "title": "Boka Det 7:e Gunget",
+    "desc": "Klubb, festival, företagsfest eller privat kalas? Vi tar med stärkare, sväng och gott humör.",
+    "name_label": "Ditt namn / arrangör *",
+    "name_placeholder": "T.ex. Janis Svensson / Kulturföreningen",
+    "email_label": "E-postadress *",
+    "event_type_label": "Typ av evenemang",
+    "event_club": "Spelning / Klubb / Pub",
+    "event_festival": "Festival / Utomhusscen",
+    "event_private": "Privatfest / Födelsedag",
+    "event_corporate": "Företagsevent",
+    "date_label": "Önskat datum",
+    "message_label": "Meddelande / detaljer *",
+    "message_placeholder": "Berätta om scenen, förväntad publik och upplägg...",
+    "send_button": "Skicka bokningsförfrågan →",
+    "success_msg": "Tack för din förfrågan! Vi hör av oss inom kort."
   },
   "glasses_mode": {
     "tooltip": "Glömt läsglasögonen i gitarrfodralet? Klicka här för större text!",
@@ -29,7 +97,8 @@
     "inactive": "Läsglasögon: AV"
   },
   "volume_knob": {
-    "label": "Volym",
+    "short_label": "Volym",
+    "label": "Mastervolym",
     "max_msg": "Volymen står på 11! Nu svänger det ordentligt!"
   },
   "newsletter": {
@@ -38,5 +107,11 @@
     "placeholder": "Din e-postadress",
     "button": "Skriv upp mig",
     "success": "Tack! Du är nu uppskriven."
+  },
+  "footer": {
+    "tagline": "Blues, rock och lagom mycket oväsen. Baserade i Ängelholm med omnejd.",
+    "quick_links": "Snabblänkar",
+    "follow_us": "Följ oss",
+    "rights": "Alla rättigheter förbehållna."
   }
 }

@@ -11,9 +11,6 @@ const { data: bandMembers } = await useFetch('/api/band')
   <div class="mx-auto max-w-7xl px-6 py-12 lg:px-10 space-y-20">
     <!-- Header -->
     <div class="space-y-4 max-w-3xl">
-      <NuxtLink to="/" class="text-xs font-bold uppercase tracking-widest text-secondary hover:text-primary transition-colors inline-flex items-center gap-1">
-        <span>←</span> Hem
-      </NuxtLink>
       <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty">
         Om Det 7:e Gunget
       </h1>

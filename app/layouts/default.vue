@@ -77,15 +77,15 @@ const handleNewsletter = async () => {
         <div class="flex items-center gap-2 font-mono text-[11px] truncate">
           <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
           <NuxtLink v-if="nextGig" to="/gigs" class="hover:text-primary transition-colors flex items-center gap-1.5 truncate">
-            <span class="text-secondary font-bold uppercase tracking-wider">Nästa gig:</span>
+            <span class="text-secondary font-bold uppercase tracking-wider">{{ t('ticker.next_gig') }}</span>
             <span class="text-primary font-bold">{{ nextGig.venue }}, {{ nextGig.city }}</span>
             <span class="text-base-content/60 hidden md:inline font-sans">
-              ({{ new Date(nextGig.date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) }})
+              ({{ new Date(nextGig.date).toLocaleDateString(locale === 'en' ? 'en-US' : 'sv-SE', { day: 'numeric', month: 'short' }) }})
             </span>
             <span class="text-secondary font-bold">→</span>
           </NuxtLink>
           <span v-else class="text-base-content/80">
-            <span class="text-primary font-bold">Det 7:e Gunget</span> • Blues, rock och lagom mycket oväsen
+            <span class="text-primary font-bold">Det 7:e Gunget</span> • {{ t('tagline') }}
           </span>
         </div>
 
@@ -156,7 +156,7 @@ const handleNewsletter = async () => {
     <header class="sticky top-0 z-40 bg-base-100/95 backdrop-blur-md border-b border-primary/15 shadow-xl">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
         <!-- Wordmark (Arvo font as specified) -->
-        <NuxtLink to="/" class="group flex items-center gap-3 focus:outline-none">
+        <NuxtLink to="/" class="group flex items-center gap-3 focus:outline-none cursor-guitar">
           <div class="flex flex-col">
             <span class="font-heading text-2xl sm:text-3xl text-primary tracking-wide drop-shadow transition-transform group-hover:scale-102">
               Det 7:e Gunget
@@ -181,8 +181,9 @@ const handleNewsletter = async () => {
           <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" to="/gallery">
             {{ t('nav.gallery') }}
           </NuxtLink>
-          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" to="/fancentral">
+          <NuxtLink class="group transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary cursor-fan inline-flex items-center gap-1.5" active-class="!text-primary !border-primary" to="/fancentral">
             {{ t('nav.fan_central') }}
+            <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity fan-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M14.167 10.5c.722 -1.538 1.156 -3.043 1.303 -4.514c.22 -1.63 -.762 -2.986 -3.47 -2.986s-3.69 1.357 -3.47 2.986c.147 1.471 .581 2.976 1.303 4.514"/><path d="M13.169 16.751c.97 1.395 2.057 2.523 3.257 3.386c1.3 1 2.967 .833 4.321 -1.512c1.354 -2.345 .67 -3.874 -.85 -4.498c-1.348 -.608 -2.868 -.985 -4.562 -1.128"/><path d="M8.664 13c-1.693 .143 -3.213 .52 -4.56 1.128c-1.522 .623 -2.206 2.153 -.852 4.498s3.02 2.517 4.321 1.512c1.2 -.863 2.287 -1.991 3.258 -3.386"/></svg>
           </NuxtLink>
         </nav>
 
@@ -191,7 +192,7 @@ const handleNewsletter = async () => {
           <!-- Master Volume Knob -->
           <div class="flex items-center gap-2 bg-neutral/90 px-2.5 py-1.5 rounded-full border border-primary/20 shadow-inner">
             <div class="flex flex-col text-right">
-              <span class="text-[9px] font-mono uppercase tracking-widest text-secondary font-bold">Volym</span>
+              <span class="text-[9px] font-mono uppercase tracking-widest text-secondary font-bold">{{ t('volume_knob.short_label') }}</span>
               <span class="text-xs font-mono font-bold text-primary">{{ volume }}</span>
             </div>
             <button
@@ -434,3 +435,19 @@ const handleNewsletter = async () => {
     </nav>
   </div>
 </template>
+
+<style scoped>
+.cursor-guitar {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='24' font-size='24'%3E🎸%3C/text%3E%3C/svg%3E") 4 4, pointer;
+}
+.cursor-fan {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%23c87f3f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 13a3 3 0 1 0 6 0a3 3 0 1 0 -6 0'/%3E%3Cpath d='M14.167 10.5c.722 -1.538 1.156 -3.043 1.303 -4.514c.22 -1.63 -.762 -2.986 -3.47 -2.986s-3.69 1.357 -3.47 2.986c.147 1.471 .581 2.976 1.303 4.514'/%3E%3Cpath d='M13.169 16.751c.97 1.395 2.057 2.523 3.257 3.386c1.3 1 2.967 .833 4.321 -1.512c1.354 -2.345 .67 -3.874 -.85 -4.498c-1.348 -.608 -2.868 -.985 -4.562 -1.128'/%3E%3Cpath d='M8.664 13c-1.693 .143 -3.213 .52 -4.56 1.128c-1.522 .623 -2.206 2.153 -.852 4.498s3.02 2.517 4.321 1.512c1.2 -.863 2.287 -1.991 3.258 -3.386'/%3E%3C/svg%3E") 16 16, pointer;
+}
+@keyframes fan-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.fan-spin {
+  animation: fan-rotate 2s linear infinite;
+}
+</style>

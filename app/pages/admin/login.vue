@@ -33,17 +33,20 @@ const handleQuickLogin = async (memberId: string) => {
   }
 }
 
-const handleSocialAuth = async (provider: 'google' | 'github') => {
+const handleSocialAuth = (provider: 'google' | 'github') => {
   isSocialLoading.value = true
-  // In a full external OAuth setup, this redirects to the OAuth provider URL.
-  // Here we seamlessly authenticate using the provider connector.
-  const result = await socialLogin(provider, undefined, `admin.${provider}@det7egunget.se`, `Social Admin (${provider})`)
-  isSocialLoading.value = false
-  if (result.success) {
-    const redirectPath = (route.query.redirect as string) || '/admin'
-    await navigateTo(redirectPath)
-  }
+  window.location.href = `/api/auth/${provider}`
 }
+
+onMounted(() => {
+  if (route.query.error) {
+    if (route.query.error === 'google_auth_failed') {
+      authError.value = 'Inloggning med Google misslyckades eller avbröts.'
+    } else if (route.query.error === 'github_auth_failed') {
+      authError.value = 'Inloggning med GitHub misslyckades eller avbröts.'
+    }
+  }
+})
 </script>
 
 <template>

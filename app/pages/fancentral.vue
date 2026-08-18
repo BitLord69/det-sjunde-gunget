@@ -126,5 +126,32 @@ const fanItems = computed(() => {
         </div>
       </div>
     </div>
+
+    <!-- Official Band Merch Showcase Banner -->
+    <div class="stage-card p-8 sm:p-12 rounded-3xl border border-primary/30 flex flex-col md:flex-row items-center justify-between gap-8 bg-gradient-to-r from-base-300 via-base-200 to-base-300 shadow-2xl">
+      <div class="space-y-3 text-center md:text-left max-w-xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold uppercase tracking-widest">
+          <span>👕</span> Officiell Merch-Shop
+        </div>
+        <h2 class="font-heading text-3xl sm:text-4xl text-primary font-bold">
+          Bär Det 7:e Gunget med stolthet
+        </h2>
+        <p class="text-sm text-base-content/80 leading-relaxed">
+          Kittad för nästa gig? Spana in våra officiella t-shirts, huvtröjor, tygpåsar och muggar i vår Spreadshop-butik.
+        </p>
+      </div>
+
+      <div class="flex-shrink-0">
+        <a
+          href="https://det-7e-gunget.myspreadshop.se"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary btn-md rounded-full font-bold px-8 shadow-lg shadow-primary/20 hover:scale-105 transition-transform inline-flex items-center gap-2"
+        >
+          <span>Besök Merch-butiken</span>
+          <span>↗</span>
+        </a>
+      </div>
+    </div>
   </div>
 </template>

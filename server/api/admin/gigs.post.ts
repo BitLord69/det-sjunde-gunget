@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid'
 import { db } from '../../db/client'
 import { gigs } from '../../db/schema'
 import { requireAdminAuth } from '../../utils/auth'
+import { publishToSocialMedia } from '../../utils/social'
 
 export default defineEventHandler(async (event) => {
   await requireAdminAuth(event)
@@ -31,8 +32,6 @@ export default defineEventHandler(async (event) => {
         updatedAt: now,
       })
       .where(eq(gigs.id, body.id))
-
-    return { success: true, id: body.id, updated: true }
   } else {
     // Insert
     await db.insert(gigs).values({
@@ -47,7 +46,26 @@ export default defineEventHandler(async (event) => {
       createdAt: now,
       updatedAt: now,
     })
+  }
 
-    return { success: true, id, created: true }
+  // Cross-post to Facebook & Instagram if requested
+  let socialResult = null
+  if (body.postToSocials) {
+    socialResult = await publishToSocialMedia({
+      type: 'gig',
+      title: `Spelning på ${body.venue}, ${body.city}`,
+      venue: body.venue,
+      city: body.city,
+      date: gigDate,
+      ticketUrl: body.ticketUrl,
+      notes: body.notesSv,
+    })
+  }
+
+  return {
+    success: true,
+    id,
+    saved: true,
+    social: socialResult,
   }
 })

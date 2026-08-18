@@ -85,6 +85,29 @@ const openEditGig = (gig: any) => {
   editingGig.value = gig.id
 }
 
+const gigSocialPreview = computed(() => {
+  const dateStr = gigForm.date
+    ? new Date(gigForm.date).toLocaleDateString('sv-SE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : '[Datum]'
+
+  const cityTag = gigForm.city ? `#${gigForm.city.replace(/\s+/g, '')}Blues` : '#Blues'
+
+  return `🎸 NYTT GIG MED DET 7:E GUNGET! 🎸
+
+📍 Spelplats: ${gigForm.venue || '[Spelplats]'}, ${gigForm.city || '[Stad]'}
+📅 Datum: ${dateStr}${gigForm.notesSv ? `\n\n"${gigForm.notesSv}"` : ''}
+
+${gigForm.ticketUrl ? `🎟️ Biljetter: ${gigForm.ticketUrl}` : '👉 Mer info: https://det7egunget.se/gigs'}
+
+Kom och sväng med oss! 🎶
+#DetSjundeGunget #BluesRock #LiveMusik #SvenskBlues ${cityTag}`
+})
+
 const saveGig = async () => {
   if (!gigForm.venue || !gigForm.city || !gigForm.date) {
     showToast('⚠️ Vänligen fyll i spelplats, stad och datum!')
@@ -92,7 +115,7 @@ const saveGig = async () => {
   }
 
   const dateTimeStr = `${gigForm.date}T${gigForm.time || '20:00'}:00`
-  await $fetch('/api/admin/gigs', {
+  const res = await $fetch<{ success: boolean; social?: any }>('/api/admin/gigs', {
     method: 'POST',
     body: {
       id: gigForm.id || undefined,
@@ -103,12 +126,17 @@ const saveGig = async () => {
       status: gigForm.status,
       notesSv: gigForm.notesSv,
       notesEn: gigForm.notesEn,
+      postToSocials: gigForm.postToSocials,
     },
   })
 
   editingGig.value = null
   await refreshGigs()
-  showToast('✓ Giget har sparats!')
+  if (res.social?.message) {
+    showToast(`✓ Giget sparades! 📱 ${res.social.message}`)
+  } else {
+    showToast('✓ Giget har sparats!')
+  }
 }
 
 const deleteGig = async (id: string) => {
@@ -121,6 +149,36 @@ const deleteGig = async (id: string) => {
   showToast('✓ Giget raderades.')
 }
 
+// ---------------- UPLOAD HELPER ----------------
+const isUploading = ref(false)
+
+const uploadFile = async (event: Event, targetCallback: (url: string) => void) => {
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+  const file = input.files[0]
+  if (!file) return
+
+  const formData = new FormData()
+  formData.append('file', file)
+  isUploading.value = true
+
+  try {
+    const res = await $fetch<{ success: boolean; url: string }>('/api/admin/upload', {
+      method: 'POST',
+      body: formData,
+    })
+    if (res.success && res.url) {
+      targetCallback(res.url)
+      showToast('✓ Bilden har laddats upp!')
+    }
+  } catch (err: any) {
+    showToast(`⚠️ Uppladdning misslyckades: ${err?.data?.message || err?.message || 'Fel'}`)
+  } finally {
+    isUploading.value = false
+    input.value = ''
+  }
+}
+
 // ---------------- BAND MEMBER LORE ----------------
 const editingMember = ref<any | null>(null)
 const memberForm = reactive({
@@ -128,8 +186,10 @@ const memberForm = reactive({
   name: '',
   role: '',
   bioSv: '',
+  bioEn: '',
   photoUrl: '',
   gearSv: '',
+  gearEn: '',
   favoriteChord: '',
   weaknessSv: '',
   coffeeConsumption: '',
@@ -140,8 +200,10 @@ const openEditMember = (m: any) => {
   memberForm.name = m.name
   memberForm.role = m.role
   memberForm.bioSv = m.bioSv || ''
+  memberForm.bioEn = m.bioEn || ''
   memberForm.photoUrl = m.photoUrl || ''
   memberForm.gearSv = m.gearSv || ''
+  memberForm.gearEn = m.gearEn || ''
   memberForm.favoriteChord = m.favoriteChord || ''
   memberForm.weaknessSv = m.weaknessSv || ''
   memberForm.coffeeConsumption = m.coffeeConsumption || ''
@@ -198,18 +260,33 @@ const openEditSong = (s: any) => {
   editingSong.value = s.id
 }
 
+const songSocialPreview = computed(() => {
+  return `🎵 NY LÅT I JUKEBOXEN! 🎵
+
+"${songForm.title || '[Låttitel]'}" ${songForm.isOriginal ? '(Originalkomposition)' : `(Cover av ${songForm.originalArtist || 'Okänd'})`} finns nu att lyssna på i vår retro jukebox på webben!
+
+${songForm.embedUrl ? `👉 Lyssna direkt: ${songForm.embedUrl}` : '👉 Lyssna här: https://det7egunget.se/music'}
+
+Släpp i en slant och höj volymen till 11! ⚡
+#DetSjundeGunget #BluesRock #NyMusik #BluesLåt`
+})
+
 const saveSong = async () => {
   if (!songForm.title || !songForm.embedUrl) {
     showToast('⚠️ Ange låttitel och länk!')
     return
   }
-  await $fetch('/api/admin/songs', {
+  const res = await $fetch<{ success: boolean; social?: any }>('/api/admin/songs', {
     method: 'POST',
     body: songForm,
   })
   editingSong.value = null
   await refreshSongs()
-  showToast(songForm.postToSocials ? '✓ Låten har sparats & schemalagts för FB & Insta!' : '✓ Låten har sparats i jukeboxen!')
+  if (res.social?.message) {
+    showToast(`✓ Låten sparades! 📱 ${res.social.message}`)
+  } else {
+    showToast(songForm.postToSocials ? '✓ Låten har sparats & schemalagts för FB & Insta!' : '✓ Låten har sparats i jukeboxen!')
+  }
 }
 
 const deleteSong = async (id: string) => {
@@ -307,6 +384,7 @@ const newAdminForm = reactive({
   username: '',
   role: 'Administratör',
   password: '',
+  avatarUrl: '',
 })
 
 const openAddAdmin = () => {
@@ -315,6 +393,7 @@ const openAddAdmin = () => {
   newAdminForm.username = ''
   newAdminForm.role = 'Administratör'
   newAdminForm.password = ''
+  newAdminForm.avatarUrl = ''
   isAddAdminOpen.value = true
 }
 
@@ -482,21 +561,34 @@ const deleteAdminUser = async (admin: any) => {
           </div>
 
           <!-- Social Media Cross-Posting Switch -->
-          <div class="sm:col-span-2 p-3 bg-base-200/80 rounded-xl border border-primary/20 flex items-center justify-between gap-4">
-            <div class="space-y-0.5">
-              <span class="text-xs font-bold text-primary flex items-center gap-1.5">
-                <span>📱</span> Posta automatiskt till Facebook & Instagram
-              </span>
-              <p class="text-[11px] text-base-content/60">
-                Skapar automatiskt ett inlägg på bandets sociala medier när giget publiceras.
-              </p>
+          <div class="sm:col-span-2 p-4 bg-base-200/80 rounded-2xl border border-primary/20 space-y-3">
+            <div class="flex items-center justify-between gap-4">
+              <div class="space-y-0.5">
+                <span class="text-xs font-bold text-primary flex items-center gap-1.5">
+                  <span>📱</span> Posta automatiskt till Facebook & Instagram
+                </span>
+                <p class="text-[11px] text-base-content/60">
+                  Skapar automatiskt ett inlägg på bandets sociala medier när giget sparas.
+                </p>
+              </div>
+              <input
+                v-model="gigForm.postToSocials"
+                type="checkbox"
+                class="toggle toggle-primary toggle-sm"
+                title="Aktivera / inaktivera automatisk delning till FB & Instagram"
+              />
             </div>
-            <input
-              v-model="gigForm.postToSocials"
-              type="checkbox"
-              class="toggle toggle-primary toggle-sm"
-              title="Aktivera / inaktivera automatisk delning till FB & Instagram"
-            />
+
+            <!-- Live Social Post Preview Box -->
+            <div v-if="gigForm.postToSocials" class="p-3.5 bg-black/80 rounded-xl border border-primary/30 space-y-2 mt-2">
+              <div class="flex items-center justify-between text-[11px] font-bold text-secondary">
+                <span>👁️ Live Förhandsgranskning (Facebook & Instagram)</span>
+                <span class="badge badge-xs badge-primary font-mono">Auto-genererat</span>
+              </div>
+              <div class="font-mono text-xs text-base-content/90 whitespace-pre-line leading-relaxed border-l-2 border-primary/40 pl-3">
+                {{ gigSocialPreview }}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -559,11 +651,35 @@ const deleteAdminUser = async (admin: any) => {
       </div>
 
       <!-- Edit Member Modal -->
-      <div v-if="editingMember" class="stage-card p-6 sm:p-8 rounded-2xl border border-primary/40 space-y-4 shadow-2xl">
-        <h3 class="font-heading text-xl text-primary font-bold">
-          Redigera profil för {{ memberForm.name }}
-        </h3>
+      <div v-if="editingMember" class="stage-card p-6 sm:p-8 rounded-2xl border border-primary/40 space-y-5 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-primary/20 pb-3">
+          <h3 class="font-heading text-xl text-primary font-bold">
+            Redigera profil för {{ memberForm.name }}
+          </h3>
+          <span class="badge badge-primary font-mono text-xs font-bold">{{ memberForm.role }}</span>
+        </div>
+
         <div class="grid sm:grid-cols-2 gap-4 text-sm">
+          <!-- Profile Photo with Direct Uploader -->
+          <div class="sm:col-span-2 flex flex-col sm:flex-row items-center gap-4 p-4 bg-base-200/60 rounded-xl border border-primary/20">
+            <NuxtImg
+              :src="memberForm.photoUrl || '/media/brand/Logotyp_mini.webp'"
+              :alt="memberForm.name"
+              class="w-20 h-24 object-cover rounded-lg border border-primary/40 shadow-md flex-shrink-0"
+            />
+            <div class="flex-grow space-y-2 w-full">
+              <label class="block text-xs font-bold text-secondary">Profilfoto</label>
+              <div class="flex items-center gap-2">
+                <input v-model="memberForm.photoUrl" type="text" placeholder="/media/band/namn.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" />
+                <label class="btn btn-outline btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
+                  <span>📁 Ladda upp</span>
+                  <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => memberForm.photoUrl = url)" />
+                </label>
+              </div>
+              <p class="text-[10px] text-base-content/60">Ladda upp från datorn eller ange sökväg.</p>
+            </div>
+          </div>
+
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Namn *</label>
             <input v-model="memberForm.name" type="text" class="input input-bordered w-full bg-base-200 input-sm" />
@@ -572,29 +688,43 @@ const deleteAdminUser = async (admin: any) => {
             <label class="block text-xs font-bold text-secondary mb-1">Roll / instrument *</label>
             <input v-model="memberForm.role" type="text" class="input input-bordered w-full bg-base-200 input-sm" />
           </div>
-          <div class="sm:col-span-2">
+
+          <!-- Bilingual Bios -->
+          <div>
             <label class="block text-xs font-bold text-secondary mb-1">Biografi (svenska)</label>
             <textarea v-model="memberForm.bioSv" rows="3" class="textarea textarea-bordered w-full bg-base-200 text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Vapen / utrustning</label>
-            <input v-model="memberForm.gearSv" type="text" class="input input-bordered w-full bg-base-200 input-sm" />
+            <label class="block text-xs font-bold text-secondary mb-1">Biography (English)</label>
+            <textarea v-model="memberForm.bioEn" rows="3" placeholder="English presentation..." class="textarea textarea-bordered w-full bg-base-200 text-sm" />
+          </div>
+
+          <!-- Bilingual Gear -->
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Vapen / utrustning (svenska)</label>
+            <input v-model="memberForm.gearSv" type="text" placeholder="Fender Stratocaster, Marshall..." class="input input-bordered w-full bg-base-200 input-sm" />
           </div>
           <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Gear / instruments (English)</label>
+            <input v-model="memberForm.gearEn" type="text" placeholder="Fender Stratocaster, Marshall..." class="input input-bordered w-full bg-base-200 input-sm" />
+          </div>
+
+          <!-- Quirks & Lore -->
+          <div>
             <label class="block text-xs font-bold text-secondary mb-1">Favoritackord</label>
-            <input v-model="memberForm.favoriteChord" type="text" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="memberForm.favoriteChord" type="text" placeholder="E7#9 (Hendrix-ackordet)" class="input input-bordered w-full bg-base-200 input-sm" />
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Svaghet</label>
-            <input v-model="memberForm.weaknessSv" type="text" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="memberForm.weaknessSv" type="text" placeholder="Spelar för snabbt, kanelbullar..." class="input input-bordered w-full bg-base-200 input-sm" />
           </div>
-          <div>
+          <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Kaffekonsumtion</label>
-            <input v-model="memberForm.coffeeConsumption" type="text" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="memberForm.coffeeConsumption" type="text" placeholder="6 koppar svart / rep" class="input input-bordered w-full bg-base-200 input-sm" />
           </div>
         </div>
 
-        <div class="flex items-center gap-3 pt-3">
+        <div class="flex items-center gap-3 pt-3 border-t border-primary/20">
           <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6" @click="saveMember">
             Spara profil
           </button>
@@ -689,21 +819,34 @@ const deleteAdminUser = async (admin: any) => {
           </div>
 
           <!-- Social Media Cross-Posting Switch -->
-          <div class="sm:col-span-2 p-3 bg-base-200/80 rounded-xl border border-primary/20 flex items-center justify-between gap-4">
-            <div class="space-y-0.5">
-              <span class="text-xs font-bold text-primary flex items-center gap-1.5">
-                <span>📱</span> Posta automatiskt till Facebook & Instagram
-              </span>
-              <p class="text-[11px] text-base-content/60">
-                Skapar automatiskt ett låttips på bandets sociala medier när låten publiceras.
-              </p>
+          <div class="sm:col-span-2 p-4 bg-base-200/80 rounded-2xl border border-primary/20 space-y-3">
+            <div class="flex items-center justify-between gap-4">
+              <div class="space-y-0.5">
+                <span class="text-xs font-bold text-primary flex items-center gap-1.5">
+                  <span>📱</span> Posta automatiskt till Facebook & Instagram
+                </span>
+                <p class="text-[11px] text-base-content/60">
+                  Skapar automatiskt ett låttips på bandets sociala medier när låten sparas.
+                </p>
+              </div>
+              <input
+                v-model="songForm.postToSocials"
+                type="checkbox"
+                class="toggle toggle-primary toggle-sm"
+                title="Aktivera / inaktivera automatisk delning till FB & Instagram"
+              />
             </div>
-            <input
-              v-model="songForm.postToSocials"
-              type="checkbox"
-              class="toggle toggle-primary toggle-sm"
-              title="Aktivera / inaktivera automatisk delning till FB & Instagram"
-            />
+
+            <!-- Live Song Social Preview -->
+            <div v-if="songForm.postToSocials" class="p-3.5 bg-black/80 rounded-xl border border-primary/30 space-y-2 mt-2">
+              <div class="flex items-center justify-between text-[11px] font-bold text-secondary">
+                <span>👁️ Live Förhandsgranskning (Facebook & Instagram)</span>
+                <span class="badge badge-xs badge-primary font-mono">Auto-genererat</span>
+              </div>
+              <div class="font-mono text-xs text-base-content/90 whitespace-pre-line leading-relaxed border-l-2 border-primary/40 pl-3">
+                {{ songSocialPreview }}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -766,15 +909,37 @@ const deleteAdminUser = async (admin: any) => {
       </div>
 
       <!-- Add/Edit Gallery Modal Form -->
-      <div v-if="editingGal" class="stage-card p-6 sm:p-8 rounded-2xl border border-primary/40 space-y-4 shadow-2xl">
+      <div v-if="editingGal" class="stage-card p-6 sm:p-8 rounded-2xl border border-primary/40 space-y-5 shadow-2xl">
         <h3 class="font-heading text-xl text-primary font-bold">
           {{ editingGal === 'new' ? 'Lägg till ny bild' : 'Redigera bild' }}
         </h3>
         <div class="grid sm:grid-cols-2 gap-4 text-sm">
-          <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Bildens URL / sökväg *</label>
-            <input v-model="galForm.mediaUrl" type="text" placeholder="/media/band/bild.jpg" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+          <!-- Image File Uploader & URL Input -->
+          <div class="sm:col-span-2 flex flex-col sm:flex-row items-center gap-4 p-4 bg-base-200/60 rounded-xl border border-primary/20">
+            <div
+              v-if="galForm.mediaUrl"
+              class="w-24 h-24 rounded-lg overflow-hidden border border-primary/40 shadow-md flex-shrink-0 flex items-center justify-center bg-black/40"
+              :style="{ transform: `rotate(${galForm.rotation || 0}deg)` }"
+            >
+              <NuxtImg
+                :src="galForm.mediaUrl"
+                alt="Preview"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div class="flex-grow space-y-2 w-full">
+              <label class="block text-xs font-bold text-secondary">Bildfil / Media URL *</label>
+              <div class="flex items-center gap-2">
+                <input v-model="galForm.mediaUrl" type="text" placeholder="/media/band/bild.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" />
+                <label class="btn btn-outline btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
+                  <span>📁 Ladda upp</span>
+                  <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => galForm.mediaUrl = url)" />
+                </label>
+              </div>
+              <p class="text-[10px] text-base-content/60">Välj en bildfil från datorn eller klistra in en bildlänk.</p>
+            </div>
           </div>
+
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Kategori</label>
             <select v-model="galForm.category" class="select select-bordered w-full bg-base-200 select-sm">
@@ -886,6 +1051,16 @@ const deleteAdminUser = async (admin: any) => {
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Lösenord (minst 6 tecken) *</label>
             <input v-model="newAdminForm.password" type="password" placeholder="••••••••" class="input input-bordered w-full bg-base-200 input-sm" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-secondary mb-1">Avatar / Profilbild (valfritt)</label>
+            <div class="flex items-center gap-2">
+              <input v-model="newAdminForm.avatarUrl" type="text" placeholder="/media/band/avatar.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" />
+              <label class="btn btn-outline btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
+                <span>📁 Ladda upp</span>
+                <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => newAdminForm.avatarUrl = url)" />
+              </label>
+            </div>
           </div>
         </div>
 

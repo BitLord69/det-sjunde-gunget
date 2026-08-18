@@ -395,6 +395,16 @@ const handleNewsletter = async () => {
             <li><NuxtLink :to="localePath('/about')" class="hover:text-primary transition-colors">{{ t('nav.band') }} →</NuxtLink></li>
             <li><NuxtLink :to="localePath('/gallery')" class="hover:text-primary transition-colors">{{ t('nav.gallery') }} →</NuxtLink></li>
             <li><NuxtLink :to="localePath('/fancentral')" class="hover:text-primary transition-colors">{{ t('nav.fan_central') }} →</NuxtLink></li>
+            <li>
+              <a
+                href="https://det-7e-gunget.myspreadshop.se"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:text-secondary text-primary/90 font-bold transition-colors inline-flex items-center gap-1"
+              >
+                <span>👕 Officiell Merch-shop ↗</span>
+              </a>
+            </li>
           </ul>
         </div>
 

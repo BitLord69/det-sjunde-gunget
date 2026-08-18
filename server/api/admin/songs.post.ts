@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid'
 import { db } from '../../db/client'
 import { songs } from '../../db/schema'
 import { requireAdminAuth } from '../../utils/auth'
+import { publishToSocialMedia } from '../../utils/social'
 
 export default defineEventHandler(async (event) => {
   await requireAdminAuth(event)
@@ -29,8 +30,6 @@ export default defineEventHandler(async (event) => {
         updatedAt: now,
       })
       .where(eq(songs.id, body.id))
-
-    return { success: true, id: body.id, updated: true }
   } else {
     await db.insert(songs).values({
       id,
@@ -44,7 +43,23 @@ export default defineEventHandler(async (event) => {
       createdAt: now,
       updatedAt: now,
     })
+  }
 
-    return { success: true, id, created: true }
+  // Cross-post to Facebook & Instagram if requested
+  let socialResult = null
+  if (body.postToSocials) {
+    socialResult = await publishToSocialMedia({
+      type: 'song',
+      title: body.title,
+      subtitle: body.isOriginal ? 'Original' : `Cover av ${body.originalArtist || ''}`,
+      embedUrl: body.embedUrl,
+    })
+  }
+
+  return {
+    success: true,
+    id,
+    saved: true,
+    social: socialResult,
   }
 })

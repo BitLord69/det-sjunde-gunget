@@ -19,18 +19,28 @@ export default defineEventHandler(async (event) => {
   }
   cleanTag = cleanTag.replace(/\s+/g, '')
 
-  const category = body.category || 'all'
+  let categoryStr = 'all'
+  if (Array.isArray(body.categories)) {
+    if (body.categories.includes('all') || body.categories.length === 0 || body.categories.length === 4) {
+      categoryStr = 'all'
+    } else {
+      categoryStr = body.categories.join(',')
+    }
+  } else if (body.category) {
+    categoryStr = body.category
+  }
+
   const isActive = body.isActive !== undefined ? Boolean(body.isActive) : true
   const sortOrder = body.sortOrder ? parseInt(body.sortOrder, 10) : 0
   const now = new Date()
 
   if (body.id) {
-    // Update
+    // Update existing tag (fix typos, edit categories, toggle active)
     await db
       .update(socialHashtags)
       .set({
         tag: cleanTag,
-        category,
+        category: categoryStr,
         isActive,
         sortOrder,
         updatedAt: now,
@@ -39,12 +49,12 @@ export default defineEventHandler(async (event) => {
 
     return { success: true, id: body.id, updated: true }
   } else {
-    // Insert
+    // Insert new tag
     const id = `tag-${nanoid(8)}`
     await db.insert(socialHashtags).values({
       id,
       tag: cleanTag,
-      category,
+      category: categoryStr,
       isActive,
       sortOrder,
       createdAt: now,

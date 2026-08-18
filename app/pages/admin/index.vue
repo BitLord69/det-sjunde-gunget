@@ -62,15 +62,23 @@ const gigForm = reactive({
 })
 
 // ---------------- POST-LEVEL HASHTAG SELECTION ----------------
+const allHashtags = computed<any[]>(() => (Array.isArray(hashtagsData.value) ? hashtagsData.value : []))
+
+const tagHasCategory = (tag: any, cat: string) => {
+  if (!tag || !tag.category) return false
+  if (tag.category === 'all') return true
+  return tag.category.split(',').map((s: string) => s.trim()).includes(cat)
+}
+
 const selectedGigTags = ref<string[]>([])
 const selectedSongTags = ref<string[]>([])
 
 const availableGigTags = computed(() => {
-  return (hashtagsData.value || []).filter((t) => t.isActive && (t.category === 'gig' || t.category === 'all'))
+  return allHashtags.value.filter((t) => t.isActive && tagHasCategory(t, 'gig'))
 })
 
 const availableSongTags = computed(() => {
-  return (hashtagsData.value || []).filter((t) => t.isActive && (t.category === 'song' || t.category === 'all'))
+  return allHashtags.value.filter((t) => t.isActive && tagHasCategory(t, 'song'))
 })
 
 const toggleGigTag = (tag: string) => {
@@ -342,31 +350,97 @@ const deleteSong = async (id: string) => {
   showToast('✓ Låten togs bort.')
 }
 
-// ---------------- HASHTAGS MANAGEMENT ----------------
+// ---------------- HASHTAGS MANAGEMENT & MULTI-CATEGORY ----------------
 const activeTagTabFilter = ref<'all' | 'gig' | 'song' | 'news' | 'photo'>('all')
-const newHashtagForm = reactive({
-  tag: '',
-  category: 'gig',
-})
 
 const filteredHashtags = computed(() => {
-  const list = hashtagsData.value || []
-  if (activeTagTabFilter.value === 'all') return list
-  return list.filter((t) => t.category === activeTagTabFilter.value || t.category === 'all')
+  if (activeTagTabFilter.value === 'all') return allHashtags.value
+  return allHashtags.value.filter((t) => tagHasCategory(t, activeTagTabFilter.value))
 })
 
-const addHashtag = async () => {
-  if (!newHashtagForm.tag.trim()) {
-    showToast('⚠️ Ange en tagg, t.ex. #BluesRock')
+const getCategoryBadges = (categoryStr: string) => {
+  if (!categoryStr || categoryStr === 'all') {
+    return [{ key: 'all', label: '🌐 Allmänt (Alla)', class: 'badge-neutral' }]
+  }
+  const cats = categoryStr.split(',').map((s) => s.trim())
+  const list: { key: string; label: string; class: string }[] = []
+  if (cats.includes('gig')) list.push({ key: 'gig', label: '📅 Spelningar', class: 'badge-primary' })
+  if (cats.includes('song')) list.push({ key: 'song', label: '🎵 Låtar', class: 'badge-secondary' })
+  if (cats.includes('news')) list.push({ key: 'news', label: '📢 Nyheter', class: 'badge-accent' })
+  if (cats.includes('photo')) list.push({ key: 'photo', label: '📷 Foton', class: 'badge-info' })
+  return list
+}
+
+const editingHashtagId = ref<string | null>(null)
+const hashtagForm = reactive({
+  id: '',
+  tag: '',
+  categories: ['gig'] as string[],
+  isAll: false,
+})
+
+const resetHashtagForm = () => {
+  editingHashtagId.value = null
+  hashtagForm.id = ''
+  hashtagForm.tag = ''
+  hashtagForm.categories = ['gig']
+  hashtagForm.isAll = false
+}
+
+const openEditHashtag = (tag: any) => {
+  editingHashtagId.value = tag.id
+  hashtagForm.id = tag.id
+  hashtagForm.tag = tag.tag
+  hashtagForm.isAll = tag.category === 'all'
+  if (tag.category === 'all') {
+    hashtagForm.categories = ['gig', 'song', 'news', 'photo']
+  } else {
+    hashtagForm.categories = tag.category.split(',').map((s: string) => s.trim())
+  }
+  // Scroll smoothly to the hashtag editor form
+  const el = document.getElementById('hashtag-editor')
+  if (el) el.scrollIntoView({ behavior: 'smooth' })
+}
+
+const toggleFormCategory = (cat: string) => {
+  if (cat === 'all') {
+    hashtagForm.isAll = !hashtagForm.isAll
+    if (hashtagForm.isAll) {
+      hashtagForm.categories = ['gig', 'song', 'news', 'photo']
+    }
     return
   }
+  hashtagForm.isAll = false
+  if (hashtagForm.categories.includes(cat)) {
+    hashtagForm.categories = hashtagForm.categories.filter((c) => c !== cat)
+  } else {
+    hashtagForm.categories.push(cat)
+  }
+}
+
+const saveHashtag = async () => {
+  if (!hashtagForm.tag.trim()) {
+    showToast('⚠️ Ange en hashtag, t.ex. #BluesRock')
+    return
+  }
+  if (!hashtagForm.isAll && hashtagForm.categories.length === 0) {
+    showToast('⚠️ Välj minst en kategori för taggen!')
+    return
+  }
+
+  const isEdit = !!hashtagForm.id
   await $fetch('/api/admin/hashtags', {
     method: 'POST',
-    body: newHashtagForm,
+    body: {
+      id: hashtagForm.id || undefined,
+      tag: hashtagForm.tag,
+      categories: hashtagForm.isAll ? ['all'] : hashtagForm.categories,
+    },
   })
-  newHashtagForm.tag = ''
+
+  resetHashtagForm()
   await refreshHashtags()
-  showToast('✓ Taggen lades till!')
+  showToast(isEdit ? '✓ Taggen och dess kategorier har uppdaterats!' : '✓ Ny tagg sparades!')
 }
 
 const toggleHashtagActive = async (tag: any) => {
@@ -388,6 +462,9 @@ const deleteHashtag = async (id: string) => {
   await $fetch(`/api/admin/hashtags?id=${id}`, {
     method: 'DELETE',
   })
+  if (editingHashtagId.value === id) {
+    resetHashtagForm()
+  }
   await refreshHashtags()
   showToast('✓ Taggen togs bort.')
 }
@@ -1492,7 +1569,7 @@ const deleteAdminUser = async (admin: any) => {
         <div>
           <h2 class="font-heading text-2xl text-primary font-bold">Sociala taggar & hashtags</h2>
           <p class="text-xs text-base-content/70">
-            Hantera standardtaggar för automatiska inlägg på Facebook och Instagram uppdelat på användningsområde.
+            Hantera standardtaggar för automatiska inlägg på Facebook och Instagram. En tagg kan tillhöra flera kategorier samtidigt!
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -1502,31 +1579,101 @@ const deleteAdminUser = async (admin: any) => {
         </div>
       </div>
 
-      <!-- Quick Add Tag Bar -->
-      <div class="stage-card p-5 rounded-2xl border border-primary/30 shadow-lg">
-        <form class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3" @submit.prevent="addHashtag">
-          <div class="flex-1 space-y-1">
-            <label class="label-text text-xs font-bold text-secondary">Ny hashtag / tagg</label>
-            <input
-              v-model="newHashtagForm.tag"
-              type="text"
-              placeholder="#BluesRock, #LiveIkväll..."
-              class="input input-bordered input-sm w-full bg-base-200 text-xs font-mono"
-            />
-          </div>
-          <div class="w-full sm:w-56 space-y-1">
-            <label class="label-text text-xs font-bold text-secondary">Kategori</label>
-            <select v-model="newHashtagForm.category" class="select select-bordered select-sm w-full bg-base-200 text-xs">
-              <option value="all">🌐 Alla inlägg (Allmänt)</option>
-              <option value="gig">📅 Spelningar & Gig</option>
-              <option value="song">🎵 Låtar & Jukebox</option>
-              <option value="news">📢 Nyheter & Blogg</option>
-              <option value="photo">📷 Foton & Galleri</option>
-            </select>
-          </div>
-          <button type="submit" class="btn btn-primary btn-sm rounded-xl font-bold px-6">
-            + Lägg till tagg
+      <!-- Add / Edit Tag Form Card -->
+      <div id="hashtag-editor" class="stage-card p-6 rounded-2xl border border-primary/30 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-primary/20 pb-3">
+          <h3 class="font-heading text-lg text-primary font-bold flex items-center gap-2">
+            <span>{{ editingHashtagId ? '✏️ Redigera hashtag' : '+ Lägg till ny hashtag' }}</span>
+            <span v-if="editingHashtagId" class="badge badge-sm badge-secondary font-mono">Redigerar</span>
+          </h3>
+          <button
+            v-if="editingHashtagId"
+            type="button"
+            class="btn btn-ghost btn-xs text-base-content/70 hover:text-primary rounded-full"
+            @click="resetHashtagForm"
+          >
+            Avbryt redigering ✕
           </button>
+        </div>
+
+        <form class="space-y-4" @submit.prevent="saveHashtag">
+          <div class="grid sm:grid-cols-12 gap-4 items-start">
+            <!-- Tag Name Input -->
+            <div class="sm:col-span-5 space-y-1.5">
+              <label class="label-text text-xs font-bold text-secondary">Hashtag / Taggnamn</label>
+              <input
+                v-model="hashtagForm.tag"
+                type="text"
+                required
+                placeholder="#BluesRock, #LiveIkväll..."
+                class="input input-bordered input-sm w-full bg-base-200 text-xs font-mono font-bold"
+              />
+              <span class="text-[10px] text-base-content/60 block">Prefixet # läggs till automatiskt om det saknas.</span>
+            </div>
+
+            <!-- Multi-Category Selector -->
+            <div class="sm:col-span-7 space-y-1.5">
+              <label class="label-text text-xs font-bold text-secondary">
+                Tilldela kategorier (välj en eller flera):
+              </label>
+              <div class="flex flex-wrap gap-2 pt-1">
+                <button
+                  type="button"
+                  class="badge badge-sm font-mono cursor-pointer transition-all border py-3 px-3.5"
+                  :class="hashtagForm.isAll ? 'badge-primary font-bold shadow' : 'badge-ghost opacity-70 hover:opacity-100'"
+                  @click="toggleFormCategory('all')"
+                >
+                  🌐 Alla inlägg (Allmänt) {{ hashtagForm.isAll ? '✓' : '+' }}
+                </button>
+                <button
+                  type="button"
+                  class="badge badge-sm font-mono cursor-pointer transition-all border py-3 px-3"
+                  :class="hashtagForm.categories.includes('gig') ? 'badge-primary font-bold shadow' : 'badge-ghost opacity-70 hover:opacity-100'"
+                  @click="toggleFormCategory('gig')"
+                >
+                  📅 Spelningar {{ hashtagForm.categories.includes('gig') ? '✓' : '+' }}
+                </button>
+                <button
+                  type="button"
+                  class="badge badge-sm font-mono cursor-pointer transition-all border py-3 px-3"
+                  :class="hashtagForm.categories.includes('song') ? 'badge-secondary font-bold shadow' : 'badge-ghost opacity-70 hover:opacity-100'"
+                  @click="toggleFormCategory('song')"
+                >
+                  🎵 Låtar {{ hashtagForm.categories.includes('song') ? '✓' : '+' }}
+                </button>
+                <button
+                  type="button"
+                  class="badge badge-sm font-mono cursor-pointer transition-all border py-3 px-3"
+                  :class="hashtagForm.categories.includes('news') ? 'badge-accent font-bold shadow' : 'badge-ghost opacity-70 hover:opacity-100'"
+                  @click="toggleFormCategory('news')"
+                >
+                  📢 Nyheter {{ hashtagForm.categories.includes('news') ? '✓' : '+' }}
+                </button>
+                <button
+                  type="button"
+                  class="badge badge-sm font-mono cursor-pointer transition-all border py-3 px-3"
+                  :class="hashtagForm.categories.includes('photo') ? 'badge-info font-bold shadow' : 'badge-ghost opacity-70 hover:opacity-100'"
+                  @click="toggleFormCategory('photo')"
+                >
+                  📷 Foton {{ hashtagForm.categories.includes('photo') ? '✓' : '+' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button type="submit" class="btn btn-primary btn-sm rounded-xl font-bold px-6 shadow">
+              {{ editingHashtagId ? 'Spara ändringar' : '+ Lägg till tagg' }}
+            </button>
+            <button
+              v-if="editingHashtagId"
+              type="button"
+              class="btn btn-ghost btn-sm rounded-xl"
+              @click="resetHashtagForm"
+            >
+              Avbryt
+            </button>
+          </div>
         </form>
       </div>
 
@@ -1538,7 +1685,7 @@ const deleteAdminUser = async (admin: any) => {
           :class="activeTagTabFilter === 'all' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
           @click="activeTagTabFilter = 'all'"
         >
-          Alla kategorier ({{ hashtagsData?.length || 0 }})
+          Alla taggar ({{ allHashtags.length }})
         </button>
         <button
           type="button"
@@ -1546,7 +1693,7 @@ const deleteAdminUser = async (admin: any) => {
           :class="activeTagTabFilter === 'gig' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
           @click="activeTagTabFilter = 'gig'"
         >
-          📅 Spelningar ({{ hashtagsData?.filter(t => t.category === 'gig').length || 0 }})
+          📅 Spelningar ({{ allHashtags.filter(t => tagHasCategory(t, 'gig')).length }})
         </button>
         <button
           type="button"
@@ -1554,7 +1701,7 @@ const deleteAdminUser = async (admin: any) => {
           :class="activeTagTabFilter === 'song' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
           @click="activeTagTabFilter = 'song'"
         >
-          🎵 Låtar ({{ hashtagsData?.filter(t => t.category === 'song').length || 0 }})
+          🎵 Låtar ({{ allHashtags.filter(t => tagHasCategory(t, 'song')).length }})
         </button>
         <button
           type="button"
@@ -1562,7 +1709,7 @@ const deleteAdminUser = async (admin: any) => {
           :class="activeTagTabFilter === 'news' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
           @click="activeTagTabFilter = 'news'"
         >
-          📢 Nyheter ({{ hashtagsData?.filter(t => t.category === 'news').length || 0 }})
+          📢 Nyheter ({{ allHashtags.filter(t => tagHasCategory(t, 'news')).length }})
         </button>
         <button
           type="button"
@@ -1570,7 +1717,7 @@ const deleteAdminUser = async (admin: any) => {
           :class="activeTagTabFilter === 'photo' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
           @click="activeTagTabFilter = 'photo'"
         >
-          📷 Foton & Fan Central ({{ hashtagsData?.filter(t => t.category === 'photo').length || 0 }})
+          📷 Foton & Fan Central ({{ allHashtags.filter(t => tagHasCategory(t, 'photo')).length }})
         </button>
       </div>
 
@@ -1580,35 +1727,32 @@ const deleteAdminUser = async (admin: any) => {
           <thead>
             <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
               <th>Hashtag</th>
-              <th>Kategori</th>
+              <th>Kategorier</th>
               <th>Status</th>
               <th class="text-right">Åtgärder</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="tag in filteredHashtags" :key="tag.id" class="hover:bg-base-200/50">
+            <tr
+              v-for="tag in filteredHashtags"
+              :key="tag.id"
+              class="hover:bg-base-200/50 transition-colors"
+              :class="editingHashtagId === tag.id ? 'bg-primary/10 border-l-4 border-primary' : ''"
+            >
               <td class="font-bold text-primary font-mono text-sm">
                 {{ tag.tag }}
               </td>
               <td>
-                <span
-                  class="badge badge-xs font-bold uppercase text-[9px]"
-                  :class="{
-                    'badge-neutral': tag.category === 'all',
-                    'badge-primary': tag.category === 'gig',
-                    'badge-secondary': tag.category === 'song',
-                    'badge-accent': tag.category === 'news',
-                    'badge-info': tag.category === 'photo',
-                  }"
-                >
-                  {{
-                    tag.category === 'all' ? '🌐 Allmänt' :
-                    tag.category === 'gig' ? '📅 Spelningar' :
-                    tag.category === 'song' ? '🎵 Låtar' :
-                    tag.category === 'news' ? '📢 Nyheter' :
-                    '📷 Foton'
-                  }}
-                </span>
+                <div class="flex flex-wrap gap-1">
+                  <span
+                    v-for="badge in getCategoryBadges(tag.category)"
+                    :key="badge.key"
+                    class="badge badge-xs font-bold uppercase text-[9px]"
+                    :class="badge.class"
+                  >
+                    {{ badge.label }}
+                  </span>
+                </div>
               </td>
               <td>
                 <label class="cursor-pointer inline-flex items-center gap-2">
@@ -1623,13 +1767,20 @@ const deleteAdminUser = async (admin: any) => {
                   </span>
                 </label>
               </td>
-              <td class="text-right">
+              <td class="text-right space-x-1">
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-xs text-secondary font-bold hover:bg-secondary/20 rounded-full"
+                  @click="openEditHashtag(tag)"
+                >
+                  ✏️ Redigera
+                </button>
                 <button
                   type="button"
                   class="btn btn-ghost btn-xs text-error font-bold hover:bg-error/20 rounded-full"
                   @click="deleteHashtag(tag.id)"
                 >
-                  Ta bort
+                  🗑️ Ta bort
                 </button>
               </td>
             </tr>

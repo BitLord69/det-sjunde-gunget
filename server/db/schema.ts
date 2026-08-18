@@ -199,11 +199,7 @@ export const messages = sqliteTable('messages', {
 export const socialHashtags = sqliteTable('social_hashtags', {
   id: text('id').primaryKey(),
   tag: text('tag').notNull(),
-  category: text('category', {
-    enum: ['all', 'gig', 'song', 'news', 'photo'],
-  })
-    .notNull()
-    .default('all'),
+  category: text('category').notNull().default('all'),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   sortOrder: integer('sort_order').notNull().default(0),
   ...timestamps,

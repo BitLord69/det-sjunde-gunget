@@ -59,6 +59,7 @@ export default defineEventHandler(async (event) => {
       date: gigDate,
       ticketUrl: body.ticketUrl,
       notes: body.notesSv,
+      hashtags: body.hashtags,
     })
   }
 

@@ -163,6 +163,18 @@ await client.execute(`
 `)
 
 await client.execute(`
+  CREATE TABLE IF NOT EXISTS social_hashtags (
+    id text PRIMARY KEY NOT NULL,
+    tag text NOT NULL,
+    category text DEFAULT 'all' NOT NULL,
+    is_active integer DEFAULT 1 NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+  )
+`)
+
+await client.execute(`
   CREATE TABLE IF NOT EXISTS admins (
     id text PRIMARY KEY NOT NULL,
     name text NOT NULL,
@@ -197,6 +209,7 @@ try {
   await client.execute('DELETE FROM band_members')
   await client.execute('DELETE FROM gallery_items')
   await client.execute('DELETE FROM songs')
+  await client.execute('DELETE FROM social_hashtags')
 } catch (e) {
   console.log('Error cleaning tables:', e.message)
 }
@@ -408,6 +421,28 @@ const songs = [
   },
 ]
 
+const defaultHashtags = [
+  { id: 'tag-1', tag: '#DetSjundeGunget', category: 'all', sortOrder: 1 },
+  { id: 'tag-2', tag: '#BluesRock', category: 'all', sortOrder: 2 },
+  { id: 'tag-3', tag: '#SvenskBlues', category: 'all', sortOrder: 3 },
+  { id: 'tag-4', tag: '#BluesSverige', category: 'all', sortOrder: 4 },
+  { id: 'tag-5', tag: '#LiveMusik', category: 'gig', sortOrder: 5 },
+  { id: 'tag-6', tag: '#GigsSverige', category: 'gig', sortOrder: 6 },
+  { id: 'tag-7', tag: '#BluesBand', category: 'gig', sortOrder: 7 },
+  { id: 'tag-8', tag: '#KlubbSpelning', category: 'gig', sortOrder: 8 },
+  { id: 'tag-9', tag: '#SkåneBlues', category: 'gig', sortOrder: 9 },
+  { id: 'tag-10', tag: '#NyMusik', category: 'song', sortOrder: 10 },
+  { id: 'tag-11', tag: '#BluesLåt', category: 'song', sortOrder: 11 },
+  { id: 'tag-12', tag: '#SpotifySverige', category: 'song', sortOrder: 12 },
+  { id: 'tag-13', tag: '#BluesShuffle', category: 'song', sortOrder: 13 },
+  { id: 'tag-14', tag: '#BandNytt', category: 'news', sortOrder: 14 },
+  { id: 'tag-15', tag: '#TurnéNyheter', category: 'news', sortOrder: 15 },
+  { id: 'tag-16', tag: '#StudioLiv', category: 'news', sortOrder: 16 },
+  { id: 'tag-17', tag: '#ScenBilder', category: 'photo', sortOrder: 17 },
+  { id: 'tag-18', tag: '#Backstage', category: 'photo', sortOrder: 18 },
+  { id: 'tag-19', tag: '#FanCentral', category: 'photo', sortOrder: 19 },
+]
+
 await client.batch(
   [
     ...gigs.map((g) => ({
@@ -486,8 +521,13 @@ await client.batch(
         now,
       ],
     })),
+    ...defaultHashtags.map((h) => ({
+      sql: `insert into social_hashtags (id, tag, category, is_active, sort_order, created_at, updated_at)
+        values (?, ?, ?, 1, ?, ?, ?)`,
+      args: [h.id, h.tag, h.category, h.sortOrder, now, now],
+    })),
   ],
   'write',
 )
 
-console.log(`Seeded ${admins.length} admins (Janis, Bosse, Marcus, Jonas), ${gigs.length} gigs, ${members.length} band members, ${gallery.length} gallery items, and ${songs.length} songs.`)
+console.log(`Seeded ${admins.length} admins, ${gigs.length} gigs, ${members.length} band members, ${gallery.length} gallery items, ${songs.length} songs, and ${defaultHashtags.length} hashtags.`)

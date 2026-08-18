@@ -53,6 +53,7 @@ export default defineEventHandler(async (event) => {
       title: body.title,
       subtitle: body.isOriginal ? 'Original' : `Cover av ${body.originalArtist || ''}`,
       embedUrl: body.embedUrl,
+      hashtags: body.hashtags,
     })
   }
 

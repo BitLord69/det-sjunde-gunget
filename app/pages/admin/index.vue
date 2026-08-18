@@ -10,7 +10,7 @@ useSeoMeta({
 
 const { adminUser } = useAdminAuth()
 
-const activeTab = ref<'gigs' | 'band' | 'songs' | 'gallery' | 'admins' | 'messages' | 'subscribers'>('gigs')
+const activeTab = ref<'gigs' | 'band' | 'songs' | 'gallery' | 'admins' | 'messages' | 'subscribers' | 'hashtags'>('gigs')
 const toastMessage = ref('')
 
 const showToast = (msg: string) => {
@@ -37,6 +37,10 @@ const { data: subscribersData, refresh: refreshSubscribers } = await useFetch<an
   default: () => [],
   ignoreResponseError: true,
 })
+const { data: hashtagsData, refresh: refreshHashtags } = await useFetch<any[]>('/api/admin/hashtags', {
+  default: () => [],
+  ignoreResponseError: true,
+})
 
 const unreadMessagesCount = computed(() => {
   return (messagesData.value || []).filter((m) => m.status === 'unread').length
@@ -57,6 +61,34 @@ const gigForm = reactive({
   postToSocials: false,
 })
 
+// ---------------- POST-LEVEL HASHTAG SELECTION ----------------
+const selectedGigTags = ref<string[]>([])
+const selectedSongTags = ref<string[]>([])
+
+const availableGigTags = computed(() => {
+  return (hashtagsData.value || []).filter((t) => t.isActive && (t.category === 'gig' || t.category === 'all'))
+})
+
+const availableSongTags = computed(() => {
+  return (hashtagsData.value || []).filter((t) => t.isActive && (t.category === 'song' || t.category === 'all'))
+})
+
+const toggleGigTag = (tag: string) => {
+  if (selectedGigTags.value.includes(tag)) {
+    selectedGigTags.value = selectedGigTags.value.filter((t) => t !== tag)
+  } else {
+    selectedGigTags.value.push(tag)
+  }
+}
+
+const toggleSongTag = (tag: string) => {
+  if (selectedSongTags.value.includes(tag)) {
+    selectedSongTags.value = selectedSongTags.value.filter((t) => t !== tag)
+  } else {
+    selectedSongTags.value.push(tag)
+  }
+}
+
 const openAddGig = () => {
   gigForm.id = ''
   gigForm.venue = ''
@@ -68,6 +100,7 @@ const openAddGig = () => {
   gigForm.notesSv = ''
   gigForm.notesEn = ''
   gigForm.postToSocials = false
+  selectedGigTags.value = availableGigTags.value.map((t) => t.tag)
   editingGig.value = 'new'
 }
 
@@ -82,6 +115,8 @@ const openEditGig = (gig: any) => {
   gigForm.status = gig.status || 'upcoming'
   gigForm.notesSv = gig.notesSv || ''
   gigForm.notesEn = gig.notesEn || ''
+  gigForm.postToSocials = false
+  selectedGigTags.value = availableGigTags.value.map((t) => t.tag)
   editingGig.value = gig.id
 }
 
@@ -95,7 +130,8 @@ const gigSocialPreview = computed(() => {
       })
     : '[Datum]'
 
-  const cityTag = gigForm.city ? `#${gigForm.city.replace(/\s+/g, '')}Blues` : '#Blues'
+  const cityTag = gigForm.city ? `#${gigForm.city.replace(/\s+/g, '')}Blues` : ''
+  const tagsStr = selectedGigTags.value.length > 0 ? selectedGigTags.value.join(' ') : '#DetSjundeGunget #BluesRock'
 
   return `🎸 NYTT GIG MED DET 7:E GUNGET! 🎸
 
@@ -105,7 +141,7 @@ const gigSocialPreview = computed(() => {
 ${gigForm.ticketUrl ? `🎟️ Biljetter: ${gigForm.ticketUrl}` : '👉 Mer info: https://det7egunget.se/gigs'}
 
 Kom och sväng med oss! 🎶
-#DetSjundeGunget #BluesRock #LiveMusik #SvenskBlues ${cityTag}`
+${tagsStr} ${cityTag}`.trim()
 })
 
 const saveGig = async () => {
@@ -127,6 +163,7 @@ const saveGig = async () => {
       notesSv: gigForm.notesSv,
       notesEn: gigForm.notesEn,
       postToSocials: gigForm.postToSocials,
+      hashtags: selectedGigTags.value,
     },
   })
 
@@ -244,6 +281,7 @@ const openAddSong = () => {
   songForm.audioUrl = ''
   songForm.duration = ''
   songForm.postToSocials = false
+  selectedSongTags.value = availableSongTags.value.map((t) => t.tag)
   editingSong.value = 'new'
 }
 
@@ -257,10 +295,12 @@ const openEditSong = (s: any) => {
   songForm.audioUrl = s.audioUrl || ''
   songForm.duration = s.duration ? String(s.duration) : ''
   songForm.postToSocials = false
+  selectedSongTags.value = availableSongTags.value.map((t) => t.tag)
   editingSong.value = s.id
 }
 
 const songSocialPreview = computed(() => {
+  const tagsStr = selectedSongTags.value.length > 0 ? selectedSongTags.value.join(' ') : '#DetSjundeGunget #BluesRock #NyMusik'
   return `🎵 NY LÅT I JUKEBOXEN! 🎵
 
 "${songForm.title || '[Låttitel]'}" ${songForm.isOriginal ? '(Originalkomposition)' : `(Cover av ${songForm.originalArtist || 'Okänd'})`} finns nu att lyssna på i vår retro jukebox på webben!
@@ -268,7 +308,7 @@ const songSocialPreview = computed(() => {
 ${songForm.embedUrl ? `👉 Lyssna direkt: ${songForm.embedUrl}` : '👉 Lyssna här: https://det7egunget.se/music'}
 
 Släpp i en slant och höj volymen till 11! ⚡
-#DetSjundeGunget #BluesRock #NyMusik #BluesLåt`
+${tagsStr}`
 })
 
 const saveSong = async () => {
@@ -278,7 +318,10 @@ const saveSong = async () => {
   }
   const res = await $fetch<{ success: boolean; social?: any }>('/api/admin/songs', {
     method: 'POST',
-    body: songForm,
+    body: {
+      ...songForm,
+      hashtags: selectedSongTags.value,
+    },
   })
   editingSong.value = null
   await refreshSongs()
@@ -297,6 +340,56 @@ const deleteSong = async (id: string) => {
   })
   await refreshSongs()
   showToast('✓ Låten togs bort.')
+}
+
+// ---------------- HASHTAGS MANAGEMENT ----------------
+const activeTagTabFilter = ref<'all' | 'gig' | 'song' | 'news' | 'photo'>('all')
+const newHashtagForm = reactive({
+  tag: '',
+  category: 'gig',
+})
+
+const filteredHashtags = computed(() => {
+  const list = hashtagsData.value || []
+  if (activeTagTabFilter.value === 'all') return list
+  return list.filter((t) => t.category === activeTagTabFilter.value || t.category === 'all')
+})
+
+const addHashtag = async () => {
+  if (!newHashtagForm.tag.trim()) {
+    showToast('⚠️ Ange en tagg, t.ex. #BluesRock')
+    return
+  }
+  await $fetch('/api/admin/hashtags', {
+    method: 'POST',
+    body: newHashtagForm,
+  })
+  newHashtagForm.tag = ''
+  await refreshHashtags()
+  showToast('✓ Taggen lades till!')
+}
+
+const toggleHashtagActive = async (tag: any) => {
+  await $fetch('/api/admin/hashtags', {
+    method: 'POST',
+    body: {
+      id: tag.id,
+      tag: tag.tag,
+      category: tag.category,
+      isActive: !tag.isActive,
+      sortOrder: tag.sortOrder,
+    },
+  })
+  await refreshHashtags()
+}
+
+const deleteHashtag = async (id: string) => {
+  if (!confirm('Är du säker på att du vill ta bort denna tagg?')) return
+  await $fetch(`/api/admin/hashtags?id=${id}`, {
+    method: 'DELETE',
+  })
+  await refreshHashtags()
+  showToast('✓ Taggen togs bort.')
 }
 
 // ---------------- MESSAGES & INQUIRIES ----------------
@@ -506,6 +599,14 @@ const deleteAdminUser = async (admin: any) => {
       >
         <span>👥</span> Administratörer ({{ adminUsers?.length || 4 }})
       </button>
+      <button
+        type="button"
+        class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
+        :class="activeTab === 'hashtags' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        @click="activeTab = 'hashtags'"
+      >
+        <span>🏷️</span> Sociala taggar ({{ hashtagsData?.length || 0 }})
+      </button>
     </div>
 
     <!-- 1. GIGS MANAGER -->
@@ -580,11 +681,35 @@ const deleteAdminUser = async (admin: any) => {
             </div>
 
             <!-- Live Social Post Preview Box -->
-            <div v-if="gigForm.postToSocials" class="p-3.5 bg-black/80 rounded-xl border border-primary/30 space-y-2 mt-2">
+            <div v-if="gigForm.postToSocials" class="p-3.5 bg-black/80 rounded-xl border border-primary/30 space-y-3 mt-2">
               <div class="flex items-center justify-between text-[11px] font-bold text-secondary">
                 <span>👁️ Live Förhandsgranskning (Facebook & Instagram)</span>
                 <span class="badge badge-xs badge-primary font-mono">Auto-genererat</span>
               </div>
+
+              <!-- Clickable Hashtag Selector Chips -->
+              <div class="space-y-1.5 pt-1 border-t border-primary/15">
+                <div class="flex items-center justify-between text-[10px] text-base-content/70">
+                  <span class="font-bold text-secondary">Välj taggar för detta inlägg:</span>
+                  <span>Klicka för att välja/avmarkera</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="t in availableGigTags"
+                    :key="t.id"
+                    type="button"
+                    class="badge badge-xs sm:badge-sm font-mono cursor-pointer transition-all border"
+                    :class="selectedGigTags.includes(t.tag) ? 'badge-primary font-bold shadow' : 'badge-ghost opacity-60 hover:opacity-100'"
+                    @click="toggleGigTag(t.tag)"
+                  >
+                    {{ t.tag }} {{ selectedGigTags.includes(t.tag) ? '✓' : '+' }}
+                  </button>
+                  <span v-if="availableGigTags.length === 0" class="text-xs text-base-content/50 italic">
+                    Inga aktiva gig-taggar. Lägg till i fliken "Sociala taggar".
+                  </span>
+                </div>
+              </div>
+
               <div class="font-mono text-xs text-base-content/90 whitespace-pre-line leading-relaxed border-l-2 border-primary/40 pl-3">
                 {{ gigSocialPreview }}
               </div>
@@ -838,11 +963,35 @@ const deleteAdminUser = async (admin: any) => {
             </div>
 
             <!-- Live Song Social Preview -->
-            <div v-if="songForm.postToSocials" class="p-3.5 bg-black/80 rounded-xl border border-primary/30 space-y-2 mt-2">
+            <div v-if="songForm.postToSocials" class="p-3.5 bg-black/80 rounded-xl border border-primary/30 space-y-3 mt-2">
               <div class="flex items-center justify-between text-[11px] font-bold text-secondary">
                 <span>👁️ Live Förhandsgranskning (Facebook & Instagram)</span>
                 <span class="badge badge-xs badge-primary font-mono">Auto-genererat</span>
               </div>
+
+              <!-- Clickable Hashtag Selector Chips -->
+              <div class="space-y-1.5 pt-1 border-t border-primary/15">
+                <div class="flex items-center justify-between text-[10px] text-base-content/70">
+                  <span class="font-bold text-secondary">Välj taggar för detta inlägg:</span>
+                  <span>Klicka för att välja/avmarkera</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="t in availableSongTags"
+                    :key="t.id"
+                    type="button"
+                    class="badge badge-xs sm:badge-sm font-mono cursor-pointer transition-all border"
+                    :class="selectedSongTags.includes(t.tag) ? 'badge-primary font-bold shadow' : 'badge-ghost opacity-60 hover:opacity-100'"
+                    @click="toggleSongTag(t.tag)"
+                  >
+                    {{ t.tag }} {{ selectedSongTags.includes(t.tag) ? '✓' : '+' }}
+                  </button>
+                  <span v-if="availableSongTags.length === 0" class="text-xs text-base-content/50 italic">
+                    Inga aktiva låt-taggar. Lägg till i fliken "Sociala taggar".
+                  </span>
+                </div>
+              </div>
+
               <div class="font-mono text-xs text-base-content/90 whitespace-pre-line leading-relaxed border-l-2 border-primary/40 pl-3">
                 {{ songSocialPreview }}
               </div>
@@ -1330,6 +1479,163 @@ const deleteAdminUser = async (admin: any) => {
             <tr v-if="!subscribersData || subscribersData.length === 0">
               <td colspan="4" class="text-center py-8 text-base-content/60 italic">
                 Inga prenumeranter ännu.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 8. SOCIAL HASHTAGS MANAGER -->
+    <div v-if="activeTab === 'hashtags'" class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="font-heading text-2xl text-primary font-bold">Sociala taggar & hashtags</h2>
+          <p class="text-xs text-base-content/70">
+            Hantera standardtaggar för automatiska inlägg på Facebook och Instagram uppdelat på användningsområde.
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button type="button" class="btn btn-outline btn-primary btn-sm rounded-full" @click="() => refreshHashtags()">
+            🔄 Uppdatera
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Add Tag Bar -->
+      <div class="stage-card p-5 rounded-2xl border border-primary/30 shadow-lg">
+        <form class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3" @submit.prevent="addHashtag">
+          <div class="flex-1 space-y-1">
+            <label class="label-text text-xs font-bold text-secondary">Ny hashtag / tagg</label>
+            <input
+              v-model="newHashtagForm.tag"
+              type="text"
+              placeholder="#BluesRock, #LiveIkväll..."
+              class="input input-bordered input-sm w-full bg-base-200 text-xs font-mono"
+            />
+          </div>
+          <div class="w-full sm:w-56 space-y-1">
+            <label class="label-text text-xs font-bold text-secondary">Kategori</label>
+            <select v-model="newHashtagForm.category" class="select select-bordered select-sm w-full bg-base-200 text-xs">
+              <option value="all">🌐 Alla inlägg (Allmänt)</option>
+              <option value="gig">📅 Spelningar & Gig</option>
+              <option value="song">🎵 Låtar & Jukebox</option>
+              <option value="news">📢 Nyheter & Blogg</option>
+              <option value="photo">📷 Foton & Galleri</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm rounded-xl font-bold px-6">
+            + Lägg till tagg
+          </button>
+        </form>
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="flex flex-wrap gap-2 text-xs font-bold">
+        <button
+          type="button"
+          class="px-4 py-1.5 rounded-full transition-all"
+          :class="activeTagTabFilter === 'all' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+          @click="activeTagTabFilter = 'all'"
+        >
+          Alla kategorier ({{ hashtagsData?.length || 0 }})
+        </button>
+        <button
+          type="button"
+          class="px-4 py-1.5 rounded-full transition-all"
+          :class="activeTagTabFilter === 'gig' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+          @click="activeTagTabFilter = 'gig'"
+        >
+          📅 Spelningar ({{ hashtagsData?.filter(t => t.category === 'gig').length || 0 }})
+        </button>
+        <button
+          type="button"
+          class="px-4 py-1.5 rounded-full transition-all"
+          :class="activeTagTabFilter === 'song' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+          @click="activeTagTabFilter = 'song'"
+        >
+          🎵 Låtar ({{ hashtagsData?.filter(t => t.category === 'song').length || 0 }})
+        </button>
+        <button
+          type="button"
+          class="px-4 py-1.5 rounded-full transition-all"
+          :class="activeTagTabFilter === 'news' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+          @click="activeTagTabFilter = 'news'"
+        >
+          📢 Nyheter ({{ hashtagsData?.filter(t => t.category === 'news').length || 0 }})
+        </button>
+        <button
+          type="button"
+          class="px-4 py-1.5 rounded-full transition-all"
+          :class="activeTagTabFilter === 'photo' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+          @click="activeTagTabFilter = 'photo'"
+        >
+          📷 Foton & Fan Central ({{ hashtagsData?.filter(t => t.category === 'photo').length || 0 }})
+        </button>
+      </div>
+
+      <!-- Hashtags Grid / Table -->
+      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+        <table class="table table-zebra w-full text-xs">
+          <thead>
+            <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
+              <th>Hashtag</th>
+              <th>Kategori</th>
+              <th>Status</th>
+              <th class="text-right">Åtgärder</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="tag in filteredHashtags" :key="tag.id" class="hover:bg-base-200/50">
+              <td class="font-bold text-primary font-mono text-sm">
+                {{ tag.tag }}
+              </td>
+              <td>
+                <span
+                  class="badge badge-xs font-bold uppercase text-[9px]"
+                  :class="{
+                    'badge-neutral': tag.category === 'all',
+                    'badge-primary': tag.category === 'gig',
+                    'badge-secondary': tag.category === 'song',
+                    'badge-accent': tag.category === 'news',
+                    'badge-info': tag.category === 'photo',
+                  }"
+                >
+                  {{
+                    tag.category === 'all' ? '🌐 Allmänt' :
+                    tag.category === 'gig' ? '📅 Spelningar' :
+                    tag.category === 'song' ? '🎵 Låtar' :
+                    tag.category === 'news' ? '📢 Nyheter' :
+                    '📷 Foton'
+                  }}
+                </span>
+              </td>
+              <td>
+                <label class="cursor-pointer inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    :checked="tag.isActive"
+                    class="toggle toggle-success toggle-xs"
+                    @change="toggleHashtagActive(tag)"
+                  />
+                  <span class="text-[11px] font-bold" :class="tag.isActive ? 'text-emerald-400' : 'text-base-content/40'">
+                    {{ tag.isActive ? 'Aktiv' : 'Inaktiv' }}
+                  </span>
+                </label>
+              </td>
+              <td class="text-right">
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-xs text-error font-bold hover:bg-error/20 rounded-full"
+                  @click="deleteHashtag(tag.id)"
+                >
+                  Ta bort
+                </button>
+              </td>
+            </tr>
+            <tr v-if="filteredHashtags.length === 0">
+              <td colspan="4" class="text-center py-8 text-base-content/60 italic">
+                Inga taggar hittades i denna kategori.
               </td>
             </tr>
           </tbody>

@@ -14,6 +14,7 @@ export interface SocialPostParams {
   embedUrl?: string
   imageUrl?: string
   notes?: string
+  hashtags?: string[]
 }
 
 export interface SocialPostResult {
@@ -27,7 +28,8 @@ export interface SocialPostResult {
 }
 
 export function formatSocialPost(params: SocialPostParams): { facebookText: string; instagramText: string } {
-  const hashtags = '#DetSjundeGunget #BluesRock #LiveMusik #SvenskBlues #BluesSverige'
+  const defaultTags = '#DetSjundeGunget #BluesRock #LiveMusik #SvenskBlues #BluesSverige'
+  const activeTags = params.hashtags && params.hashtags.length > 0 ? params.hashtags.join(' ') : defaultTags
 
   if (params.type === 'gig') {
     const formattedDate = params.date
@@ -51,7 +53,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       params.ticketUrl ? `🎟️ Biljetter & info: ${params.ticketUrl}` : `👉 Mer info: https://det7egunget.se/gigs`,
       '',
       `Kom och sväng med oss! 🎶`,
-      `${hashtags} ${cityTag}`,
+      `${activeTags} ${cityTag}`,
     ].filter(Boolean)
 
     const igLines = [
@@ -64,7 +66,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       `Länk i bion för biljetter och alla turnédatum! 🎟️👇`,
       `https://det7egunget.se/gigs`,
       '',
-      `${hashtags} ${cityTag} #GigsSverige #LiveBand`,
+      `${activeTags} ${cityTag}`,
     ].filter(Boolean)
 
     return {
@@ -82,7 +84,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       params.embedUrl ? `Lyssna direkt: ${params.embedUrl}` : `👉 Lyssna här: https://det7egunget.se/music`,
       '',
       `Släpp i en slant och höj volymen till 11! ⚡`,
-      `${hashtags} #NyMusik #BluesLåt`,
+      `${activeTags}`,
     ]
       .filter(Boolean)
       .join('\n')
@@ -92,7 +94,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       '',
       `Klicka in på länken i vår bio och dra igång vår interaktiva jukebox! 🎶`,
       '',
-      `${hashtags} #NyMusik #BluesShuffle`,
+      `${activeTags}`,
     ].join('\n')
 
     return {
@@ -110,7 +112,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
     '',
     `Läs mer på https://det7egunget.se`,
     '',
-    hashtags,
+    activeTags,
   ]
     .filter(Boolean)
     .join('\n')

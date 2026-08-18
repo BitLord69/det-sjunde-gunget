@@ -129,6 +129,19 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
     message: 'Inlägg förberett.',
   }
 
+  const isMockMode = process.env.SOCIAL_MOCK_MODE === 'true' || process.env.SOCIAL_DRY_RUN === 'true'
+  if (isMockMode) {
+    console.log('\n[Social MOCK / DRY RUN MODE - Inget skarpt inlägg skickas]:')
+    console.log('--- FACEBOOK POST PREVIEW ---\n' + facebookText)
+    console.log('--- INSTAGRAM POST PREVIEW ---\n' + instagramText)
+    return {
+      success: true,
+      simulated: true,
+      previewText: facebookText,
+      message: 'Simulerad delning (Mock/Dry-run är aktivt i .env - inget publiceras skarpt på Facebook/Instagram).',
+    }
+  }
+
   const fbToken = process.env.FB_PAGE_ACCESS_TOKEN
   const fbPageId = process.env.FB_PAGE_ID
   const igUserId = process.env.INSTAGRAM_ACCOUNT_ID

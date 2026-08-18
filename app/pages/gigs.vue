@@ -1,12 +1,24 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
+const localePath = useLocalePath()
 
 useSeoMeta({
   title: 'Kommande gig & spelningar | Det 7:e Gunget',
   description: 'Se var Det 7:e Gunget spelar härnäst. Datum, spelplatser, biljetter och arkiv.',
 })
 
-const { data: gigsData } = await useFetch('/api/gigs')
+interface Gig {
+  id: string
+  date: number | string
+  venue: string
+  city: string
+  ticketUrl: string | null
+  status: 'upcoming' | 'sold_out' | 'free' | 'cancelled' | 'completed' | null
+  notesSv: string | null
+  notesEn: string | null
+}
+
+const { data: gigsData } = await useFetch<{ upcoming: Gig[]; past: Gig[]; all: Gig[] }>('/api/gigs')
 
 const currentTab = ref<'upcoming' | 'past'>('upcoming')
 
@@ -32,7 +44,7 @@ const getGoogleCalendarUrl = (gig: any) => {
   const endDate = new Date(d.getTime() + 3 * 60 * 60 * 1000)
   const endTime = endDate.toISOString().replace(/-|:|\.\d\d\d/g, '')
   const title = encodeURIComponent(`Det 7:e Gunget live @ ${gig.venue}`)
-  const details = encodeURIComponent(`${gig.notesSv || gig.notesEn || ''}\nBiljetter: ${gig.ticketUrl || 'I dörren'}`)
+  const details = encodeURIComponent(`${gig.notesSv || gig.notesEn || ''}\nBiljetter: ${gig.ticketUrl || t('gigs.door')}`)
   const location = encodeURIComponent(`${gig.venue}, ${gig.city}`)
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startTime}/${endTime}&details=${details}&location=${location}`
 }
@@ -68,7 +80,7 @@ const tearTicket = (gigId: string) => {
     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-10">
 
       <!-- TICKET BOOTH MARQUEE HEADER -->
-      <div class="text-center space-y-4">
+      <div class="text-center space-y-4 mb-14">
         <!-- Marquee Light Board -->
         <div class="inline-block relative">
           <!-- Bulb border simulation -->
@@ -77,11 +89,11 @@ const tearTicket = (gigId: string) => {
             <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.3em] text-secondary/80 mb-1">
               ★ Det 7:e Gunget presenterar ★
             </div>
-            <h1 class="font-heading text-3xl sm:text-5xl lg:text-6xl text-primary text-gritty uppercase tracking-wider">
+            <h1 class="font-heading text-3xl sm:text-5xl lg:text-6xl text-primary text-gritty uppercase tracking-wider pb-2">
               {{ t('gigs.subtitle') }}
             </h1>
             <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] text-secondary/70 mt-1">
-              Biljettluckan • Blues & rock sedan replokalen
+              {{ t('gigs.section_tag') }} • Blues & rock
             </div>
           </div>
         </div>
@@ -103,14 +115,14 @@ const tearTicket = (gigId: string) => {
             <div class="inline-flex items-center gap-3 px-8 py-2.5 rounded-full bg-gradient-to-r from-[#1a1310] via-[#3a2618] to-[#1a1310] border-2 border-secondary shadow-lg shadow-secondary/20">
               <span class="text-primary text-sm">🎫</span>
               <span class="font-heading text-xl sm:text-2xl text-secondary uppercase tracking-[0.25em] font-black">
-                BILJETTLUCKAN
+                {{ t('gigs.ticket_booth') }}
               </span>
               <span class="text-primary text-sm">🎫</span>
             </div>
             <!-- "OPEN" neon -->
             <div class="mt-2 inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-widest">
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span class="text-emerald-400">Öppen</span>
+              <span class="text-emerald-400">{{ t('gigs.open') }}</span>
             </div>
           </div>
 
@@ -126,7 +138,7 @@ const tearTicket = (gigId: string) => {
               "
               @click="currentTab = 'upcoming'"
             >
-              🎤 {{ locale === 'en' ? 'Upcoming shows' : 'Kommande gig' }} ({{ upcomingGigs.length }})
+              🎤 {{ t('gigs.upcoming_tab') }} ({{ upcomingGigs.length }})
             </button>
             <button
               type="button"
@@ -138,7 +150,7 @@ const tearTicket = (gigId: string) => {
               "
               @click="currentTab = 'past'"
             >
-              📜 {{ locale === 'en' ? 'Past shows' : 'Spelade gig' }} ({{ pastGigs.length }})
+              📜 {{ t('gigs.past_tab') }} ({{ pastGigs.length }})
             </button>
           </div>
 
@@ -187,13 +199,13 @@ const tearTicket = (gigId: string) => {
                       </span>
                       <div class="mt-3 w-full border-t border-neutral/30 pt-2">
                         <span class="text-[9px] font-mono font-bold text-neutral/80 uppercase tracking-wider">
-                          kl {{ formatGigDate(gig.date).time }}
+                          {{ t('gigs.at_time') }} {{ formatGigDate(gig.date).time }}
                         </span>
                       </div>
                     </template>
                     <template v-else>
                       <span class="text-2xl">✅</span>
-                      <span class="text-[10px] font-mono font-bold text-accent mt-1">SPARAD</span>
+                      <span class="text-[10px] font-mono font-bold text-accent mt-1">{{ t('gigs.saved') }}</span>
                     </template>
                   </div>
 
@@ -212,7 +224,7 @@ const tearTicket = (gigId: string) => {
                             : 'text-amber-700 border-amber-600 bg-amber-50'
                       "
                     >
-                      {{ gig.status === 'free' ? (locale === 'en' ? 'Free entry' : 'Fri entré') : gig.status === 'sold_out' ? (locale === 'en' ? 'Sold out' : 'Utsålt') : (locale === 'en' ? 'Tickets available' : 'Biljetter finns') }}
+                      {{ gig.status === 'free' ? t('gigs.free_entry') : gig.status === 'sold_out' ? t('gigs.sold_out') : t('gigs.tickets_available') }}
                     </div>
 
                     <!-- Venue & City -->
@@ -266,10 +278,10 @@ const tearTicket = (gigId: string) => {
                           rel="noopener noreferrer"
                           class="btn btn-primary btn-sm rounded-full font-bold px-5 shadow-md text-xs"
                         >
-                          🎫 {{ locale === 'en' ? 'Buy ticket' : 'Köp biljett' }} →
+                          🎫 {{ t('gigs.buy_ticket') }} →
                         </a>
                         <span v-else-if="gig.status === 'free'" class="text-xs font-bold text-emerald-600 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-200">
-                          ✓ {{ locale === 'en' ? 'Free entry' : 'Fri entré' }}
+                          ✓ {{ t('gigs.free_entry') }}
                         </span>
 
                         <a
@@ -280,7 +292,7 @@ const tearTicket = (gigId: string) => {
                           :class="tornTickets.has(gig.id) ? 'text-primary' : 'text-stone-700'"
                           @click="tearTicket(gig.id)"
                         >
-                          📅 {{ locale === 'en' ? 'Save date' : 'Spara datum' }}
+                          📅 {{ t('gigs.save_date') }}
                         </a>
 
                         <a
@@ -290,7 +302,7 @@ const tearTicket = (gigId: string) => {
                           class="btn btn-ghost btn-sm rounded-full text-xs font-bold border border-primary/20 hover:bg-primary/10"
                           :class="tornTickets.has(gig.id) ? 'text-primary' : 'text-stone-700'"
                         >
-                          🗺️ {{ locale === 'en' ? 'Directions' : 'Hitta hit' }}
+                          🗺️ {{ t('gigs.directions') }}
                         </a>
                       </div>
                     </div>
@@ -302,7 +314,7 @@ const tearTicket = (gigId: string) => {
             <!-- No Upcoming Gigs -->
             <div v-else class="text-center py-16 space-y-4">
               <span class="text-5xl">🎸</span>
-              <h2 class="text-xl font-heading text-primary">{{ locale === 'en' ? 'No confirmed dates yet' : 'Inga bekräftade datum just nu' }}</h2>
+              <h2 class="text-xl font-heading text-primary">{{ t('gigs.no_confirmed') }}</h2>
               <p class="text-sm text-base-content/70 max-w-md mx-auto">
                 {{ t('gigs.no_upcoming') }}
               </p>
@@ -336,12 +348,12 @@ const tearTicket = (gigId: string) => {
 
                 <!-- "Played" stamp -->
                 <div class="font-mono font-black text-[10px] uppercase text-base-content/30 border-2 border-base-content/20 px-3 py-1 rounded-full transform -rotate-6">
-                  ✓ {{ locale === 'en' ? 'Played' : 'Spelat' }}
+                  ✓ {{ t('gigs.played') }}
                 </div>
               </div>
             </div>
             <div v-else class="p-8 text-center text-sm text-base-content/60">
-              {{ locale === 'en' ? 'No past shows in the archive yet.' : 'Inga tidigare gig i arkivet än.' }}
+              {{ t('gigs.no_past') }}
             </div>
           </div>
         </div>
@@ -357,7 +369,7 @@ const tearTicket = (gigId: string) => {
             {{ t('contact.desc') }}
           </p>
         </div>
-        <NuxtLink to="/contact" class="btn btn-primary rounded-full px-8 font-bold shadow-lg shadow-primary/20 flex-shrink-0">
+        <NuxtLink :to="localePath('/contact')" class="btn btn-primary rounded-full px-8 font-bold shadow-lg shadow-primary/20 flex-shrink-0">
           {{ t('contact.send_button') }}
         </NuxtLink>
       </div>

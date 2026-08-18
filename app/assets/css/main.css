@@ -90,13 +90,25 @@ body {
 /* Gritty, worn texture overlay effect for rock titles */
 @layer utilities {
   .text-gritty {
-    color: #e2bd72;
+    color: #fce8b0;
     position: relative;
-    mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.88'/%3E%3C/svg%3E");
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.88'/%3E%3C/svg%3E");
-    mask-size: 130px 130px;
-    -webkit-mask-size: 130px 130px;
-    filter: drop-shadow(2px 3px 3px rgba(0, 0, 0, 0.9));
+    /*
+     * Layered distress mask — logo-matched vintage print texture:
+     * Coarse + fine noise blended, high opacity (0.92) for sparse speckles
+     */
+    mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='2' seed='2' stitchTiles='stitch' result='coarse'/%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='1' seed='5' stitchTiles='stitch' result='fine'/%3E%3CfeComposite in='coarse' in2='fine' operator='arithmetic' k1='0.5' k2='0.5' k3='0.15' k4='0.0' result='mixed'/%3E%3CfeColorMatrix type='saturate' values='0' in='mixed' result='gray'/%3E%3CfeComponentTransfer in='gray' result='contrast'%3E%3CfeFuncA type='linear' slope='1.2' intercept='0.0'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3C/defs%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.92'/%3E%3C/svg%3E");
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='2' seed='2' stitchTiles='stitch' result='coarse'/%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='1' seed='5' stitchTiles='stitch' result='fine'/%3E%3CfeComposite in='coarse' in2='fine' operator='arithmetic' k1='0.5' k2='0.5' k3='0.15' k4='0.0' result='mixed'/%3E%3CfeColorMatrix type='saturate' values='0' in='mixed' result='gray'/%3E%3CfeComponentTransfer in='gray' result='contrast'%3E%3CfeFuncA type='linear' slope='1.2' intercept='0.0'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3C/defs%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.92'/%3E%3C/svg%3E");
+    mask-size: 200px 200px;
+    -webkit-mask-size: 200px 200px;
+    filter: drop-shadow(2px 3px 4px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 12px rgba(226, 189, 114, 0.15));
+    text-shadow: 0 1px 6px rgba(226, 189, 114, 0.3);
+  }
+
+  /* Light mode override — darker gold that reads well on cream bg */
+  [data-theme='light'] .text-gritty {
+    color: #a86f20;
+    filter: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.25)) drop-shadow(0 0 8px rgba(168, 111, 32, 0.1));
+    text-shadow: 0 1px 4px rgba(168, 111, 32, 0.15);
   }
 
   /* Tube amp ambient warm backlight */
@@ -203,9 +215,18 @@ body {
 
 /* Läsglasögon-läge (Reading glasses mode for high contrast and large comfortable reading) */
 body.reading-glasses-mode {
-  font-size: 1.15rem;
-  line-height: 1.8;
-  letter-spacing: 0.02em;
+  font-size: 1.3rem;
+  line-height: 1.85;
+  letter-spacing: 0.025em;
+}
+
+body.reading-glasses-mode h1,
+body.reading-glasses-mode h2,
+body.reading-glasses-mode h3 {
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+  transform: scale(1.08);
+  transform-origin: left center;
 }
 
 body.reading-glasses-mode p,
@@ -214,16 +235,9 @@ body.reading-glasses-mode a {
   color: #fffef8 !important;
 }
 
-body.reading-glasses-mode h1,
-body.reading-glasses-mode h2,
-body.reading-glasses-mode h3 {
-  letter-spacing: 0.04em;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-}
-
 body.reading-glasses-mode .badge,
 body.reading-glasses-mode .btn {
-  font-size: 1.05rem !important;
-  padding-top: 0.6rem !important;
-  padding-bottom: 0.6rem !important;
+  font-size: 1.1rem !important;
+  padding-top: 0.65rem !important;
+  padding-bottom: 0.65rem !important;
 }

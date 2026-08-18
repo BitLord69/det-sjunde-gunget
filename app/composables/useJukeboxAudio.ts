@@ -1,0 +1,332 @@
+/**
+ * Jukebox Audio Engine
+ * Combines HTML5 audio playback for direct preview tracks and a Web Audio blues synthesis engine
+ * with authentic retro vinyl needle-drop crackle and coin slot SFX.
+ */
+
+export function useJukeboxAudio() {
+  const isAudioPlaying = ref(false)
+  const currentTime = ref(0)
+  const duration = ref(30)
+  const volume = ref(0.8)
+  const isMuted = ref(false)
+  const audioSourceType = ref<'synth' | 'file'>('synth')
+
+  let audioCtx: AudioContext | null = null
+  let synthInterval: any = null
+  let synthGainNode: GainNode | null = null
+  let vinylCrackleNode: AudioNode | null = null
+  let htmlAudio: HTMLAudioElement | null = null
+
+  // Ensure AudioContext is initialized on user interaction
+  const getAudioContext = () => {
+    if (import.meta.server) return null
+    if (!audioCtx) {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext
+      if (AudioCtxClass) {
+        audioCtx = new AudioCtxClass()
+      }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume()
+    }
+    return audioCtx
+  }
+
+  // 1. Coin Insert Chime SFX
+  const playCoinChime = () => {
+    const ctx = getAudioContext()
+    if (!ctx) return
+
+    const now = ctx.currentTime
+
+    // Clink metallic impact
+    const osc1 = ctx.createOscillator()
+    const gain1 = ctx.createGain()
+    osc1.type = 'triangle'
+    osc1.frequency.setValueAtTime(1400, now)
+    osc1.frequency.exponentialRampToValueAtTime(800, now + 0.08)
+    gain1.gain.setValueAtTime(0.3 * volume.value, now)
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
+    osc1.connect(gain1)
+    gain1.connect(ctx.destination)
+    osc1.start(now)
+    osc1.stop(now + 0.08)
+
+    // Sweet double bell ping
+    const pings = [
+      { freq: 1760, time: now + 0.06, dur: 0.35 },
+      { freq: 2637, time: now + 0.14, dur: 0.45 },
+    ]
+
+    pings.forEach((p) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(p.freq, p.time)
+      gain.gain.setValueAtTime(0.25 * volume.value, p.time)
+      gain.gain.exponentialRampToValueAtTime(0.0001, p.time + p.dur)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start(p.time)
+      osc.stop(p.time + p.dur)
+    })
+  }
+
+  // 2. Vinyl Needle Drop Sound Effect
+  const playNeedleDrop = () => {
+    const ctx = getAudioContext()
+    if (!ctx) return
+
+    const now = ctx.currentTime
+    const bufferSize = ctx.sampleRate * 0.4
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+    const data = buffer.getChannelData(0)
+
+    for (let i = 0; i < bufferSize; i++) {
+      // Crackles + thump
+      const t = i / ctx.sampleRate
+      const thump = Math.exp(-t * 25) * Math.sin(t * 80 * 2 * Math.PI) * 0.4
+      const crackle = Math.random() < 0.02 ? (Math.random() * 2 - 1) * 0.25 : 0
+      data[i] = thump + crackle
+    }
+
+    const noise = ctx.createBufferSource()
+    noise.buffer = buffer
+
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'lowpass'
+    filter.frequency.setValueAtTime(1200, now)
+
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.25 * volume.value, now)
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4)
+
+    noise.connect(filter)
+    filter.connect(gain)
+    gain.connect(ctx.destination)
+
+    noise.start(now)
+  }
+
+  // 3. Web Audio 12-Bar Blues Synthesizer Preview Riff
+  const stopSynth = () => {
+    if (synthInterval) {
+      clearInterval(synthInterval)
+      synthInterval = null
+    }
+    if (synthGainNode) {
+      try {
+        synthGainNode.gain.setValueAtTime(0, audioCtx?.currentTime || 0)
+      } catch (_) {}
+      synthGainNode = null
+    }
+  }
+
+  const startBluesSynth = (seedKey = 'A') => {
+    stopSynth()
+    const ctx = getAudioContext()
+    if (!ctx) return
+
+    audioSourceType.value = 'synth'
+    duration.value = 45
+    currentTime.value = 0
+
+    // Master synth gain node
+    synthGainNode = ctx.createGain()
+    synthGainNode.gain.setValueAtTime(volume.value * 0.22, ctx.currentTime)
+    synthGainNode.connect(ctx.destination)
+
+    // Blues notes frequencies (A Blues scale + Boogie bass)
+    const baseFreq = seedKey.includes('B') ? 98.0 : 110.0 // G or A
+    const bassRiff = [
+      baseFreq,
+      baseFreq * 1.25, // Major 3rd
+      baseFreq * 1.5, // 5th
+      baseFreq * 1.68, // 6th
+      baseFreq * 1.78, // Dominant 7th
+      baseFreq * 1.68,
+      baseFreq * 1.5,
+      baseFreq * 1.25,
+    ]
+
+    let step = 0
+    const tempoMs = 280 // ~107 BPM swing shuffle
+
+    const playStep = () => {
+      if (!isAudioPlaying.value || !synthGainNode || !audioCtx) return
+
+      const now = audioCtx.currentTime
+      const bassNote = bassRiff[step % bassRiff.length] ?? baseFreq
+
+      // 1. Warm Bass Osc
+      const bassOsc = audioCtx.createOscillator()
+      const bassGain = audioCtx.createGain()
+      bassOsc.type = 'triangle'
+      bassOsc.frequency.setValueAtTime(bassNote / 2, now)
+      bassGain.gain.setValueAtTime(0.4, now)
+      bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25)
+      bassOsc.connect(bassGain)
+      bassGain.connect(synthGainNode)
+      bassOsc.start(now)
+      bassOsc.stop(now + 0.26)
+
+      // 2. Vintage Organ / Harmonica Chord stab on 2 and 4
+      if (step % 2 === 0) {
+        const chordPitches = [bassNote, bassNote * 1.25, bassNote * 1.5, bassNote * 1.78]
+        chordPitches.forEach((freq) => {
+          if (!audioCtx || !synthGainNode || !freq) return
+          const chordOsc = audioCtx.createOscillator()
+          const chordGain = audioCtx.createGain()
+          chordOsc.type = 'sawtooth'
+          chordOsc.frequency.setValueAtTime(freq * 2, now)
+
+          const chordFilter = audioCtx.createBiquadFilter()
+          chordFilter.type = 'lowpass'
+          chordFilter.frequency.setValueAtTime(1400, now)
+
+          chordGain.gain.setValueAtTime(0.12, now)
+          chordGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18)
+
+          chordOsc.connect(chordFilter)
+          chordFilter.connect(chordGain)
+          chordGain.connect(synthGainNode)
+
+          chordOsc.start(now)
+          chordOsc.stop(now + 0.2)
+        })
+      }
+
+      // 3. Shuffle Snare / Hi-Hat Brush noise
+      const snareBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.08, audioCtx.sampleRate)
+      const sData = snareBuffer.getChannelData(0)
+      for (let i = 0; i < sData.length; i++) {
+        sData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.02))
+      }
+      const snareSource = audioCtx.createBufferSource()
+      snareSource.buffer = snareBuffer
+      const sFilter = audioCtx.createBiquadFilter()
+      sFilter.type = step % 4 === 2 ? 'bandpass' : 'highpass'
+      sFilter.frequency.setValueAtTime(step % 4 === 2 ? 2200 : 6000, now)
+      const sGain = audioCtx.createGain()
+      sGain.gain.setValueAtTime(step % 4 === 2 ? 0.25 : 0.08, now)
+      snareSource.connect(sFilter)
+      sFilter.connect(sGain)
+      sGain.connect(synthGainNode)
+      snareSource.start(now)
+
+      step++
+      currentTime.value = (currentTime.value + tempoMs / 1000) % duration.value
+    }
+
+    playStep()
+    synthInterval = setInterval(playStep, tempoMs)
+  }
+
+  // 4. Direct Audio Playback & Transport Controls
+  const playTrack = (song: { id: string; code?: string; title: string; audioUrl?: string | null }) => {
+    stopSynth()
+    if (htmlAudio) {
+      htmlAudio.pause()
+      htmlAudio = null
+    }
+
+    playNeedleDrop()
+    isAudioPlaying.value = true
+
+    if (song.audioUrl) {
+      audioSourceType.value = 'file'
+      htmlAudio = new Audio(song.audioUrl)
+      htmlAudio.volume = isMuted.value ? 0 : volume.value
+
+      htmlAudio.addEventListener('timeupdate', () => {
+        if (htmlAudio) {
+          currentTime.value = htmlAudio.currentTime
+          duration.value = htmlAudio.duration || 30
+        }
+      })
+
+      htmlAudio.addEventListener('ended', () => {
+        isAudioPlaying.value = false
+        currentTime.value = 0
+      })
+
+      htmlAudio.play().catch((err) => {
+        console.warn('[JukeboxAudio] HTML5 audio error, falling back to blues synth:', err)
+        startBluesSynth(song.code || 'A1')
+      })
+    } else {
+      // Start synthesised blues groove
+      setTimeout(() => {
+        if (isAudioPlaying.value) {
+          startBluesSynth(song.code || 'A1')
+        }
+      }, 250)
+    }
+  }
+
+  const pauseTrack = () => {
+    isAudioPlaying.value = false
+    stopSynth()
+    if (htmlAudio) {
+      htmlAudio.pause()
+    }
+  }
+
+  const resumeTrack = (song: { id: string; code?: string; title: string; audioUrl?: string | null }) => {
+    if (htmlAudio && audioSourceType.value === 'file') {
+      isAudioPlaying.value = true
+      htmlAudio.play()
+    } else {
+      isAudioPlaying.value = true
+      startBluesSynth(song.code || 'A1')
+    }
+  }
+
+  const setAudioVolume = (newVol: number) => {
+    volume.value = Math.max(0, Math.min(1, newVol))
+    if (htmlAudio) {
+      htmlAudio.volume = isMuted.value ? 0 : volume.value
+    }
+    if (synthGainNode && audioCtx) {
+      synthGainNode.gain.setValueAtTime(isMuted.value ? 0 : volume.value * 0.22, audioCtx.currentTime)
+    }
+  }
+
+  const toggleMute = () => {
+    isMuted.value = !isMuted.value
+    setAudioVolume(volume.value)
+  }
+
+  const seek = (seconds: number) => {
+    currentTime.value = seconds
+    if (htmlAudio && audioSourceType.value === 'file') {
+      htmlAudio.currentTime = seconds
+    }
+  }
+
+  onUnmounted(() => {
+    stopSynth()
+    if (htmlAudio) {
+      htmlAudio.pause()
+      htmlAudio = null
+    }
+  })
+
+  return {
+    isAudioPlaying,
+    currentTime,
+    duration,
+    volume,
+    isMuted,
+    audioSourceType,
+    playTrack,
+    pauseTrack,
+    resumeTrack,
+    playCoinChime,
+    playNeedleDrop,
+    setAudioVolume,
+    toggleMute,
+    seek,
+  }
+}

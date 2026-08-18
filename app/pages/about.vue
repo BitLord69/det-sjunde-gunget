@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t, locale } = useI18n()
+
 useSeoMeta({
   title: 'Om bandet | Det 7:e Gunget',
   description: 'Möt Janis, Bosse, Marcus och Jonas i Det 7:e Gunget. Fyra herrar över 50 som spelar äkta svensk blues och rock.',
@@ -10,12 +12,12 @@ const { data: bandMembers } = await useFetch('/api/band')
 <template>
   <div class="mx-auto max-w-7xl px-6 py-12 lg:px-10 space-y-20">
     <!-- Header -->
-    <div class="space-y-4 max-w-3xl">
-      <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty">
-        Om Det 7:e Gunget
+    <div class="space-y-4 max-w-3xl mb-14">
+      <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty pb-2">
+        {{ t('band.title') }}
       </h1>
       <p class="text-base sm:text-lg text-base-content/80 leading-relaxed font-normal">
-        Fyra herrar över 50 som hellre bär tunga rörförstärkare i trappor än går på Friskis & Svettis. Bluesen är vårt elixir och svänget är vår religion.
+        {{ t('band.desc') }}
       </p>
     </div>
 
@@ -23,18 +25,18 @@ const { data: bandMembers } = await useFetch('/api/band')
     <div class="grid lg:grid-cols-2 gap-12 items-center">
       <div class="space-y-4 text-base text-base-content/85 leading-relaxed">
         <h2 class="font-heading text-2xl sm:text-3xl text-primary font-bold">
-          Ett bra riff slår alltid friskvård
+          {{ t('about.story_title') }}
         </h2>
         <p>
-          Det 7:e Gunget föddes ur en gemensam insikt: livet är för kort för dåligt gitarrljud och kliniska poplåtar. Vi har spelat i oräkneliga band genom åren, men när vi fyra träffades i replokalen klickade det direkt i den första 12-takters bluesen.
+          {{ t('about.story_p1') }}
         </p>
         <p>
-          Vår musik är rotad i Chicagos rökiga klubbar och söderns swamp-rock, men texterna och energin bärs fram med svensk självdistans och humor. Vi tar musiken på största allvar — men absolut inte oss själva.
+          {{ t('about.story_p2') }}
         </p>
-        <div class="pt-2 flex items-center gap-4 text-xs font-mono text-secondary font-bold">
-          <span>✦ 100% äkta instrument</span>
-          <span>✦ Inga förinspelade spår</span>
-          <span>✦ Alltid rörglöd</span>
+        <div class="pt-2 flex items-center gap-4 text-xs font-mono text-secondary font-bold flex-wrap">
+          <span>✦ {{ t('about.bullet_instruments') }}</span>
+          <span>✦ {{ t('about.bullet_no_tracks') }}</span>
+          <span>✦ {{ t('about.bullet_tubes') }}</span>
         </div>
       </div>
 
@@ -45,7 +47,7 @@ const { data: bandMembers } = await useFetch('/api/band')
           class="w-full aspect-[4/3] object-cover filter contrast-105"
         />
         <div class="p-3 text-center text-xs font-heading font-bold text-primary bg-neutral">
-          Hela gänget samlat inför sommarsäsongen
+          {{ t('about.photo_caption') }}
         </div>
       </div>
     </div>
@@ -53,9 +55,9 @@ const { data: bandMembers } = await useFetch('/api/band')
     <!-- Member Profiles Grid -->
     <div class="space-y-10">
       <div class="border-b border-primary/20 pb-4">
-        <span class="text-xs font-bold uppercase tracking-widest text-secondary">Medlemmar</span>
+        <span class="text-xs font-bold uppercase tracking-widest text-secondary">{{ t('about.members_tag') }}</span>
         <h2 class="font-heading text-3xl sm:text-4xl text-primary font-bold mt-1">
-          Herrarna bakom musiken
+          {{ t('about.members_title') }}
         </h2>
       </div>
 
@@ -84,26 +86,26 @@ const { data: bandMembers } = await useFetch('/api/band')
               {{ member.role }}
             </span>
             <p class="text-xs text-base-content/80 leading-relaxed mb-6 font-normal">
-              {{ member.bioSv }}
+              {{ locale === 'en' && member.bioEn ? member.bioEn : member.bioSv }}
             </p>
           </div>
 
           <!-- Gear Lore -->
           <div class="space-y-2 pt-4 border-t border-base-content/10 text-[11px] font-sans">
             <div v-if="member.gearSv" class="flex flex-col">
-              <span class="font-bold text-secondary">🎸 Vapen:</span>
-              <span class="text-base-content/75">{{ member.gearSv }}</span>
+              <span class="font-bold text-secondary">🎸 {{ t('about.gear_label') }}:</span>
+              <span class="text-base-content/75">{{ locale === 'en' && member.gearEn ? member.gearEn : member.gearSv }}</span>
             </div>
             <div v-if="member.favoriteChord" class="flex flex-col">
-              <span class="font-bold text-secondary">🎵 Favoritackord:</span>
+              <span class="font-bold text-secondary">🎵 {{ t('about.favorite_chord') }}:</span>
               <span class="text-base-content/75">{{ member.favoriteChord }}</span>
             </div>
             <div v-if="member.weaknessSv" class="flex flex-col">
-              <span class="font-bold text-secondary">⚠️ Svaghet:</span>
+              <span class="font-bold text-secondary">⚠️ {{ t('about.weakness') }}:</span>
               <span class="text-base-content/75">{{ member.weaknessSv }}</span>
             </div>
             <div v-if="member.coffeeConsumption" class="flex flex-col">
-              <span class="font-bold text-secondary">☕ Kaffekonsumtion:</span>
+              <span class="font-bold text-secondary">☕ {{ t('about.coffee') }}:</span>
               <span class="text-base-content/75">{{ member.coffeeConsumption }}</span>
             </div>
           </div>

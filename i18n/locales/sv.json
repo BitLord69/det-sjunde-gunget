@@ -13,16 +13,15 @@
     "next_gig": "Nästa gig:"
   },
   "hero": {
-    "sub": "Blues från den sjunde himlen",
     "title": "Det 7:e Gunget",
     "desc": "Fyra herrar över 50 som fortfarande tycker att ett bra riff slår friskvård. Covers, egna låtar och precis lagom mycket oväsen.",
     "cta_gigs": "Kommande gig",
     "cta_music": "Lyssna i jukeboxen",
     "stats": {
-      "musicians": "musiker",
-      "avg_age": "snittålder",
-      "groove": "tungt gung",
-      "volume": "volym"
+      "musicians": "Musiker",
+      "avg_age": "Snittålder",
+      "groove": "Tungt gung",
+      "volume": "Volym"
     },
     "badge_tag": "✦ Äkta svensk bluesrock sedan replokalen ✦"
   },
@@ -35,13 +34,43 @@
     "book_cta": "Boka oss till ditt event",
     "tickets": "Biljetter",
     "door": "I dörren",
-    "no_upcoming": "Just nu laddar vi förstärkare och stämmer gitarrer. Fler datum kommer snart!"
+    "no_upcoming": "Just nu laddar vi förstärkare och stämmer gitarrer. Fler datum kommer snart!",
+    "ticket_booth": "Biljettluckan",
+    "open": "Öppen",
+    "upcoming_tab": "Kommande gig",
+    "past_tab": "Spelade gig",
+    "buy_ticket": "Köp biljett",
+    "save_date": "Spara datum",
+    "directions": "Hitta hit",
+    "played": "Spelat",
+    "no_past": "Inga tidigare gig i arkivet än.",
+    "no_confirmed": "Inga bekräftade datum just nu",
+    "at_time": "kl",
+    "saved": "SPARAD",
+    "free_entry": "Fri entré",
+    "sold_out": "Utsålt",
+    "tickets_available": "Biljetter finns"
   },
   "band": {
     "section_tag": "Laguppställning",
     "title": "Möt gänget",
     "desc": "Fyra personligheter, ett tajt gung.",
     "all_band": "Läs alla bios & utrustning"
+  },
+  "about": {
+    "story_title": "Ett bra riff slår alltid friskvård",
+    "story_p1": "Det 7:e Gunget föddes ur en gemensam insikt: livet är för kort för dåligt gitarrljud och kliniska poplåtar. Vi har spelat i oräkneliga band genom åren, men när vi fyra träffades i replokalen klickade det direkt i den första 12-takters bluesen.",
+    "story_p2": "Vår musik är rotad i Chicagos rökiga klubbar och söderns swamp-rock, men texterna och energin bärs fram med svensk självdistans och humor. Vi tar musiken på största allvar — men absolut inte oss själva.",
+    "bullet_instruments": "100% äkta instrument",
+    "bullet_no_tracks": "Inga förinspelade spår",
+    "bullet_tubes": "Alltid rörglöd",
+    "photo_caption": "Hela gänget samlat inför sommarsäsongen",
+    "members_tag": "Medlemmar",
+    "members_title": "Herrarna bakom musiken",
+    "gear_label": "Vapen",
+    "favorite_chord": "Favoritackord",
+    "weakness": "Svaghet",
+    "coffee": "Kaffekonsumtion"
   },
   "music": {
     "section_tag": "Jukebox & inspelningar",
@@ -59,7 +88,20 @@
     "insert_coin": "Mata in slant",
     "free_play": "Frispel aktivt",
     "credits": "Krediter",
-    "open_in": "Öppna i"
+    "open_in": "Öppna i",
+    "keypad": "Snabbväljare (Keypad)",
+    "title_strips": "Titelremsor",
+    "original_track": "Eget alster",
+    "original_composition": "Originalkomposition av Det 7:e Gunget",
+    "cover_of": "Cover av",
+    "original_by": "Original av",
+    "prev_song": "Föregående låt",
+    "next_song": "Nästa låt",
+    "play": "Spela",
+    "pause": "Pausa",
+    "repertoire_tag": "Från replokalen",
+    "repertoire_title": "Hur låter en kväll med Det 7:e Gunget?",
+    "repertoire_desc": "Vi kör två eller tre set med en blandning av svettig chicagoblues, tung träskrock och melodiska solon. Ett axplock ur setlistan:"
   },
   "gallery": {
     "section_tag": "Live & studio",
@@ -71,7 +113,26 @@
     "section_tag": "Gemenskapen",
     "title": "Fan Central & bordsfläktar",
     "desc": "Oavsett om du är en hängiven bluesälskare eller en faktisk bordsfläkt på tre hastigheter – här platsar du.",
-    "open_fan_central": "Till Fan Central"
+    "open_fan_central": "Till Fan Central",
+    "all_fans": "Alla fans (båda sorterna)",
+    "human_fans": "👥 Mänskliga fans",
+    "electric_fans": "🌀 Elektriska bordsfläktar",
+    "human_title": "Det mänskliga fanet",
+    "human_badge": "Publikfavorit #1",
+    "human_desc": "Står längst fram vid scenkanten, klappar i takt och kan texten till låtar vi själva glömt bort. En ovärderlig del av konsertupplevelsen.",
+    "human_features_label": "Kännetecken",
+    "human_features": "Ler stort, håller i en öl, sjunger med",
+    "human_fav_label": "Favoritlåt",
+    "human_fav": "Allt med munspelssolo",
+    "human_status": "Status: 100% gung-ackrediterad",
+    "electric_title": "Det elektriska fanet",
+    "electric_model": "Modell: Andersson 45W",
+    "electric_desc": "Oscillerande rörelse, 3 hastigheter. Utan denna trogna maskin bakom trumsetet hade Jonas förvandlats till ånga redan under andra låten.",
+    "electric_power_label": "Effekt",
+    "electric_power": "45 Watt ren svalka",
+    "electric_feature_label": "Bästa egenskap",
+    "electric_feature": "Kliffri luftström i 120 bpm",
+    "electric_status": "Energiklass: A+ för sväng"
   },
   "contact": {
     "section_tag": "Bokning & förfrågningar",

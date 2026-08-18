@@ -1,4 +1,7 @@
 <script setup lang="ts">
+const { t, locale } = useI18n()
+const localePath = useLocalePath()
+
 useSeoMeta({
   title: 'Galleri & scenbilder | Det 7:e Gunget',
   description: 'Se bilder och ögonblick från Det 7:e Gungets spelningar, replokaler och studiosessioner.',
@@ -14,12 +17,12 @@ const photos = computed(() => galleryItems.value?.filter((i) => i.category !== '
 <template>
   <div class="mx-auto max-w-7xl px-6 py-12 lg:px-10 space-y-12">
     <!-- Header -->
-    <div class="space-y-4 max-w-3xl">
-      <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty">
-        Galleri
+    <div class="space-y-4 max-w-3xl mb-14">
+      <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty pb-2">
+        {{ t('gallery.title') }}
       </h1>
       <p class="text-base sm:text-lg text-base-content/80 leading-relaxed font-normal">
-        Ögonblick av svett, gitarrsolon, stämda trummor och genuin spelglädje. Klicka på en bild för att förstora.
+        {{ t('gallery.desc') }}
       </p>
     </div>
 
@@ -41,12 +44,12 @@ const photos = computed(() => galleryItems.value?.filter((i) => i.category !== '
         >
           <NuxtImg
             :src="item.mediaUrl"
-            :alt="item.altTextSv"
+            :alt="locale === 'en' && item.altTextEn ? item.altTextEn : item.altTextSv"
             class="w-full aspect-[4/3] object-cover rounded shadow"
             loading="lazy"
           />
           <p class="text-xs text-center font-medium mt-3 italic text-base-content/90">
-            {{ item.captionSv }}
+            {{ locale === 'en' && item.captionEn ? item.captionEn : item.captionSv }}
           </p>
         </div>
       </div>
@@ -57,12 +60,12 @@ const photos = computed(() => galleryItems.value?.filter((i) => i.category !== '
       <div class="flex items-center gap-3">
         <span class="text-3xl">💨</span>
         <div>
-          <h2 class="font-heading text-xl text-primary font-bold">Letar du efter fläktarna?</h2>
-          <p class="text-xs text-base-content/70">Kolla in vår officiella humorsektion med bordsfläktar och konsertfans.</p>
+          <h2 class="font-heading text-xl text-primary font-bold">{{ t('fan_central.title') }}</h2>
+          <p class="text-xs text-base-content/70">{{ t('fan_central.desc') }}</p>
         </div>
       </div>
-      <NuxtLink to="/fancentral" class="btn btn-secondary btn-sm rounded-full font-bold">
-        Till Fan Central →
+      <NuxtLink :to="localePath('/fancentral')" class="btn btn-secondary btn-sm rounded-full font-bold">
+        {{ t('fan_central.open_fan_central') }} →
       </NuxtLink>
     </div>
 
@@ -75,11 +78,11 @@ const photos = computed(() => galleryItems.value?.filter((i) => i.category !== '
       <div class="max-w-4xl max-h-[90vh] flex flex-col items-center space-y-3" @click.stop>
         <NuxtImg
           :src="selectedImage.mediaUrl"
-          :alt="selectedImage.altTextSv"
+          :alt="locale === 'en' && selectedImage.altTextEn ? selectedImage.altTextEn : selectedImage.altTextSv"
           class="max-h-[75vh] w-auto object-contain rounded-xl shadow-2xl border border-primary/30"
         />
         <p class="text-sm font-bold text-primary text-center">
-          {{ selectedImage.captionSv }}
+          {{ locale === 'en' && selectedImage.captionEn ? selectedImage.captionEn : selectedImage.captionSv }}
         </p>
         <button
           type="button"

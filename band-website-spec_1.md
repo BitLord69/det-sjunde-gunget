@@ -14,6 +14,7 @@ A full website for **Det 7:e Gunget** ("The Seventh Groove"), a four-piece blues
 - **Database:** Turso (libSQL/SQLite, edge-hosted)
 - **ORM:** Drizzle ORM (schema definitions + migrations for Turso)
 - **CMS:** Custom-built lightweight admin (Nuxt server routes + Drizzle + Turso + BetterAuth — see §5)
+- **Social Media Publishing:** Yes/No switch in admin CRUD to automatically cross-post announcements to Facebook and Instagram (planned for CMS Refinements §5)
 - **File/image storage:** Vercel Blob
 - **Email:** Brevo (transactional email for contact form + fan mailing list)
 - **Analytics:** Vercel Web Analytics (free within Hobby-tier limits, no cookie banner required — privacy-friendly by default)
@@ -57,6 +58,7 @@ All four band members need to add/edit content (gigs, photos, bio, news) **witho
 - **ORM:** Drizzle ORM defines the schema (`drizzle-orm/libsql`), handles migrations (`drizzle-kit`), and gives type-safe queries throughout the server routes
 - **API layer:** Nuxt server routes (`server/api/*`) handle CRUD operations against Turso via Drizzle
 - **Admin UI:** A simple `/admin` section (Nuxt pages, DaisyUI forms/tables) behind authentication, where any of the 4 members can log in and add/edit/delete content
+- **Social Media Cross-Posting Switch:** When creating or editing gigs, news posts, songs, or gallery items in the admin dashboard, provide a **Yes/No switch** ("Posta automatiskt till Facebook & Instagram"). When enabled, the publish action prepares and dispatches the post to the band's connected Facebook Page and Instagram accounts.
 - **Auth:** BetterAuth (using its Drizzle adapter against the same Turso DB) — handles login/session for the 4 band members via **email/password**. Social login providers (Google, GitHub, Facebook) configured as well for admin convenience, and to lay groundwork for potential future fan-facing accounts. Fan login/accounts are **not** in scope for v1, but the schema and auth setup should not preclude adding it later.
 - **Image storage:** Vercel Blob holds actual photo/video files, referenced by URL in the DB
 

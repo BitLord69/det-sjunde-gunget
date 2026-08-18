@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
+const localePath = useLocalePath()
 
 useSeoMeta({
   title: 'Det 7:e Gunget | Blues och rock med glimt i ögat',
@@ -10,7 +11,17 @@ useSeoMeta({
 })
 
 // Fetch data from our APIs with graceful fallbacks
-const { data: gigsData } = await useFetch('/api/gigs')
+interface Gig {
+  id: string
+  date: number | string
+  venue: string
+  city: string
+  ticketUrl: string | null
+  status: 'upcoming' | 'sold_out' | 'free' | 'cancelled' | 'completed' | null
+  notesSv: string | null
+  notesEn: string | null
+}
+const { data: gigsData } = await useFetch<{ upcoming: Gig[]; past: Gig[]; all: Gig[] }>('/api/gigs')
 const { data: bandMembers } = await useFetch('/api/band')
 const { data: galleryItems } = await useFetch('/api/gallery')
 const { data: songsData } = await useFetch('/api/songs')
@@ -75,7 +86,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
 </script>
 
 <template>
-  <div class="space-y-24 sm:space-y-32">
+  <div class="space-y-10 sm:space-y-14">
     <!-- 1. HERO SECTION -->
     <section class="relative isolate overflow-hidden pt-12 pb-20 sm:pt-16 sm:pb-28 border-b border-primary/10">
       <!-- Background Ambient Glow & Subtle Texture -->
@@ -85,10 +96,6 @@ const formatGigDate = (dateVal: number | string | Date) => {
       <div class="mx-auto max-w-7xl px-6 lg:px-10 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
         <!-- Left: Text & Pitch -->
         <div class="space-y-8 max-w-2xl">
-          <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-secondary/15 border border-secondary/30 text-secondary text-xs font-bold uppercase tracking-widest">
-            <span>🔥</span> {{ t('hero.sub') }}
-          </div>
-
           <h1 class="font-heading text-5xl sm:text-7xl lg:text-8xl leading-[0.95] text-gritty pb-3">
             Det 7:e<br>Gunget
           </h1>
@@ -101,32 +108,32 @@ const formatGigDate = (dateVal: number | string | Date) => {
           <div class="flex flex-wrap items-center gap-2 sm:gap-3 pt-2 text-xs font-sans">
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-primary/30 text-neutral-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.musicians') }}:</span>
               <span class="font-bold text-primary text-sm">4</span>
-              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.musicians') }}</span>
             </div>
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-secondary/30 text-neutral-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-secondary" />
+              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.avg_age') }}:</span>
               <span class="font-bold text-secondary text-sm">50+</span>
-              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.avg_age') }}</span>
             </div>
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-accent/30 text-neutral-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-accent" />
+              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.groove') }}:</span>
               <span class="font-bold text-accent text-sm">100%</span>
-              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.groove') }}</span>
             </div>
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-primary/30 text-neutral-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-primary" />
+              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.volume') }}:</span>
               <span class="font-bold text-primary text-sm">11</span>
-              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.volume') }}</span>
             </div>
           </div>
 
           <!-- CTAs navigating to dedicated pages -->
           <div class="flex flex-wrap gap-4 pt-4">
-            <NuxtLink to="/gigs" class="btn btn-primary rounded-full px-8 text-sm font-bold shadow-lg shadow-primary/25 hover:scale-105 transition-transform">
+            <NuxtLink :to="localePath('/gigs')" class="btn btn-primary rounded-full px-8 text-sm font-bold shadow-lg shadow-primary/25 hover:scale-105 transition-transform">
               {{ t('hero.cta_gigs') }} →
             </NuxtLink>
-            <NuxtLink to="/music" class="btn btn-outline btn-secondary rounded-full px-8 text-sm font-bold hover:scale-105 transition-transform">
+            <NuxtLink :to="localePath('/music')" class="btn btn-outline btn-secondary rounded-full px-8 text-sm font-bold hover:scale-105 transition-transform">
               {{ t('hero.cta_music') }}
             </NuxtLink>
           </div>
@@ -153,10 +160,10 @@ const formatGigDate = (dateVal: number | string | Date) => {
 
     <!-- 2. GIG / SPELNINGAR SPOTLIGHT -->
     <section id="gigs" class="mx-auto max-w-7xl px-6 lg:px-10 scroll-mt-24">
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-4 border-b border-primary/20 gap-4">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 pb-4 border-b border-primary/20 gap-4">
         <div>
           <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">{{ t('gigs.section_tag') }}</span>
-          <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty">
+          <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty pb-2">
             {{ t('gigs.subtitle') }}
           </h2>
         </div>
@@ -164,7 +171,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
           <p class="text-sm text-base-content/70 max-w-md">
             {{ t('gigs.desc') }}
           </p>
-          <NuxtLink to="/gigs" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
+          <NuxtLink :to="localePath('/gigs')" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
             {{ t('gigs.all_gigs') }} →
           </NuxtLink>
         </div>
@@ -258,10 +265,10 @@ const formatGigDate = (dateVal: number | string | Date) => {
 
     <!-- 3. JUKEBOX & MUSIK SEKTION -->
     <section id="music" class="mx-auto max-w-7xl px-6 lg:px-10 scroll-mt-24">
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-4 border-b border-primary/20 gap-4">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 pb-4 border-b border-primary/20 gap-4">
         <div>
           <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">{{ t('music.section_tag') }}</span>
-          <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty">
+          <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty pb-2">
             {{ t('music.title') }}
           </h2>
         </div>
@@ -295,7 +302,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
             </button>
           </div>
 
-          <NuxtLink to="/music" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
+          <NuxtLink :to="localePath('/music')" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
             {{ t('music.all_music') }} →
           </NuxtLink>
         </div>
@@ -364,10 +371,10 @@ const formatGigDate = (dateVal: number | string | Date) => {
 
     <!-- 4. BANDET (JANIS, BOSSE, MARCUS, JONAS) -->
     <section id="band" class="mx-auto max-w-7xl px-6 lg:px-10 scroll-mt-24">
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-4 border-b border-primary/20 gap-4">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 pb-4 border-b border-primary/20 gap-4">
         <div>
           <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">{{ t('band.section_tag') }}</span>
-          <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty">
+          <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty pb-2">
             {{ t('band.title') }}
           </h2>
         </div>
@@ -375,7 +382,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
           <p class="text-sm text-base-content/70 max-w-md">
             {{ t('band.desc') }}
           </p>
-          <NuxtLink to="/about" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
+          <NuxtLink :to="localePath('/about')" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
             {{ t('band.all_band') }} →
           </NuxtLink>
         </div>
@@ -439,7 +446,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
     <!-- 5. FAN CENTRAL (THE LITERAL FAN JOKE) -->
     <section id="fancentral" class="mx-auto max-w-7xl px-6 lg:px-10 scroll-mt-24">
       <div class="bg-base-200/90 rounded-3xl p-8 sm:p-12 border border-secondary/30 relative overflow-hidden shadow-2xl">
-        <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-primary/20 gap-4">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 pb-4 border-b border-primary/20 gap-4">
           <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/20 text-secondary text-xs font-bold uppercase tracking-widest mb-2">
               <span>💨</span> {{ t('fan_central.section_tag') }}
@@ -452,7 +459,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
             <p class="text-sm text-base-content/80 max-w-md">
               {{ t('fan_central.desc') }}
             </p>
-            <NuxtLink to="/fancentral" class="btn btn-secondary btn-sm rounded-full font-bold flex-shrink-0">
+            <NuxtLink :to="localePath('/fancentral')" class="btn btn-secondary btn-sm rounded-full font-bold flex-shrink-0">
               {{ t('fan_central.open_fan_central') }} →
             </NuxtLink>
           </div>
@@ -548,10 +555,10 @@ const formatGigDate = (dateVal: number | string | Date) => {
 
     <!-- 6. GALLERI & SCENLIV -->
     <section id="gallery" class="mx-auto max-w-7xl px-6 lg:px-10 scroll-mt-24">
-      <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-4 border-b border-primary/20 gap-4">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 pb-4 border-b border-primary/20 gap-4">
         <div>
           <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">Scen, Svett & Rep</span>
-          <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty">
+          <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty pb-2">
             Galleri
           </h2>
         </div>
@@ -559,8 +566,8 @@ const formatGigDate = (dateVal: number | string | Date) => {
           <p class="text-sm text-base-content/70 max-w-md">
             Ögonblick från studion, replokalen och livescener runt om i landet.
           </p>
-          <NuxtLink to="/gallery" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
-            Öppna Bildgalleri →
+          <NuxtLink :to="localePath('/gallery')" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
+            {{ t('gallery.all_gallery') }} →
           </NuxtLink>
         </div>
       </div>
@@ -582,12 +589,12 @@ const formatGigDate = (dateVal: number | string | Date) => {
           >
             <NuxtImg
               :src="item.mediaUrl"
-              :alt="item.altTextSv"
+              :alt="locale === 'en' && item.altTextEn ? item.altTextEn : item.altTextSv"
               class="w-full aspect-[4/3] object-cover rounded shadow"
               loading="lazy"
             />
             <p class="text-xs text-center font-medium mt-3 italic text-neutral-content/90">
-              {{ item.captionSv }}
+              {{ locale === 'en' && item.captionEn ? item.captionEn : item.captionSv }}
             </p>
           </div>
         </div>

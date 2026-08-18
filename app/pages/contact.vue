@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useI18n()
+
 useSeoMeta({
   title: 'Boka Oss & Kontakt | Det 7:e Gunget',
   description: 'Boka Det 7:e Gunget till festival, pub, klubb eller privatfest. Kontaktformulär, teknisk rider och bokningsinfo.',
@@ -17,26 +19,53 @@ const form = reactive({
 
 const formSubmitted = ref(false)
 const formLoading = ref(false)
+const formError = ref('')
 
 const submitForm = async () => {
   if (form.honeypot) return
   formLoading.value = true
-  setTimeout(() => {
+  formError.value = ''
+
+  try {
+    const res = await $fetch<{ success: boolean; message?: string }>('/api/contact', {
+      method: 'POST',
+      body: { ...form },
+    })
+
+    if (res.success) {
+      formSubmitted.value = true
+    }
+  } catch (err: any) {
+    console.error('Contact form submission error:', err)
+    formError.value = err?.data?.statusMessage || err?.data?.message || 'Ett fel uppstod när förfrågan skickades. Vänligen kontrollera uppgifterna eller mejla oss direkt.'
+  } finally {
     formLoading.value = false
-    formSubmitted.value = true
-  }, 700)
+  }
+}
+
+const resetForm = () => {
+  form.name = ''
+  form.email = ''
+  form.phone = ''
+  form.eventType = 'Klubb / Pub'
+  form.date = ''
+  form.location = ''
+  form.message = ''
+  form.honeypot = ''
+  formSubmitted.value = false
+  formError.value = ''
 }
 </script>
 
 <template>
   <div class="mx-auto max-w-7xl px-6 py-12 lg:px-10 space-y-16">
     <!-- Header -->
-    <div class="space-y-4 max-w-3xl">
-      <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty">
-        Boka Det 7:e Gunget
+    <div class="space-y-4 max-w-3xl mb-14">
+      <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty pb-2">
+        {{ t('contact.title') }}
       </h1>
       <p class="text-base sm:text-lg text-base-content/80 leading-relaxed font-normal">
-        Vill du ha äkta blues, sväng och bra stämning till er scen, pub eller 50-årsfest? Hör av dig så hittar vi ett datum!
+        {{ t('contact.desc') }}
       </p>
     </div>
 
@@ -172,6 +201,10 @@ const submitForm = async () => {
             />
           </div>
 
+          <div v-if="formError" class="p-3 bg-error/10 border border-error/30 rounded-xl text-error text-xs font-semibold">
+            ⚠️ {{ formError }}
+          </div>
+
           <button
             type="submit"
             class="btn btn-primary w-full font-bold shadow-lg shadow-primary/20 text-base"
@@ -185,8 +218,15 @@ const submitForm = async () => {
           <span class="text-5xl">🎸</span>
           <h3 class="text-2xl font-heading text-primary font-bold">Tack för er förfrågan!</h3>
           <p class="text-sm text-base-content/80 max-w-sm mx-auto">
-            Vi har tagit emot era uppgifter och återkopplar inom kort.
+            Vi har tagit emot era uppgifter och en bekräftelse har skickats till er e-post. Vi återkopplar inom kort!
           </p>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline btn-secondary rounded-full mt-4"
+            @click="resetForm"
+          >
+            Skicka en ny förfrågan
+          </button>
         </div>
       </div>
     </div>

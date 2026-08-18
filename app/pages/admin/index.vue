@@ -10,24 +10,36 @@ useSeoMeta({
 
 const { adminUser } = useAdminAuth()
 
-const activeTab = ref<'gigs' | 'band' | 'songs' | 'gallery' | 'admins'>('gigs')
+const activeTab = ref<'gigs' | 'band' | 'songs' | 'gallery' | 'admins' | 'messages' | 'subscribers'>('gigs')
 const toastMessage = ref('')
 
 const showToast = (msg: string) => {
   toastMessage.value = msg
   setTimeout(() => {
     toastMessage.value = ''
-  }, 3500)
+  }, 4000)
 }
 
 // Fetch all fresh data
-const { data: gigsData, refresh: refreshGigs } = await useFetch('/api/gigs')
+const { data: gigsData, refresh: refreshGigs } = await useFetch<{ upcoming: any[]; past: any[]; all: any[] }>('/api/gigs')
 const { data: bandMembers, refresh: refreshBand } = await useFetch('/api/band')
 const { data: galleryItems, refresh: refreshGallery } = await useFetch('/api/gallery')
 const { data: songsData, refresh: refreshSongs } = await useFetch('/api/songs')
 const { data: adminUsers, refresh: refreshAdmins } = await useFetch('/api/admin/users', {
   default: () => [],
   ignoreResponseError: true,
+})
+const { data: messagesData, refresh: refreshMessages } = await useFetch<any[]>('/api/admin/messages', {
+  default: () => [],
+  ignoreResponseError: true,
+})
+const { data: subscribersData, refresh: refreshSubscribers } = await useFetch<any[]>('/api/admin/subscribers', {
+  default: () => [],
+  ignoreResponseError: true,
+})
+
+const unreadMessagesCount = computed(() => {
+  return (messagesData.value || []).filter((m) => m.status === 'unread').length
 })
 
 // ---------------- GIGS CRUD ----------------
@@ -42,18 +54,20 @@ const gigForm = reactive({
   status: 'upcoming',
   notesSv: '',
   notesEn: '',
+  postToSocials: false,
 })
 
 const openAddGig = () => {
   gigForm.id = ''
   gigForm.venue = ''
   gigForm.city = 'Ängelholm'
-  gigForm.date = new Date().toISOString().split('T')[0]
+  gigForm.date = new Date().toISOString().split('T')[0] || ''
   gigForm.time = '20:00'
   gigForm.ticketUrl = ''
   gigForm.status = 'upcoming'
   gigForm.notesSv = ''
   gigForm.notesEn = ''
+  gigForm.postToSocials = false
   editingGig.value = 'new'
 }
 
@@ -62,7 +76,7 @@ const openEditGig = (gig: any) => {
   gigForm.id = gig.id
   gigForm.venue = gig.venue
   gigForm.city = gig.city
-  gigForm.date = d.toISOString().split('T')[0]
+  gigForm.date = d.toISOString().split('T')[0] || ''
   gigForm.time = d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })
   gigForm.ticketUrl = gig.ticketUrl || ''
   gigForm.status = gig.status || 'upcoming'
@@ -153,6 +167,9 @@ const songForm = reactive({
   originalArtist: '',
   embedProvider: 'spotify',
   embedUrl: '',
+  audioUrl: '',
+  duration: '',
+  postToSocials: false,
 })
 
 const openAddSong = () => {
@@ -162,6 +179,9 @@ const openAddSong = () => {
   songForm.originalArtist = ''
   songForm.embedProvider = 'spotify'
   songForm.embedUrl = ''
+  songForm.audioUrl = ''
+  songForm.duration = ''
+  songForm.postToSocials = false
   editingSong.value = 'new'
 }
 
@@ -172,6 +192,9 @@ const openEditSong = (s: any) => {
   songForm.originalArtist = s.originalArtist || ''
   songForm.embedProvider = s.embedProvider || 'spotify'
   songForm.embedUrl = s.embedUrl || ''
+  songForm.audioUrl = s.audioUrl || ''
+  songForm.duration = s.duration ? String(s.duration) : ''
+  songForm.postToSocials = false
   editingSong.value = s.id
 }
 
@@ -186,7 +209,7 @@ const saveSong = async () => {
   })
   editingSong.value = null
   await refreshSongs()
-  showToast('✓ Låten har sparats i jukeboxen!')
+  showToast(songForm.postToSocials ? '✓ Låten har sparats & schemalagts för FB & Insta!' : '✓ Låten har sparats i jukeboxen!')
 }
 
 const deleteSong = async (id: string) => {
@@ -197,6 +220,28 @@ const deleteSong = async (id: string) => {
   })
   await refreshSongs()
   showToast('✓ Låten togs bort.')
+}
+
+// ---------------- MESSAGES & INQUIRIES ----------------
+const selectedMessage = ref<any | null>(null)
+
+const markMessageStatus = async (msg: any, status: 'read' | 'unread' | 'archived') => {
+  await $fetch('/api/admin/messages', {
+    method: 'PATCH',
+    body: { id: msg.id, status, read: status === 'read' },
+  })
+  await refreshMessages()
+  showToast(`✓ Meddelandet markerades som ${status === 'read' ? 'läst' : status === 'archived' ? 'arkiverat' : 'oläst'}.`)
+}
+
+const deleteMessage = async (id: string) => {
+  if (!confirm('Är du säker på att du vill radera denna förfrågan?')) return
+  await $fetch(`/api/admin/messages?id=${id}`, {
+    method: 'DELETE',
+  })
+  selectedMessage.value = null
+  await refreshMessages()
+  showToast('✓ Förfrågan raderades.')
 }
 
 // ---------------- GALLERY CRUD ----------------
@@ -358,6 +403,25 @@ const deleteAdminUser = async (admin: any) => {
       <button
         type="button"
         class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
+        :class="activeTab === 'messages' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        @click="activeTab = 'messages'"
+      >
+        <span>✉️</span> Bokningar & förfrågningar ({{ messagesData?.length || 0 }})
+        <span v-if="unreadMessagesCount > 0" class="badge badge-xs badge-accent font-mono font-bold ml-1">
+          {{ unreadMessagesCount }} nya
+        </span>
+      </button>
+      <button
+        type="button"
+        class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
+        :class="activeTab === 'subscribers' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        @click="activeTab = 'subscribers'"
+      >
+        <span>📬</span> Nyhetsbrev ({{ subscribersData?.length || 0 }})
+      </button>
+      <button
+        type="button"
+        class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
         :class="activeTab === 'admins' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
         @click="activeTab = 'admins'"
       >
@@ -415,6 +479,24 @@ const deleteAdminUser = async (admin: any) => {
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Anteckningar / mellansnack (svenska)</label>
             <textarea v-model="gigForm.notesSv" rows="2" placeholder="Dörrarna öppnar 18:30..." class="textarea textarea-bordered w-full bg-base-200 text-sm" />
+          </div>
+
+          <!-- Social Media Cross-Posting Switch -->
+          <div class="sm:col-span-2 p-3 bg-base-200/80 rounded-xl border border-primary/20 flex items-center justify-between gap-4">
+            <div class="space-y-0.5">
+              <span class="text-xs font-bold text-primary flex items-center gap-1.5">
+                <span>📱</span> Posta automatiskt till Facebook & Instagram
+              </span>
+              <p class="text-[11px] text-base-content/60">
+                Skapar automatiskt ett inlägg på bandets sociala medier när giget publiceras.
+              </p>
+            </div>
+            <input
+              v-model="gigForm.postToSocials"
+              type="checkbox"
+              class="toggle toggle-primary toggle-sm"
+              title="Aktivera / inaktivera automatisk delning till FB & Instagram"
+            />
           </div>
         </div>
 
@@ -594,8 +676,34 @@ const deleteAdminUser = async (admin: any) => {
             </select>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs font-bold text-secondary mb-1">Länk / URL *</label>
+            <label class="block text-xs font-bold text-secondary mb-1">Länk / Embed URL *</label>
             <input v-model="songForm.embedUrl" type="url" placeholder="https://open.spotify.com/track/..." class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Direkt ljudspår / MP3-preview (valfritt)</label>
+            <input v-model="songForm.audioUrl" type="text" placeholder="/media/audio/sample.mp3" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Längd (sekunder, valfritt)</label>
+            <input v-model="songForm.duration" type="number" placeholder="215" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+          </div>
+
+          <!-- Social Media Cross-Posting Switch -->
+          <div class="sm:col-span-2 p-3 bg-base-200/80 rounded-xl border border-primary/20 flex items-center justify-between gap-4">
+            <div class="space-y-0.5">
+              <span class="text-xs font-bold text-primary flex items-center gap-1.5">
+                <span>📱</span> Posta automatiskt till Facebook & Instagram
+              </span>
+              <p class="text-[11px] text-base-content/60">
+                Skapar automatiskt ett låttips på bandets sociala medier när låten publiceras.
+              </p>
+            </div>
+            <input
+              v-model="songForm.postToSocials"
+              type="checkbox"
+              class="toggle toggle-primary toggle-sm"
+              title="Aktivera / inaktivera automatisk delning till FB & Instagram"
+            />
           </div>
         </div>
 
@@ -832,6 +940,221 @@ const deleteAdminUser = async (admin: any) => {
                   Ta bort
                 </button>
                 <span v-else class="text-[10px] text-base-content/40 italic">Aktiv inloggning</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6. MESSAGES & INQUIRIES -->
+    <div v-if="activeTab === 'messages'" class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="font-heading text-2xl text-primary font-bold">Bokningsförfrågningar & meddelanden</h2>
+          <p class="text-xs text-base-content/70">Inkomna förfrågningar från kontaktformuläret på webbplatsen.</p>
+        </div>
+        <button type="button" class="btn btn-outline btn-primary btn-sm rounded-full" @click="() => refreshMessages()">
+          🔄 Uppdatera lista
+        </button>
+      </div>
+
+      <!-- Messages Table -->
+      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+        <table class="table table-zebra w-full text-xs">
+          <thead>
+            <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
+              <th>Datum</th>
+              <th>Kontaktperson</th>
+              <th>E-post & Telefon</th>
+              <th>Typ av event</th>
+              <th>Önskat datum & Plats</th>
+              <th>Status</th>
+              <th class="text-right">Åtgärd</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="msg in messagesData || []"
+              :key="msg.id"
+              class="cursor-pointer hover:bg-base-200/60 transition-colors"
+              :class="msg.status === 'unread' ? 'font-bold bg-primary/5' : ''"
+              @click="selectedMessage = msg"
+            >
+              <td class="font-mono text-[11px] whitespace-nowrap">
+                {{ new Date(msg.createdAt).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }}
+              </td>
+              <td class="font-bold text-primary">{{ msg.name }}</td>
+              <td class="font-mono text-[11px]">
+                <div>{{ msg.email }}</div>
+                <div v-if="msg.phone" class="text-base-content/60">{{ msg.phone }}</div>
+              </td>
+              <td><span class="badge badge-sm font-bold text-[10px]">{{ msg.eventType || 'Allmänt' }}</span></td>
+              <td class="text-xs">
+                <div v-if="msg.eventDate" class="font-bold">{{ msg.eventDate }}</div>
+                <div v-if="msg.location" class="text-base-content/60">{{ msg.location }}</div>
+                <div v-if="!msg.eventDate && !msg.location" class="text-base-content/40">—</div>
+              </td>
+              <td>
+                <span
+                  class="badge badge-xs font-bold uppercase text-[9px]"
+                  :class="msg.status === 'unread' ? 'badge-accent' : msg.status === 'read' ? 'badge-success' : 'badge-ghost'"
+                >
+                  {{ msg.status === 'unread' ? 'Oläst' : msg.status === 'read' ? 'Läst' : 'Arkiverad' }}
+                </span>
+              </td>
+              <td class="text-right space-x-2" @click.stop>
+                <button
+                  type="button"
+                  class="btn btn-xs btn-outline btn-primary rounded"
+                  @click="selectedMessage = msg"
+                >
+                  Visa
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-xs btn-outline btn-error rounded"
+                  @click="deleteMessage(msg.id)"
+                >
+                  Ta bort
+                </button>
+              </td>
+            </tr>
+            <tr v-if="!messagesData || messagesData.length === 0">
+              <td colspan="7" class="text-center py-8 text-base-content/60 italic">
+                Inga meddelanden har inkommit ännu.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Message Detail Modal -->
+      <div v-if="selectedMessage" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+        <div class="stage-card max-w-2xl w-full p-6 sm:p-8 rounded-3xl border border-primary/40 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+          <div class="flex items-start justify-between gap-4 border-b border-primary/20 pb-4">
+            <div>
+              <span class="text-xs font-mono uppercase text-secondary font-bold">Förfrågan #{{ selectedMessage.id }}</span>
+              <h3 class="font-heading text-2xl text-primary font-bold">{{ selectedMessage.name }}</h3>
+              <span class="text-xs text-base-content/60">
+                Mottagen: {{ new Date(selectedMessage.createdAt).toLocaleString('sv-SE') }}
+              </span>
+            </div>
+            <button type="button" class="btn btn-sm btn-circle btn-ghost" @click="selectedMessage = null">✕</button>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4 text-sm bg-base-200/80 p-4 rounded-xl border border-primary/20">
+            <div>
+              <span class="text-[10px] uppercase font-bold text-secondary block">E-post</span>
+              <a :href="`mailto:${selectedMessage.email}`" class="text-primary font-bold hover:underline">{{ selectedMessage.email }}</a>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase font-bold text-secondary block">Telefon</span>
+              <span>{{ selectedMessage.phone || 'Ej angivet' }}</span>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase font-bold text-secondary block">Typ av event</span>
+              <span>{{ selectedMessage.eventType || 'Ej angivet' }}</span>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase font-bold text-secondary block">Önskat datum & Plats</span>
+              <span>{{ selectedMessage.eventDate || 'Inget datum' }} • {{ selectedMessage.location || 'Ingen plats' }}</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <span class="text-xs uppercase font-bold text-secondary">Meddelande:</span>
+            <div class="bg-base-200 p-4 rounded-xl text-sm whitespace-pre-wrap leading-relaxed border border-primary/10">
+              {{ selectedMessage.body }}
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-primary/20">
+            <div class="flex items-center gap-2">
+              <button
+                v-if="selectedMessage.status === 'unread'"
+                type="button"
+                class="btn btn-sm btn-outline btn-success rounded-full"
+                @click="markMessageStatus(selectedMessage, 'read')"
+              >
+                ✓ Markera som läst
+              </button>
+              <button
+                v-else
+                type="button"
+                class="btn btn-sm btn-outline btn-ghost rounded-full"
+                @click="markMessageStatus(selectedMessage, 'unread')"
+              >
+                Markera som oläst
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline btn-error rounded-full"
+                @click="deleteMessage(selectedMessage.id)"
+              >
+                Radera
+              </button>
+            </div>
+
+            <a
+              :href="`mailto:${selectedMessage.email}?subject=Re: Bokningsförfrågan Det 7:e Gunget`"
+              class="btn btn-sm btn-primary rounded-full font-bold px-5"
+            >
+              ✉️ Svara via e-post
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. NEWSLETTER SUBSCRIBERS -->
+    <div v-if="activeTab === 'subscribers'" class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="font-heading text-2xl text-primary font-bold">Nyhetsbrevsprenumeranter</h2>
+          <p class="text-xs text-base-content/70">Fans som anmält sig för att få nyheter och speldatum.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button type="button" class="btn btn-outline btn-primary btn-sm rounded-full" @click="() => refreshSubscribers()">
+            🔄 Uppdatera
+          </button>
+        </div>
+      </div>
+
+      <!-- Subscribers Table -->
+      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+        <table class="table table-zebra w-full text-xs">
+          <thead>
+            <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
+              <th>E-postadress</th>
+              <th>Status</th>
+              <th>Anmäld datum</th>
+              <th>Brevo-synk</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="sub in subscribersData || []" :key="sub.id">
+              <td class="font-bold text-primary font-mono text-[11px]">{{ sub.email }}</td>
+              <td>
+                <span
+                  class="badge badge-xs font-bold uppercase text-[9px]"
+                  :class="sub.status === 'subscribed' ? 'badge-success' : 'badge-ghost'"
+                >
+                  {{ sub.status === 'subscribed' ? 'Aktiv' : 'Avregistrerad' }}
+                </span>
+              </td>
+              <td class="font-mono text-[11px]">
+                {{ new Date(sub.subscribedAt).toLocaleDateString('sv-SE') }}
+              </td>
+              <td>
+                <span class="badge badge-xs badge-outline font-mono text-[9px] text-emerald-400 border-emerald-500/40">
+                  Synkad
+                </span>
+              </td>
+            </tr>
+            <tr v-if="!subscribersData || subscribersData.length === 0">
+              <td colspan="4" class="text-center py-8 text-base-content/60 italic">
+                Inga prenumeranter ännu.
               </td>
             </tr>
           </tbody>

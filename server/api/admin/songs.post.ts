@@ -20,10 +20,12 @@ export default defineEventHandler(async (event) => {
       .update(songs)
       .set({
         title: body.title,
-        isOriginal: body.isOriginal ? 1 : 0,
+        isOriginal: Boolean(body.isOriginal),
         originalArtist: body.originalArtist || null,
         embedProvider: body.embedProvider || 'spotify',
         embedUrl: body.embedUrl,
+        audioUrl: body.audioUrl || null,
+        duration: body.duration ? parseInt(body.duration, 10) : null,
         updatedAt: now,
       })
       .where(eq(songs.id, body.id))
@@ -33,10 +35,12 @@ export default defineEventHandler(async (event) => {
     await db.insert(songs).values({
       id,
       title: body.title,
-      isOriginal: body.isOriginal ? 1 : 0,
+      isOriginal: Boolean(body.isOriginal),
       originalArtist: body.originalArtist || null,
       embedProvider: body.embedProvider || 'spotify',
       embedUrl: body.embedUrl,
+      audioUrl: body.audioUrl || null,
+      duration: body.duration ? parseInt(body.duration, 10) : null,
       createdAt: now,
       updatedAt: now,
     })

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { locale, setLocale, t } = useI18n()
+const localePath = useLocalePath()
 const colorMode = useColorMode()
 
 const toggleColorMode = () => {
@@ -49,22 +50,35 @@ const increaseVolume = () => {
   }
 }
 
-const { data: gigsData } = await useFetch('/api/gigs')
+const { data: gigsData } = await useFetch<{ upcoming: any[]; past: any[]; all: any[] }>('/api/gigs')
 const nextGig = computed(() => gigsData.value?.upcoming?.[0] || null)
 
 // Newsletter subscription in footer
 const newsletterEmail = ref('')
 const newsletterSubmitted = ref(false)
 const newsletterLoading = ref(false)
+const newsletterError = ref('')
 
 const handleNewsletter = async () => {
   if (!newsletterEmail.value) return
   newsletterLoading.value = true
-  // Mock/API call simulation
-  setTimeout(() => {
+  newsletterError.value = ''
+
+  try {
+    const res = await $fetch<{ success: boolean; message?: string }>('/api/newsletter', {
+      method: 'POST',
+      body: { email: newsletterEmail.value },
+    })
+
+    if (res.success) {
+      newsletterSubmitted.value = true
+    }
+  } catch (err: any) {
+    console.error('Newsletter subscription error:', err)
+    newsletterError.value = err?.data?.statusMessage || 'Kunde inte registrera. Försök igen.'
+  } finally {
     newsletterLoading.value = false
-    newsletterSubmitted.value = true
-  }, 600)
+  }
 }
 </script>
 
@@ -76,7 +90,7 @@ const handleNewsletter = async () => {
         <!-- Left: Live Next Gig Ticker -->
         <div class="flex items-center gap-2 font-mono text-[11px] truncate">
           <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
-          <NuxtLink v-if="nextGig" to="/gigs" class="hover:text-primary transition-colors flex items-center gap-1.5 truncate">
+          <NuxtLink v-if="nextGig" :to="localePath('/gigs')" class="hover:text-primary transition-colors flex items-center gap-1.5 truncate">
             <span class="text-secondary font-bold uppercase tracking-wider">{{ t('ticker.next_gig') }}</span>
             <span class="text-primary font-bold">{{ nextGig.venue }}, {{ nextGig.city }}</span>
             <span class="text-base-content/60 hidden md:inline font-sans">
@@ -156,7 +170,7 @@ const handleNewsletter = async () => {
     <header class="sticky top-0 z-40 bg-base-100/95 backdrop-blur-md border-b border-primary/15 shadow-xl">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
         <!-- Wordmark (Arvo font as specified) -->
-        <NuxtLink to="/" class="group flex items-center gap-3 focus:outline-none cursor-guitar">
+        <NuxtLink :to="localePath('/')" class="group flex items-center gap-3 focus:outline-none cursor-guitar">
           <div class="flex flex-col">
             <span class="font-heading text-2xl sm:text-3xl text-primary tracking-wide drop-shadow transition-transform group-hover:scale-102">
               Det 7:e Gunget
@@ -169,19 +183,19 @@ const handleNewsletter = async () => {
 
         <!-- Desktop Navigation to Dedicated Pages -->
         <nav class="hidden items-center gap-7 text-sm font-semibold tracking-wide lg:flex font-sans">
-          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" to="/gigs">
+          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" :to="localePath('/gigs')">
             {{ t('nav.gigs') }}
           </NuxtLink>
-          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" to="/music">
+          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" :to="localePath('/music')">
             {{ t('nav.music') }}
           </NuxtLink>
-          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" to="/about">
+          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" :to="localePath('/about')">
             {{ t('nav.band') }}
           </NuxtLink>
-          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" to="/gallery">
+          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" :to="localePath('/gallery')">
             {{ t('nav.gallery') }}
           </NuxtLink>
-          <NuxtLink class="group transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary cursor-fan inline-flex items-center" active-class="!text-primary !border-primary" to="/fancentral">
+          <NuxtLink class="group transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary cursor-fan inline-flex items-center" active-class="!text-primary !border-primary" :to="localePath('/fancentral')">
             {{ t('nav.fan_central') }}
             <svg class="h-4 w-0 group-hover:w-4 group-hover:ml-1.5 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300 fan-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M14.167 10.5c.722 -1.538 1.156 -3.043 1.303 -4.514c.22 -1.63 -.762 -2.986 -3.47 -2.986s-3.69 1.357 -3.47 2.986c.147 1.471 .581 2.976 1.303 4.514"/><path d="M13.169 16.751c.97 1.395 2.057 2.523 3.257 3.386c1.3 1 2.967 .833 4.321 -1.512c1.354 -2.345 .67 -3.874 -.85 -4.498c-1.348 -.608 -2.868 -.985 -4.562 -1.128"/><path d="M8.664 13c-1.693 .143 -3.213 .52 -4.56 1.128c-1.522 .623 -2.206 2.153 -.852 4.498s3.02 2.517 4.321 1.512c1.2 -.863 2.287 -1.991 3.258 -3.386"/></svg>
           </NuxtLink>
@@ -211,7 +225,7 @@ const handleNewsletter = async () => {
           </div>
 
           <!-- Book Us button (Desktop) -->
-          <NuxtLink class="btn btn-primary btn-sm rounded-full px-5 font-bold shadow-md shadow-primary/20 hover:scale-105 transition-transform hidden sm:inline-flex" to="/contact">
+          <NuxtLink class="btn btn-primary btn-sm rounded-full px-5 font-bold shadow-md shadow-primary/20 hover:scale-105 transition-transform hidden sm:inline-flex" :to="localePath('/contact')">
             {{ t('nav.book') }}
           </NuxtLink>
 
@@ -243,7 +257,7 @@ const handleNewsletter = async () => {
         >
           <nav class="flex flex-col space-y-3 font-semibold text-base">
             <NuxtLink
-              to="/gigs"
+              :to="localePath('/gigs')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
               @click="isMobileMenuOpen = false"
             >
@@ -251,7 +265,7 @@ const handleNewsletter = async () => {
               <span class="text-xs text-base-content/40">›</span>
             </NuxtLink>
             <NuxtLink
-              to="/music"
+              :to="localePath('/music')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
               @click="isMobileMenuOpen = false"
             >
@@ -259,7 +273,7 @@ const handleNewsletter = async () => {
               <span class="text-xs text-base-content/40">›</span>
             </NuxtLink>
             <NuxtLink
-              to="/about"
+              :to="localePath('/about')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
               @click="isMobileMenuOpen = false"
             >
@@ -267,7 +281,7 @@ const handleNewsletter = async () => {
               <span class="text-xs text-base-content/40">›</span>
             </NuxtLink>
             <NuxtLink
-              to="/gallery"
+              :to="localePath('/gallery')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
               @click="isMobileMenuOpen = false"
             >
@@ -275,7 +289,7 @@ const handleNewsletter = async () => {
               <span class="text-xs text-base-content/40">›</span>
             </NuxtLink>
             <NuxtLink
-              to="/fancentral"
+              :to="localePath('/fancentral')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
               @click="isMobileMenuOpen = false"
             >
@@ -283,7 +297,7 @@ const handleNewsletter = async () => {
               <span class="text-xs text-base-content/40">›</span>
             </NuxtLink>
             <NuxtLink
-              to="/contact"
+              :to="localePath('/contact')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-secondary"
               @click="isMobileMenuOpen = false"
             >
@@ -340,42 +354,63 @@ const handleNewsletter = async () => {
             />
             <div>
               <span class="font-heading text-xl text-primary block leading-none">Det 7:e Gunget</span>
-              <span class="text-xs text-secondary font-semibold">Blues & rock från hjärtat</span>
+              <span class="text-xs text-secondary font-semibold">{{ t('tagline') }}</span>
             </div>
           </div>
           <p class="text-sm text-neutral-content/70 leading-relaxed">
-            Fyra herrar över 50. Blues, rock, egna alster, svettiga klassiker och precis lagom mycket oväsen.
+            {{ t('hero.desc') }}
           </p>
+          <!-- Social Links -->
+          <div class="flex items-center gap-3">
+            <a
+              href="https://www.facebook.com/Detsjundegunget"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-9 h-9 rounded-full bg-base-200/60 border border-primary/20 flex items-center justify-center text-neutral-content/70 hover:text-primary hover:border-primary/50 hover:scale-110 transition-all"
+              title="Facebook"
+            >
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a
+              href="https://www.instagram.com/det7egunget/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-9 h-9 rounded-full bg-base-200/60 border border-primary/20 flex items-center justify-center text-neutral-content/70 hover:text-secondary hover:border-secondary/50 hover:scale-110 transition-all"
+              title="Instagram"
+            >
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            </a>
+          </div>
           <div class="text-xs font-mono text-neutral-content/50">
-            © {{ new Date().getFullYear() }} Det 7:e Gunget. Alla rättigheter reserverade.
+            © {{ new Date().getFullYear() }} Det 7:e Gunget. {{ t('footer.rights') }}
           </div>
         </div>
 
         <!-- Column 2: Quick Links -->
         <div>
-          <h4 class="font-heading text-lg text-primary mb-4 border-b border-primary/20 pb-2">Sidor & navigering</h4>
+          <h4 class="font-heading text-lg text-primary mb-4 border-b border-primary/20 pb-2">{{ t('footer.quick_links') }}</h4>
           <ul class="space-y-2 text-sm">
-            <li><NuxtLink to="/gigs" class="hover:text-primary transition-colors">Kommande gig & datum →</NuxtLink></li>
-            <li><NuxtLink to="/music" class="hover:text-primary transition-colors">Lyssna i jukeboxen →</NuxtLink></li>
-            <li><NuxtLink to="/about" class="hover:text-primary transition-colors">Möt bandet (Janis, Bosse, Marcus, Jonas) →</NuxtLink></li>
-            <li><NuxtLink to="/gallery" class="hover:text-primary transition-colors">Scen- & replokalsgalleri →</NuxtLink></li>
-            <li><NuxtLink to="/fancentral" class="hover:text-primary transition-colors">Fan Central (bordsfläktar & publik) →</NuxtLink></li>
+            <li><NuxtLink :to="localePath('/gigs')" class="hover:text-primary transition-colors">{{ t('nav.gigs') }} →</NuxtLink></li>
+            <li><NuxtLink :to="localePath('/music')" class="hover:text-primary transition-colors">{{ t('nav.music') }} →</NuxtLink></li>
+            <li><NuxtLink :to="localePath('/about')" class="hover:text-primary transition-colors">{{ t('nav.band') }} →</NuxtLink></li>
+            <li><NuxtLink :to="localePath('/gallery')" class="hover:text-primary transition-colors">{{ t('nav.gallery') }} →</NuxtLink></li>
+            <li><NuxtLink :to="localePath('/fancentral')" class="hover:text-primary transition-colors">{{ t('nav.fan_central') }} →</NuxtLink></li>
           </ul>
         </div>
 
         <!-- Column 3: Booking & Info -->
         <div>
-          <h4 class="font-heading text-lg text-primary mb-4 border-b border-primary/20 pb-2">Boka bandet</h4>
+          <h4 class="font-heading text-lg text-primary mb-4 border-b border-primary/20 pb-2">{{ t('contact.title') }}</h4>
           <p class="text-sm text-neutral-content/75 mb-3 leading-relaxed">
-            Vill du ha tungt sväng till din klubb, festival eller 50-årsfest?
+            {{ t('contact.desc') }}
           </p>
           <div class="space-y-1.5 text-sm font-medium">
             <p><span class="text-secondary font-bold">E-post:</span> kontakt@det7egunget.se</p>
-            <p><span class="text-secondary font-bold">Plats:</span> Ängelholm & Skåne med omnejd</p>
+            <p><span class="text-secondary font-bold">Plats:</span> Ängelholm & Skåne</p>
           </div>
           <div class="mt-4">
-            <NuxtLink to="/contact" class="btn btn-outline btn-sm btn-primary rounded-full px-5">
-              Skicka bokningsförfrågan →
+            <NuxtLink :to="localePath('/contact')" class="btn btn-outline btn-sm btn-primary rounded-full px-5">
+              {{ t('contact.send_button') }}
             </NuxtLink>
           </div>
         </div>
@@ -395,12 +430,15 @@ const handleNewsletter = async () => {
               :placeholder="t('newsletter.placeholder')"
               class="input input-bordered input-sm w-full bg-neutral text-neutral-content focus:border-primary text-xs"
             />
+            <div v-if="newsletterError" class="text-error text-[11px] font-semibold">
+              ⚠️ {{ newsletterError }}
+            </div>
             <button
               type="submit"
               class="btn btn-primary btn-sm w-full font-bold shadow"
               :disabled="newsletterLoading"
             >
-              {{ newsletterLoading ? 'Skriver upp...' : t('newsletter.button') }}
+              {{ newsletterLoading ? '...' : t('newsletter.button') }}
             </button>
           </form>
           <div v-else class="text-emerald-400 text-xs font-bold bg-emerald-950/40 p-3 rounded-lg border border-emerald-500/30 flex items-center gap-2">
@@ -412,23 +450,23 @@ const handleNewsletter = async () => {
 
     <!-- Mobile Bottom Navigation Bar (Thumb-friendly per spec §4) -->
     <nav class="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t border-primary/20 bg-base-100/95 backdrop-blur-md p-1.5 lg:hidden shadow-2xl">
-      <NuxtLink class="flex flex-col items-center gap-0.5 p-1 text-[10px] font-bold text-base-content/70 hover:text-primary" active-class="!text-primary" to="/">
+      <NuxtLink class="flex flex-col items-center gap-0.5 p-1 text-[10px] font-bold text-base-content/70 hover:text-primary" active-class="!text-primary" :to="localePath('/')">
         <span class="text-base">🏠</span>
         <span>{{ t('nav.home') }}</span>
       </NuxtLink>
-      <NuxtLink class="flex flex-col items-center gap-0.5 p-1 text-[10px] font-bold text-base-content/70 hover:text-primary" active-class="!text-primary" to="/gigs">
+      <NuxtLink class="flex flex-col items-center gap-0.5 p-1 text-[10px] font-bold text-base-content/70 hover:text-primary" active-class="!text-primary" :to="localePath('/gigs')">
         <span class="text-base">📅</span>
         <span>{{ t('nav.gigs') }}</span>
       </NuxtLink>
-      <NuxtLink class="flex flex-col items-center gap-0.5 p-1 text-[10px] font-bold text-base-content/70 hover:text-primary" active-class="!text-primary" to="/music">
+      <NuxtLink class="flex flex-col items-center gap-0.5 p-1 text-[10px] font-bold text-base-content/70 hover:text-primary" active-class="!text-primary" :to="localePath('/music')">
         <span class="text-base">🎵</span>
         <span>{{ t('nav.music') }}</span>
       </NuxtLink>
-      <NuxtLink class="flex flex-col items-center gap-0.5 p-1 text-[10px] font-bold text-base-content/70 hover:text-primary" active-class="!text-primary" to="/about">
+      <NuxtLink class="flex flex-col items-center gap-0.5 p-1 text-[10px] font-bold text-base-content/70 hover:text-primary" active-class="!text-primary" :to="localePath('/about')">
         <span class="text-base">🎸</span>
         <span>{{ t('nav.band') }}</span>
       </NuxtLink>
-      <NuxtLink class="flex flex-col items-center gap-0.5 p-1 text-[10px] font-bold text-base-content/70 hover:text-primary" active-class="!text-primary" to="/contact">
+      <NuxtLink class="flex flex-col items-center gap-0.5 p-1 text-[10px] font-bold text-base-content/70 hover:text-primary" active-class="!text-primary" :to="localePath('/contact')">
         <span class="text-base">✉️</span>
         <span>{{ t('nav.book') }}</span>
       </NuxtLink>

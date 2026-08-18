@@ -86,6 +86,10 @@ export default defineEventHandler(async (event) => {
       targetAdmin = newlyCreated[0]
     }
 
+    if (!targetAdmin) {
+      throw new Error('Admin account could not be found or initialized.')
+    }
+
     // 4. Create session and redirect to admin dashboard
     await createAdminSession(targetAdmin.id, event)
     return sendRedirect(event, '/admin')

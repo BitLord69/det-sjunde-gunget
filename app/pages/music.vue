@@ -9,6 +9,7 @@ useSeoMeta({
 const { data: songsData } = await useFetch('/api/songs')
 
 const songFilter = ref<'all' | 'original' | 'cover'>('all')
+const playerDisplayMode = ref<'vinyl' | 'embed'>('vinyl')
 
 // Assign letter-number jukebox codes (A1, A2, A3... for originals, B1, B2... for covers)
 const songsWithCodes = computed(() => {
@@ -16,7 +17,7 @@ const songsWithCodes = computed(() => {
   let originalIndex = 1
   let coverIndex = 1
 
-  return list.map((song) => {
+  return list.map((song: any) => {
     if (song.isOriginal) {
       const code = `A${originalIndex++}`
       return { ...song, code, side: 'A' }
@@ -29,67 +30,126 @@ const songsWithCodes = computed(() => {
 
 const filteredSongs = computed(() => {
   const list = songsWithCodes.value
-  if (songFilter.value === 'original') return list.filter((s) => s.isOriginal)
-  if (songFilter.value === 'cover') return list.filter((s) => !s.isOriginal)
+  if (songFilter.value === 'original') return list.filter((s: any) => s.isOriginal)
+  if (songFilter.value === 'cover') return list.filter((s: any) => !s.isOriginal)
   return list
 })
 
 // Active song state
-const activeSongId = ref<string | null>('song-det-7e-gunget')
-const isPlaying = ref(false)
+const activeSongId = ref<string | null>('song-det-sjunde-gunget')
 const credits = ref(5)
 const coinAnimation = ref(false)
 
 const currentSong = computed(() => {
-  return songsWithCodes.value.find((s) => s.id === activeSongId.value) || songsWithCodes.value[0] || null
+  return songsWithCodes.value.find((s: any) => s.id === activeSongId.value) || songsWithCodes.value[0] || null
 })
+
+// Initialize Jukebox Audio Engine
+const {
+  isAudioPlaying,
+  currentTime,
+  duration,
+  volume,
+  isMuted,
+  audioSourceType,
+  playTrack,
+  pauseTrack,
+  resumeTrack,
+  playCoinChime,
+  setAudioVolume,
+  toggleMute,
+  seek,
+} = useJukeboxAudio()
 
 const selectSong = (songId: string) => {
   activeSongId.value = songId
-  isPlaying.value = true
+  const song = songsWithCodes.value.find((s: any) => s.id === songId)
+  if (song) {
+    playTrack(song)
+  }
 }
 
 const togglePlay = (songId?: string) => {
   if (songId && activeSongId.value !== songId) {
-    activeSongId.value = songId
-    isPlaying.value = true
+    selectSong(songId)
     return
   }
-  isPlaying.value = !isPlaying.value
+
+  if (isAudioPlaying.value) {
+    pauseTrack()
+  } else if (currentSong.value) {
+    resumeTrack(currentSong.value)
+  }
 }
 
 const playByCode = (code: string) => {
-  const target = songsWithCodes.value.find((s) => s.code.toLowerCase() === code.toLowerCase())
+  const target = songsWithCodes.value.find((s: any) => s.code.toLowerCase() === code.toLowerCase())
   if (target) {
-    activeSongId.value = target.id
-    isPlaying.value = true
+    selectSong(target.id)
   }
 }
 
 const nextTrack = () => {
   const list = songsWithCodes.value
   if (!list.length) return
-  const currentIndex = list.findIndex((s) => s.id === activeSongId.value)
+  const currentIndex = list.findIndex((s: any) => s.id === activeSongId.value)
   const nextIndex = (currentIndex + 1) % list.length
-  activeSongId.value = list[nextIndex].id
-  isPlaying.value = true
+  const nextSong = list[nextIndex]
+  if (nextSong) {
+    selectSong(nextSong.id)
+  }
 }
 
 const prevTrack = () => {
   const list = songsWithCodes.value
   if (!list.length) return
-  const currentIndex = list.findIndex((s) => s.id === activeSongId.value)
+  const currentIndex = list.findIndex((s: any) => s.id === activeSongId.value)
   const prevIndex = (currentIndex - 1 + list.length) % list.length
-  activeSongId.value = list[prevIndex].id
-  isPlaying.value = true
+  const prevSong = list[prevIndex]
+  if (prevSong) {
+    selectSong(prevSong.id)
+  }
 }
 
 const insertCoin = () => {
   credits.value += 3
   coinAnimation.value = true
+  playCoinChime()
   setTimeout(() => {
     coinAnimation.value = false
   }, 1000)
+}
+
+// Convert song embed URL into direct iframe player link
+const formattedEmbedUrl = computed(() => {
+  const song = currentSong.value
+  if (!song?.embedUrl) return ''
+  const url = song.embedUrl
+
+  // Spotify embed conversion
+  if (song.embedProvider === 'spotify' || url.includes('spotify.com')) {
+    if (url.includes('/embed/')) return url
+    const match = url.match(/track\/([a-zA-Z0-9]+)/)
+    if (match) return `https://open.spotify.com/embed/track/${match[1]}?utm_source=generator&theme=0`
+    return url
+  }
+
+  // YouTube embed conversion
+  if (song.embedProvider === 'youtube' || url.includes('youtube.com') || url.includes('youtu.be')) {
+    if (url.includes('/embed/')) return url
+    const vMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/) || url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/)
+    if (vMatch) return `https://www.youtube.com/embed/${vMatch[1]}?autoplay=1`
+    return url
+  }
+
+  return url
+})
+
+const formatTime = (secs: number) => {
+  if (isNaN(secs) || secs < 0) return '0:00'
+  const m = Math.floor(secs / 60)
+  const s = Math.floor(secs % 60)
+  return `${m}:${s < 10 ? '0' : ''}${s}`
 }
 </script>
 
@@ -110,14 +170,13 @@ const insertCoin = () => {
 
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-12">
       <!-- Breadcrumb & Top Page Header -->
-      <div class="text-center space-y-3 max-w-2xl mx-auto">
-
+      <div class="text-center space-y-3 max-w-2xl mx-auto mb-14">
         <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-secondary/15 border border-secondary/30 text-secondary text-xs font-bold uppercase tracking-widest">
           <span>🎶</span> {{ t('music.jukebox_model') }}
         </div>
 
-        <h1 class="font-heading text-4xl sm:text-6xl lg:text-7xl text-primary text-gritty">
-          Gungets Jukebox
+        <h1 class="font-heading text-4xl sm:text-6xl lg:text-7xl text-primary text-gritty pb-2">
+          {{ t('music.title') }}
         </h1>
 
         <p class="text-sm sm:text-base text-base-content/80 leading-relaxed">
@@ -140,17 +199,41 @@ const insertCoin = () => {
             </span>
             <span class="text-secondary text-sm">✦</span>
           </div>
-          <div class="text-[10px] font-mono uppercase tracking-widest text-secondary/80 mt-1">
-            Hi-Fi Stereophonic Sound • 45 R.P.M.
+
+          <div class="flex items-center justify-between mt-3 px-2 sm:px-6 text-[11px] font-mono">
+            <span class="text-secondary/80 uppercase tracking-widest hidden sm:inline">
+              Hi-Fi Stereophonic Sound • 45 R.P.M.
+            </span>
+
+            <!-- Mode Switcher: Vinyl vs Embed Player -->
+            <div class="flex items-center gap-1 bg-black/60 p-1 rounded-full border border-primary/30 mx-auto sm:mx-0">
+              <button
+                type="button"
+                class="px-3 py-0.5 rounded-full text-xs font-bold transition-all"
+                :class="playerDisplayMode === 'vinyl' ? 'bg-primary text-neutral shadow' : 'text-base-content/70 hover:text-primary'"
+                @click="playerDisplayMode = 'vinyl'"
+              >
+                🎛️ Skivtallrik (Hi-Fi)
+              </button>
+              <button
+                type="button"
+                class="px-3 py-0.5 rounded-full text-xs font-bold transition-all"
+                :class="playerDisplayMode === 'embed' ? 'bg-primary text-neutral shadow' : 'text-base-content/70 hover:text-primary'"
+                @click="playerDisplayMode = 'embed'"
+              >
+                ▶️ Inbäddad spelare
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- UPPER GLASS DOME: TURNTABLE, VACUUM TUBES & ROTATING VINYL RECORD -->
+        <!-- UPPER GLASS DOME: TURNTABLE OR EMBED PLAYER -->
         <div class="mt-6 p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-[#0a0705] to-[#17100b] border-2 border-primary/30 relative overflow-hidden shadow-inner">
           <!-- Glass reflection highlights -->
           <div class="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-white/10 pointer-events-none" />
 
-          <div class="grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-center relative z-10">
+          <!-- VIEW A: VINTAGE VINYL TURNTABLE CONSOLE -->
+          <div v-if="playerDisplayMode === 'vinyl'" class="grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-center relative z-10">
             <!-- Left: Rotating Vinyl Record Player -->
             <div class="flex items-center justify-center relative py-4">
               <!-- Vacuum Tubes Behind Record -->
@@ -159,7 +242,7 @@ const insertCoin = () => {
                   v-for="i in 3"
                   :key="i"
                   class="w-4 h-10 rounded-t-full bg-gradient-to-t from-amber-600 via-amber-400 to-transparent border border-amber-400/40 transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.6)]"
-                  :class="isPlaying ? 'animate-pulse' : 'opacity-40'"
+                  :class="isAudioPlaying ? 'animate-pulse' : 'opacity-40'"
                 />
               </div>
 
@@ -168,7 +251,7 @@ const insertCoin = () => {
                 <!-- 45 RPM Vinyl Record -->
                 <div
                   class="w-48 h-48 sm:w-60 sm:h-60 rounded-full bg-[#0a0a0a] border-2 border-neutral-700/60 shadow-xl flex items-center justify-center relative transition-transform"
-                  :class="isPlaying ? 'animate-spin' : ''"
+                  :class="isAudioPlaying ? 'animate-spin' : ''"
                   :style="{ animationDuration: '3.5s' }"
                 >
                   <!-- Vinyl Grooves Rings -->
@@ -193,7 +276,7 @@ const insertCoin = () => {
                 <!-- Tone-Arm Mechanism -->
                 <div
                   class="absolute top-2 right-2 w-12 sm:w-16 h-28 sm:h-36 origin-top-right transition-transform duration-700 pointer-events-none z-20"
-                  :style="{ transform: isPlaying ? 'rotate(28deg)' : 'rotate(0deg)' }"
+                  :style="{ transform: isAudioPlaying ? 'rotate(28deg)' : 'rotate(0deg)' }"
                 >
                   <div class="w-1.5 h-full bg-gradient-to-b from-stone-300 via-stone-400 to-stone-500 rounded shadow-md" />
                   <div class="w-4 h-6 bg-primary rounded-sm -bottom-1 -left-1.5 absolute shadow-md border border-black/40" />
@@ -202,75 +285,152 @@ const insertCoin = () => {
             </div>
 
             <!-- Right: Digital / Analog Track Status & Equalizer Display -->
-            <div class="space-y-5 bg-neutral/80 p-5 sm:p-6 rounded-2xl border border-primary/30 shadow-xl">
+            <div class="space-y-4 bg-neutral/80 p-5 sm:p-6 rounded-2xl border border-primary/30 shadow-xl">
               <!-- Digital Track Code Screen -->
               <div class="bg-black/90 p-4 rounded-xl border border-primary/40 font-mono text-center space-y-1 shadow-inner">
                 <div class="flex items-center justify-between text-[11px] text-secondary font-bold">
-                  <span>{{ isPlaying ? '● ' + t('music.now_playing') : '○ STANDBY' }}</span>
+                  <span>{{ isAudioPlaying ? '● ' + t('music.now_playing') : '○ STANDBY' }}</span>
                   <span class="text-accent font-black text-sm">{{ currentSong?.code || 'A1' }}</span>
                 </div>
                 <div class="text-primary font-bold text-base sm:text-lg truncate">
-                  {{ currentSong ? currentSong.title : 'Välj en låt' }}
+                  {{ currentSong ? currentSong.title : t('music.select_track') }}
                 </div>
                 <div class="text-xs text-base-content/60 truncate">
-                  {{ currentSong?.isOriginal ? 'Det 7:e Gunget (Eget alster)' : `Cover av ${currentSong?.originalArtist}` }}
+                  {{ currentSong?.isOriginal ? `Det 7:e Gunget (${t('music.original_track')})` : `${t('music.cover_of')} ${currentSong?.originalArtist}` }}
                 </div>
               </div>
 
+              <!-- Real-time Progress Bar & Scrubber -->
+              <div class="space-y-1 px-1">
+                <div class="flex items-center justify-between text-[10px] font-mono text-secondary">
+                  <span>{{ formatTime(currentTime) }}</span>
+                  <span class="text-[9px] uppercase tracking-wider text-base-content/60">
+                    {{ audioSourceType === 'file' ? 'Direct Track' : 'Blues Preview Groove' }}
+                  </span>
+                  <span>{{ formatTime(duration) }}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  :max="duration || 30"
+                  step="0.5"
+                  :value="currentTime"
+                  class="range range-xs range-primary w-full cursor-pointer"
+                  @input="seek(parseFloat(($event.target as HTMLInputElement).value))"
+                />
+              </div>
+
               <!-- Animated Equalizer Bars -->
-              <div class="flex items-end justify-center gap-1.5 h-10 px-2">
+              <div class="flex items-end justify-center gap-1.5 h-8 px-2">
                 <div
                   v-for="bar in 16"
                   :key="bar"
                   class="w-2 rounded-t transition-all duration-150"
-                  :class="isPlaying ? 'bg-gradient-to-t from-emerald-500 via-yellow-400 to-red-500' : 'bg-primary/20 h-1.5'"
+                  :class="isAudioPlaying ? 'bg-gradient-to-t from-emerald-500 via-yellow-400 to-red-500' : 'bg-primary/20 h-1.5'"
                   :style="{
-                    height: isPlaying ? `${Math.max(15, (bar * 17) % 95 + 10)}%` : '6px',
-                    animation: isPlaying ? `pulse ${(bar % 4) * 0.2 + 0.3}s infinite alternate` : 'none',
+                    height: isAudioPlaying ? `${Math.max(15, (bar * 17) % 95 + 10)}%` : '6px',
+                    animation: isAudioPlaying ? `pulse ${(bar % 4) * 0.2 + 0.3}s infinite alternate` : 'none',
                   }"
                 />
               </div>
 
               <!-- Jukebox Transport Controls (Play / Pause / Next / Prev) -->
-              <div class="flex items-center justify-center gap-3 pt-1">
-                <button
-                  type="button"
-                  class="btn btn-circle btn-sm btn-ghost border border-primary/30 text-primary hover:bg-primary/20"
-                  title="Föregående låt"
-                  @click="prevTrack"
-                >
-                  ⏮
-                </button>
+              <div class="flex items-center justify-between pt-1">
+                <!-- Volume & Mute Button -->
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    class="btn btn-circle btn-xs btn-ghost text-secondary"
+                    :title="isMuted ? 'Slå på ljud' : 'Ljud av'"
+                    @click="toggleMute"
+                  >
+                    <span>{{ isMuted ? '🔇' : volume > 0.5 ? '🔊' : '🔉' }}</span>
+                  </button>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    :value="isMuted ? 0 : volume"
+                    class="range range-xs range-secondary w-16 hidden sm:inline-block cursor-pointer"
+                    @input="setAudioVolume(parseFloat(($event.target as HTMLInputElement).value))"
+                  />
+                </div>
 
-                <button
-                  type="button"
-                  class="btn btn-circle btn-primary font-bold text-xl shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-transform"
-                  :title="isPlaying ? 'Pausa' : 'Spela'"
-                  @click="togglePlay()"
-                >
-                  {{ isPlaying ? '⏸' : '▶' }}
-                </button>
+                <!-- Center Controls -->
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-circle btn-sm btn-ghost border border-primary/30 text-primary hover:bg-primary/20"
+                    :title="t('music.prev_song')"
+                    @click="prevTrack"
+                  >
+                    ⏮
+                  </button>
 
-                <button
-                  type="button"
-                  class="btn btn-circle btn-sm btn-ghost border border-primary/30 text-primary hover:bg-primary/20"
-                  title="Nästa låt"
-                  @click="nextTrack"
-                >
-                  ⏭
-                </button>
+                  <button
+                    type="button"
+                    class="btn btn-circle btn-primary font-bold text-xl shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-transform"
+                    :title="isAudioPlaying ? t('music.pause') : t('music.play')"
+                    @click="togglePlay()"
+                  >
+                    {{ isAudioPlaying ? '⏸' : '▶' }}
+                  </button>
 
-                <!-- External Player Link if available -->
+                  <button
+                    type="button"
+                    class="btn btn-circle btn-sm btn-ghost border border-primary/30 text-primary hover:bg-primary/20"
+                    :title="t('music.next_song')"
+                    @click="nextTrack"
+                  >
+                    ⏭
+                  </button>
+                </div>
+
+                <!-- External Player Link -->
                 <a
                   v-if="currentSong?.embedUrl"
                   :href="currentSong.embedUrl"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="btn btn-sm btn-outline btn-secondary rounded-full text-xs ml-2 font-bold"
+                  class="btn btn-xs btn-outline btn-secondary rounded-full font-bold"
                   :title="`${t('music.open_in')} ${currentSong.embedProvider}`"
                 >
                   <span>{{ currentSong.embedProvider }} ↗</span>
                 </a>
+                <div v-else class="w-10" />
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW B: EMBEDDED STREAMING PLAYER (SPOTIFY / YOUTUBE / BANDCAMP) -->
+          <div v-else class="relative z-10 space-y-4">
+            <div class="flex items-center justify-between border-b border-primary/20 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="badge badge-primary font-mono font-bold">{{ currentSong?.code || 'A1' }}</span>
+                <span class="font-heading font-bold text-primary text-lg">{{ currentSong?.title }}</span>
+                <span class="text-xs text-base-content/60 capitalize hidden sm:inline">({{ currentSong?.embedProvider }})</span>
+              </div>
+              <button
+                type="button"
+                class="btn btn-xs btn-outline btn-secondary rounded-full"
+                @click="playerDisplayMode = 'vinyl'"
+              >
+                ← Tillbaka till skivtallrik
+              </button>
+            </div>
+
+            <!-- Iframe Container -->
+            <div class="w-full rounded-2xl overflow-hidden bg-black/80 border border-primary/30 shadow-2xl flex items-center justify-center min-h-[160px] sm:min-h-[220px]">
+              <iframe
+                v-if="formattedEmbedUrl"
+                :src="formattedEmbedUrl"
+                class="w-full h-[180px] sm:h-[260px] border-0 rounded-2xl"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+              />
+              <div v-else class="text-center py-12 text-base-content/60 text-xs">
+                Ingen inbäddningslänk tillgänglig för denna låt.
               </div>
             </div>
           </div>
@@ -281,7 +441,7 @@ const insertCoin = () => {
           <!-- Left: Keypad Push Buttons (A1, A2, B1, B2...) -->
           <div class="space-y-2 w-full md:w-auto">
             <div class="text-[11px] font-mono font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5">
-              <span>🎛️</span> Snabbväljare (Keypad)
+              <span>🎛️</span> {{ t('music.keypad') }}
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <button
@@ -326,7 +486,7 @@ const insertCoin = () => {
           <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-primary/20 pb-3">
             <div>
               <h2 class="font-heading text-xl sm:text-2xl text-primary font-bold">
-                Titelremsor
+                {{ t('music.title_strips') }}
               </h2>
               <span class="text-xs text-base-content/70">
                 {{ t('music.select_track') }}
@@ -400,7 +560,7 @@ const insertCoin = () => {
                     {{ song.title }}
                   </div>
                   <div class="text-[11px] font-sans font-medium text-stone-600 truncate mt-0.5">
-                    {{ song.isOriginal ? 'Originalkomposition av Det 7:e Gunget' : `Original av ${song.originalArtist}` }}
+                    {{ song.isOriginal ? t('music.original_composition') : `${t('music.original_by')} ${song.originalArtist}` }}
                   </div>
                 </div>
 
@@ -414,7 +574,7 @@ const insertCoin = () => {
                         : 'bg-stone-200 text-stone-700 group-hover:bg-primary group-hover:text-neutral'
                     "
                   >
-                    {{ activeSongId === song.id && isPlaying ? '⏸' : '▶' }}
+                    {{ activeSongId === song.id && isAudioPlaying ? '⏸' : '▶' }}
                   </span>
                 </div>
               </div>
@@ -432,21 +592,21 @@ const insertCoin = () => {
       <!-- VINTAGE CHALKBOARD REPERTOIRE & LIVE SETLIST -->
       <div class="stage-card p-8 sm:p-12 rounded-3xl border border-primary/20 space-y-6 max-w-4xl mx-auto">
         <div class="space-y-2">
-          <span class="text-xs font-bold uppercase tracking-widest text-secondary">Från replokalen</span>
+          <span class="text-xs font-bold uppercase tracking-widest text-secondary">{{ t('music.repertoire_tag') }}</span>
           <h2 class="font-heading text-2xl sm:text-4xl text-primary font-bold">
-            Hur låter en kväll med Det 7:e Gunget?
+            {{ t('music.repertoire_title') }}
           </h2>
           <p class="text-sm text-base-content/80 max-w-2xl">
-            Vi kör två eller tre set med en blandning av svettig chicagoblues, tung träskrock och melodiska solon. Ett axplock ur setlistan:
+            {{ t('music.repertoire_desc') }}
           </p>
         </div>
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs font-mono">
-          <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Det 7:e Gunget (eget alster)</div>
+          <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Det 7:e Gunget ({{ t('music.original_track') }})</div>
           <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Hoochie Coochie Man (Muddy Waters)</div>
           <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Born Under a Bad Sign (Albert King)</div>
           <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ The Thrill is Gone (B.B. King)</div>
-          <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Sväng i källaren (eget alster)</div>
+          <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Sväng i källaren ({{ t('music.original_track') }})</div>
           <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Sweet Home Chicago (Robert Johnson)</div>
         </div>
       </div>

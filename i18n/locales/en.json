@@ -13,16 +13,15 @@
     "next_gig": "Next gig:"
   },
   "hero": {
-    "sub": "Blues from the seventh groove",
     "title": "Det 7:e Gunget",
     "desc": "Four gents over 50 who still believe a great riff beats workplace wellness perks. Covers, originals, and just the right amount of noise.",
     "cta_gigs": "Upcoming gigs",
     "cta_music": "Play jukebox",
     "stats": {
-      "musicians": "musicians",
-      "avg_age": "average age",
-      "groove": "heavy groove",
-      "volume": "volume"
+      "musicians": "Musicians",
+      "avg_age": "Average age",
+      "groove": "Heavy groove",
+      "volume": "Volume"
     },
     "badge_tag": "✦ Authentic Swedish blues rock straight from the rehearsal room ✦"
   },
@@ -35,13 +34,43 @@
     "book_cta": "Book us for your venue or party",
     "tickets": "Tickets",
     "door": "At the door",
-    "no_upcoming": "Warming up the tube amps and tuning strings. New dates coming soon!"
+    "no_upcoming": "Warming up the tube amps and tuning strings. New dates coming soon!",
+    "ticket_booth": "Ticket Booth",
+    "open": "Open",
+    "upcoming_tab": "Upcoming shows",
+    "past_tab": "Past shows",
+    "buy_ticket": "Buy ticket",
+    "save_date": "Save date",
+    "directions": "Directions",
+    "played": "Played",
+    "no_past": "No past shows in the archive yet.",
+    "no_confirmed": "No confirmed dates yet",
+    "at_time": "at",
+    "saved": "SAVED",
+    "free_entry": "Free entry",
+    "sold_out": "Sold out",
+    "tickets_available": "Tickets available"
   },
   "band": {
     "section_tag": "The lineup",
     "title": "Meet the band",
     "desc": "Four personalities, one tight groove.",
     "all_band": "Read all bios & gear specs"
+  },
+  "about": {
+    "story_title": "A great riff always beats workplace wellness perks",
+    "story_p1": "Det 7:e Gunget was born from a shared realization: life is too short for bad guitar tone and sterile pop tracks. We've played in countless bands over the decades, but when the four of us met in the rehearsal space, things clicked instantly on the very first 12-bar blues.",
+    "story_p2": "Our music is rooted in smoky Chicago clubs and southern swamp rock, delivered with Swedish self-deprecation and humor. We take the music very seriously — but never ourselves.",
+    "bullet_instruments": "100% real instruments",
+    "bullet_no_tracks": "No backing tracks",
+    "bullet_tubes": "Always glowing tubes",
+    "photo_caption": "The whole crew gathered ahead of the summer season",
+    "members_tag": "Lineup",
+    "members_title": "The gentlemen behind the groove",
+    "gear_label": "Weapons of choice",
+    "favorite_chord": "Favorite chord",
+    "weakness": "Weakness",
+    "coffee": "Coffee consumption"
   },
   "music": {
     "section_tag": "Jukebox & recordings",
@@ -59,7 +88,20 @@
     "insert_coin": "Insert coin",
     "free_play": "Free play active",
     "credits": "Credits",
-    "open_in": "Open in"
+    "open_in": "Open in",
+    "keypad": "Quick selector (Keypad)",
+    "title_strips": "Title strips",
+    "original_track": "Original song",
+    "original_composition": "Original composition by Det 7:e Gunget",
+    "cover_of": "Cover of",
+    "original_by": "Original by",
+    "prev_song": "Previous track",
+    "next_song": "Next track",
+    "play": "Play",
+    "pause": "Pause",
+    "repertoire_tag": "From the rehearsal room",
+    "repertoire_title": "What does an evening with Det 7:e Gunget sound like?",
+    "repertoire_desc": "We play two or three sets featuring a mix of sweaty Chicago blues, swampy heavy rock and melodic solos. A taste from our setlist:"
   },
   "gallery": {
     "section_tag": "Live & studio",
@@ -71,7 +113,26 @@
     "section_tag": "The community",
     "title": "Fan Central & table fans",
     "desc": "Whether you're a devoted blues lover or an actual motorized desk fan — you belong here.",
-    "open_fan_central": "To Fan Central"
+    "open_fan_central": "To Fan Central",
+    "all_fans": "All fans (both kinds)",
+    "human_fans": "👥 Human fans",
+    "electric_fans": "🌀 Electric desk fans",
+    "human_title": "The Human Fan",
+    "human_badge": "Crowd Favorite #1",
+    "human_desc": "Front row, clapping in time and singing lyrics to songs we forgot we wrote. An invaluable part of the live show.",
+    "human_features_label": "Hallmarks",
+    "human_features": "Big smile, cold drink, singing along",
+    "human_fav_label": "Favorite song",
+    "human_fav": "Anything with a harmonica solo",
+    "human_status": "✓ Status: 100% groove-certified",
+    "electric_title": "The Electric Fan",
+    "electric_model": "Model: Andersson 45W",
+    "electric_desc": "Oscillating motion, 3 speed settings. Without this machine behind the kit, Jonas would evaporate by song two.",
+    "electric_power_label": "Power",
+    "electric_power": "45 Watts of pure cooling",
+    "electric_feature_label": "Best feature",
+    "electric_feature": "Breeze right in time at 120 bpm",
+    "electric_status": "⚡ Energy rating: A+ for groove"
   },
   "contact": {
     "section_tag": "Booking & inquiries",

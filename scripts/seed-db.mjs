@@ -113,6 +113,10 @@ await client.execute(`
   )
 `)
 
+try {
+  await client.execute('DROP TABLE IF EXISTS songs')
+} catch (_) {}
+
 await client.execute(`
   CREATE TABLE IF NOT EXISTS songs (
     id text PRIMARY KEY NOT NULL,
@@ -121,9 +125,40 @@ await client.execute(`
     original_artist text,
     embed_provider text NOT NULL,
     embed_url text NOT NULL,
+    audio_url text,
+    duration integer,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
     updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+  )
+`)
+
+await client.execute(`
+  CREATE TABLE IF NOT EXISTS subscribers (
+    id text PRIMARY KEY NOT NULL,
+    email text UNIQUE NOT NULL,
+    status text DEFAULT 'subscribed' NOT NULL,
+    brevo_contact_id text,
+    subscribed_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    unsubscribed_at integer,
+    created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+  )
+`)
+
+await client.execute(`
+  CREATE TABLE IF NOT EXISTS messages (
+    id text PRIMARY KEY NOT NULL,
+    name text NOT NULL,
+    email text NOT NULL,
+    phone text,
+    event_type text,
+    event_date text,
+    location text,
+    body text NOT NULL,
+    status text DEFAULT 'unread' NOT NULL,
+    created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    read_at integer
   )
 `)
 
@@ -333,7 +368,9 @@ const songs = [
     isOriginal: 1,
     originalArtist: null,
     embedProvider: 'spotify',
-    embedUrl: 'https://open.spotify.com/embed/track/sample1',
+    embedUrl: 'https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT',
+    audioUrl: null,
+    duration: 214,
     sortOrder: 1,
   },
   {
@@ -341,8 +378,10 @@ const songs = [
     title: 'Hoochie Coochie Man',
     isOriginal: 0,
     originalArtist: 'Muddy Waters',
-    embedProvider: 'spotify',
-    embedUrl: 'https://open.spotify.com/embed/track/sample2',
+    embedProvider: 'youtube',
+    embedUrl: 'https://www.youtube.com/embed/e_l6A76NulA',
+    audioUrl: null,
+    duration: 185,
     sortOrder: 2,
   },
   {
@@ -350,8 +389,10 @@ const songs = [
     title: 'Born Under a Bad Sign',
     isOriginal: 0,
     originalArtist: 'Albert King',
-    embedProvider: 'bandcamp',
-    embedUrl: 'https://bandcamp.com/EmbeddedPlayer/track=sample3',
+    embedProvider: 'spotify',
+    embedUrl: 'https://open.spotify.com/embed/track/303W6xRzNqXJvHchW9bW19',
+    audioUrl: null,
+    duration: 168,
     sortOrder: 3,
   },
   {
@@ -360,7 +401,9 @@ const songs = [
     isOriginal: 1,
     originalArtist: null,
     embedProvider: 'youtube',
-    embedUrl: 'https://www.youtube.com/watch?v=sample4',
+    embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    audioUrl: null,
+    duration: 195,
     sortOrder: 4,
   },
 ]
@@ -410,8 +453,8 @@ await client.batch(
       ],
     })),
     ...songs.map((s) => ({
-      sql: `insert into songs (id, title, is_original, original_artist, embed_provider, embed_url, sort_order, created_at, updated_at)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sql: `insert into songs (id, title, is_original, original_artist, embed_provider, embed_url, audio_url, duration, sort_order, created_at, updated_at)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         s.id,
         s.title,
@@ -419,6 +462,8 @@ await client.batch(
         s.originalArtist,
         s.embedProvider,
         s.embedUrl,
+        s.audioUrl,
+        s.duration,
         s.sortOrder,
         now,
         now,

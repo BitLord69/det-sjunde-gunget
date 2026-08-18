@@ -125,6 +125,8 @@ export const songs = sqliteTable('songs', {
     enum: ['spotify', 'bandcamp', 'youtube'],
   }).notNull(),
   embedUrl: text('embed_url').notNull(),
+  audioUrl: text('audio_url'),
+  duration: integer('duration'),
   sortOrder: integer('sort_order').notNull().default(0),
   ...timestamps,
 })
@@ -180,7 +182,14 @@ export const messages = sqliteTable('messages', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull(),
+  phone: text('phone'),
+  eventType: text('event_type'),
+  eventDate: text('event_date'),
+  location: text('location'),
   body: text('body').notNull(),
+  status: text('status', { enum: ['unread', 'read', 'archived'] })
+    .notNull()
+    .default('unread'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
     .notNull()
     .default(sql`(unixepoch() * 1000)`),

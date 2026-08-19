@@ -183,19 +183,44 @@ const handleNewsletter = async () => {
 
         <!-- Desktop Navigation to Dedicated Pages -->
         <nav class="hidden items-center gap-7 text-sm font-semibold tracking-wide lg:flex font-sans">
-          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" :to="localePath('/gigs')">
+          <NuxtLink
+            class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary"
+            active-class="!text-primary !border-primary"
+            :to="localePath('/gigs')"
+            :title="t('nav.hints.gigs')"
+          >
             {{ t('nav.gigs') }}
           </NuxtLink>
-          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" :to="localePath('/music')">
+          <NuxtLink
+            class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary"
+            active-class="!text-primary !border-primary"
+            :to="localePath('/music')"
+            :title="t('nav.hints.music')"
+          >
             {{ t('nav.music') }}
           </NuxtLink>
-          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" :to="localePath('/about')">
+          <NuxtLink
+            class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary"
+            active-class="!text-primary !border-primary"
+            :to="localePath('/about')"
+            :title="t('nav.hints.band')"
+          >
             {{ t('nav.band') }}
           </NuxtLink>
-          <NuxtLink class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary" active-class="!text-primary !border-primary" :to="localePath('/gallery')">
+          <NuxtLink
+            class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary"
+            active-class="!text-primary !border-primary"
+            :to="localePath('/gallery')"
+            :title="t('nav.hints.gallery')"
+          >
             {{ t('nav.gallery') }}
           </NuxtLink>
-          <NuxtLink class="group transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary cursor-fan inline-flex items-center" active-class="!text-primary !border-primary" :to="localePath('/fancentral')">
+          <NuxtLink
+            class="group transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary cursor-fan inline-flex items-center"
+            active-class="!text-primary !border-primary"
+            :to="localePath('/fancentral')"
+            :title="t('nav.hints.fan_central')"
+          >
             {{ t('nav.fan_central') }}
             <svg class="h-4 w-0 group-hover:w-4 group-hover:ml-1.5 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300 fan-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M14.167 10.5c.722 -1.538 1.156 -3.043 1.303 -4.514c.22 -1.63 -.762 -2.986 -3.47 -2.986s-3.69 1.357 -3.47 2.986c.147 1.471 .581 2.976 1.303 4.514"/><path d="M13.169 16.751c.97 1.395 2.057 2.523 3.257 3.386c1.3 1 2.967 .833 4.321 -1.512c1.354 -2.345 .67 -3.874 -.85 -4.498c-1.348 -.608 -2.868 -.985 -4.562 -1.128"/><path d="M8.664 13c-1.693 .143 -3.213 .52 -4.56 1.128c-1.522 .623 -2.206 2.153 -.852 4.498s3.02 2.517 4.321 1.512c1.2 -.863 2.287 -1.991 3.258 -3.386"/></svg>
           </NuxtLink>
@@ -203,10 +228,11 @@ const handleNewsletter = async () => {
             href="https://det-7e-gunget.myspreadshop.se"
             target="_blank"
             rel="noopener noreferrer"
-            class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary inline-flex items-center gap-1 text-secondary/90 font-bold"
+            class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary inline-flex items-center gap-1"
+            :title="t('nav.hints.merch')"
           >
-            <span>👕 {{ t('nav.merch') }}</span>
-            <span class="text-[10px] opacity-70">↗</span>
+            <span>{{ t('nav.merch') }}</span>
+            <span class="text-xs text-base-content/60">↗</span>
           </a>
         </nav>
 
@@ -234,7 +260,11 @@ const handleNewsletter = async () => {
           </div>
 
           <!-- Book Us button (Desktop) -->
-          <NuxtLink class="btn btn-primary btn-sm rounded-full px-5 font-bold shadow-md shadow-primary/20 hover:scale-105 transition-transform hidden sm:inline-flex" :to="localePath('/contact')">
+          <NuxtLink
+            class="btn btn-primary btn-sm rounded-full px-5 font-bold shadow-md shadow-primary/20 hover:scale-105 transition-transform hidden sm:inline-flex"
+            :to="localePath('/contact')"
+            :title="t('nav.hints.book')"
+          >
             {{ t('nav.book') }}
           </NuxtLink>
 
@@ -268,6 +298,7 @@ const handleNewsletter = async () => {
             <NuxtLink
               :to="localePath('/gigs')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
+              :title="t('nav.hints.gigs')"
               @click="isMobileMenuOpen = false"
             >
               <span>📅 {{ t('nav.gigs') }}</span>
@@ -276,6 +307,7 @@ const handleNewsletter = async () => {
             <NuxtLink
               :to="localePath('/music')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
+              :title="t('nav.hints.music')"
               @click="isMobileMenuOpen = false"
             >
               <span>🎵 {{ t('nav.music') }}</span>
@@ -284,6 +316,7 @@ const handleNewsletter = async () => {
             <NuxtLink
               :to="localePath('/about')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
+              :title="t('nav.hints.band')"
               @click="isMobileMenuOpen = false"
             >
               <span>🎸 {{ t('nav.band') }}</span>
@@ -292,6 +325,7 @@ const handleNewsletter = async () => {
             <NuxtLink
               :to="localePath('/gallery')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
+              :title="t('nav.hints.gallery')"
               @click="isMobileMenuOpen = false"
             >
               <span>📷 {{ t('nav.gallery') }}</span>
@@ -300,6 +334,7 @@ const handleNewsletter = async () => {
             <NuxtLink
               :to="localePath('/fancentral')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
+              :title="t('nav.hints.fan_central')"
               @click="isMobileMenuOpen = false"
             >
               <span>💨 {{ t('nav.fan_central') }}</span>
@@ -309,15 +344,17 @@ const handleNewsletter = async () => {
               href="https://det-7e-gunget.myspreadshop.se"
               target="_blank"
               rel="noopener noreferrer"
-              class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-secondary font-bold"
+              class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-base-content hover:text-primary"
+              :title="t('nav.hints.merch')"
               @click="isMobileMenuOpen = false"
             >
-              <span>👕 {{ t('nav.merch') }} (Spreadshop)</span>
+              <span>👕 {{ t('nav.merch') }}</span>
               <span class="text-xs text-base-content/40">↗</span>
             </a>
             <NuxtLink
               :to="localePath('/contact')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-secondary"
+              :title="t('nav.hints.book')"
               @click="isMobileMenuOpen = false"
             >
               <span>✉️ {{ t('nav.book') }}</span>

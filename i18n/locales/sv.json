@@ -7,7 +7,16 @@
     "gallery": "Galleri",
     "fan_central": "Fan Central",
     "merch": "Merch",
-    "book": "Boka oss"
+    "book": "Boka oss",
+    "hints": {
+      "gigs": "Kommande spelningar, turnédatum & biljetter",
+      "music": "Lyssna i vår klassiska jukebox & se alla låtar",
+      "band": "Möt bandmedlemmarna & se deras utrustning",
+      "gallery": "Scenbilder, replokalsfoton & ögonblick",
+      "fan_central": "Bordsfläktar, publikbilder & Gunget-fans",
+      "merch": "Officiell merch-butik på Spreadshop (öppnas i ny flik)",
+      "book": "Skicka bokningsförfrågan för fest, festival eller klubb"
+    }
   },
   "tagline": "Blues, rock och lagom mycket oväsen.",
   "ticker": {

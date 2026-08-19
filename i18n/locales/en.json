@@ -7,7 +7,16 @@
     "gallery": "Gallery",
     "fan_central": "Fan Central",
     "merch": "Merch",
-    "book": "Book us"
+    "book": "Book us",
+    "hints": {
+      "gigs": "Upcoming gigs, tour dates & tickets",
+      "music": "Listen in the jukebox & explore all tracks",
+      "band": "Meet the band members & see their gear",
+      "gallery": "Photos from live shows, rehearsals & studio",
+      "fan_central": "Desk fans, live audience & fan wall",
+      "merch": "Official merch shop on Spreadshop (opens in new tab)",
+      "book": "Send a booking inquiry for your event"
+    }
   },
   "tagline": "Blues, rock, and just the right amount of noise.",
   "ticker": {

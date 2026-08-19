@@ -611,7 +611,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
 
     <!-- 7. BOKA BANDET / KONTAKTFORMULÄR -->
     <section id="contact" class="mx-auto max-w-7xl px-6 lg:px-10 scroll-mt-24">
-      <div class="stage-card rounded-3xl p-8 sm:p-14 border border-primary/30 grid lg:grid-cols-2 gap-12 items-center">
+      <div class="rounded-3xl sm:rounded-[36px] p-8 sm:p-14 bg-gradient-to-b from-base-200/90 via-base-100 to-base-200 dark:from-[#2a1d15] dark:via-[#1a120c] dark:to-[#0d0907] border-4 border-primary/40 shadow-2xl grid lg:grid-cols-2 gap-12 items-center">
         <!-- Left: Pitch & Details -->
         <div class="space-y-6">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold uppercase tracking-widest">
@@ -642,8 +642,8 @@ const formatGigDate = (dateVal: number | string | Date) => {
           </div>
         </div>
 
-        <!-- Right: Contact Form -->
-        <div class="bg-neutral/90 p-6 sm:p-8 rounded-2xl border border-primary/20 shadow-xl">
+        <!-- Right: Contact Form Panel (Matching Jukebox Console Style) -->
+        <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-base-300/80 via-base-200/90 to-base-300/80 dark:from-[#140e0b] dark:to-[#0a0705] border-2 border-primary/35 shadow-xl">
           <form v-if="!formSubmitted" class="space-y-4" @submit.prevent="submitBooking">
             <!-- Honeypot (bot trap) -->
             <input v-model="form.honeypot" type="text" class="hidden" tabindex="-1" autocomplete="off" />
@@ -655,7 +655,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 type="text"
                 required
                 :placeholder="t('contact.name_placeholder')"
-                class="input input-bordered w-full bg-base-200 focus:border-primary text-sm"
+                class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner"
               />
             </div>
 
@@ -666,14 +666,14 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 type="email"
                 required
                 placeholder="namn@exempel.se"
-                class="input input-bordered w-full bg-base-200 focus:border-primary text-sm"
+                class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner"
               />
             </div>
 
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">{{ t('contact.event_type_label') }}</label>
-                <select v-model="form.eventType" class="select select-bordered w-full bg-base-200 focus:border-primary text-sm">
+                <select v-model="form.eventType" class="select select-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner">
                   <option>{{ t('contact.event_club') }}</option>
                   <option>{{ t('contact.event_festival') }}</option>
                   <option>{{ t('contact.event_private') }}</option>
@@ -685,7 +685,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 <input
                   v-model="form.date"
                   type="date"
-                  class="input input-bordered w-full bg-base-200 focus:border-primary text-sm"
+                  class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner"
                 />
               </div>
             </div>
@@ -697,13 +697,13 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 required
                 rows="4"
                 :placeholder="t('contact.message_placeholder')"
-                class="textarea textarea-bordered w-full bg-base-200 focus:border-primary text-sm"
+                class="textarea textarea-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner"
               />
             </div>
 
             <button
               type="submit"
-              class="btn btn-primary w-full font-bold shadow-lg shadow-primary/20 text-base"
+              class="btn btn-primary w-full font-bold shadow-lg shadow-primary/20 text-base cursor-pointer"
               :disabled="formLoading"
             >
               {{ formLoading ? '...' : t('contact.send_button') }}

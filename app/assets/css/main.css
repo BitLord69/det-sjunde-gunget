@@ -331,25 +331,48 @@ body.reading-glasses-mode .badge {
 }
 
 /* =========================================================
-   Universal Dimmed Placeholder Styling (Site-wide & Admin)
+   Theme-Responsive Placeholder Styling (Dark & Light Mode)
    ========================================================= */
-input::placeholder,
-textarea::placeholder,
-.input::placeholder,
-.textarea::placeholder,
-input::-webkit-input-placeholder,
-textarea::-webkit-input-placeholder {
-  color: rgba(160, 150, 135, 0.42) !important;
-  -webkit-text-fill-color: rgba(160, 150, 135, 0.42) !important;
-  opacity: 0.45 !important;
+/* Dark mode: warm ivory-cream placeholder with clear, comfortable contrast */
+[data-theme='dark'] input::placeholder,
+[data-theme='dark'] textarea::placeholder,
+[data-theme='dark'] .input::placeholder,
+[data-theme='dark'] .textarea::placeholder,
+[data-theme='dark'] input::-webkit-input-placeholder,
+[data-theme='dark'] textarea::-webkit-input-placeholder {
+  color: #cfbfab !important;
+  -webkit-text-fill-color: #cfbfab !important;
+  opacity: 0.60 !important;
   font-style: italic !important;
   font-weight: 400 !important;
 }
 
-input::-moz-placeholder,
-textarea::-moz-placeholder {
-  color: rgba(160, 150, 135, 0.42) !important;
-  opacity: 0.45 !important;
+[data-theme='dark'] input::-moz-placeholder,
+[data-theme='dark'] textarea::-moz-placeholder {
+  color: #cfbfab !important;
+  opacity: 0.60 !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+}
+
+/* Light mode: warm roasted espresso placeholder with soft muted tone (never white or washed out!) */
+[data-theme='light'] input::placeholder,
+[data-theme='light'] textarea::placeholder,
+[data-theme='light'] .input::placeholder,
+[data-theme='light'] .textarea::placeholder,
+[data-theme='light'] input::-webkit-input-placeholder,
+[data-theme='light'] textarea::-webkit-input-placeholder {
+  color: #6e5845 !important;
+  -webkit-text-fill-color: #6e5845 !important;
+  opacity: 0.65 !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+}
+
+[data-theme='light'] input::-moz-placeholder,
+[data-theme='light'] textarea::-moz-placeholder {
+  color: #6e5845 !important;
+  opacity: 0.65 !important;
   font-style: italic !important;
   font-weight: 400 !important;
 }

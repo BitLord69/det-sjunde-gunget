@@ -72,7 +72,7 @@ const resetForm = () => {
     <div class="grid lg:grid-cols-[1fr_1.1fr] gap-12 items-start">
       <!-- Left: Contact Details & Tech Rider -->
       <div class="space-y-8">
-        <div class="stage-card p-8 rounded-2xl border border-primary/20 space-y-6">
+        <div class="rounded-2xl p-8 bg-gradient-to-b from-base-200/90 via-base-100 to-base-200 dark:from-[#2a1d15] dark:via-[#1a120c] dark:to-[#0d0907] border-4 border-primary/40 shadow-xl space-y-6">
           <h2 class="font-heading text-2xl text-primary font-bold">Kontaktuppgifter</h2>
           
           <div class="space-y-4 text-sm font-medium">
@@ -124,7 +124,7 @@ const resetForm = () => {
                   href="https://open.spotify.com/search/Det%207%3Ae%20Gunget"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="btn btn-xs btn-outline rounded-full gap-1 text-xs text-emerald-400 border-emerald-500/40 hover:bg-emerald-950/40"
+                  class="btn btn-xs btn-outline rounded-full gap-1 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10"
                   title="Kommer snart på Spotify"
                 >
                   Spotify ↗
@@ -133,7 +133,7 @@ const resetForm = () => {
                   href="https://www.youtube.com/@det7egunget"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="btn btn-xs btn-outline rounded-full gap-1 text-xs text-red-400 border-red-500/40 hover:bg-red-950/40"
+                  class="btn btn-xs btn-outline rounded-full gap-1 text-xs text-red-600 dark:text-red-400 border-red-500/40 hover:bg-red-500/10"
                 >
                   YouTube ↗
                 </a>
@@ -143,7 +143,7 @@ const resetForm = () => {
         </div>
 
         <!-- Tech Rider Card -->
-        <div class="stage-card p-8 rounded-2xl border border-secondary/30 space-y-4">
+        <div class="rounded-2xl p-8 bg-gradient-to-b from-base-200/90 via-base-100 to-base-200 dark:from-[#2a1d15] dark:via-[#1a120c] dark:to-[#0d0907] border-4 border-secondary/40 shadow-xl space-y-4">
           <div class="flex items-center gap-2 text-secondary font-bold text-xs uppercase tracking-wider">
             <span>⚡</span> Teknisk rider
           </div>
@@ -160,7 +160,7 @@ const resetForm = () => {
       </div>
 
       <!-- Right: Booking Form -->
-      <div class="stage-card p-8 sm:p-10 rounded-2xl border border-primary/30 shadow-2xl">
+      <div class="rounded-3xl sm:rounded-[36px] p-8 sm:p-10 bg-gradient-to-b from-base-300/80 via-base-200/90 to-base-300/80 dark:from-[#140e0b] dark:to-[#0a0705] border-2 border-primary/35 shadow-2xl">
         <h2 class="font-heading text-2xl text-primary font-bold mb-6">Skicka en förfrågan</h2>
 
         <form v-if="!formSubmitted" class="space-y-4" @submit.prevent="submitForm">
@@ -173,7 +173,7 @@ const resetForm = () => {
               type="text"
               required
               placeholder="Ditt fullständiga namn"
-              class="input input-bordered w-full bg-base-200 text-sm focus:border-primary"
+              class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 text-sm focus:border-primary shadow-inner"
             />
           </div>
 
@@ -185,7 +185,7 @@ const resetForm = () => {
                 type="email"
                 required
                 placeholder="namn@exempel.se"
-                class="input input-bordered w-full bg-base-200 text-sm focus:border-primary"
+                class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 text-sm focus:border-primary shadow-inner"
               />
             </div>
             <div>
@@ -194,7 +194,7 @@ const resetForm = () => {
                 v-model="form.phone"
                 type="tel"
                 placeholder="070-123 45 67"
-                class="input input-bordered w-full bg-base-200 text-sm focus:border-primary"
+                class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 text-sm focus:border-primary shadow-inner"
               />
             </div>
           </div>
@@ -202,7 +202,7 @@ const resetForm = () => {
           <div class="grid sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">Typ av event</label>
-              <select v-model="form.eventType" class="select select-bordered w-full bg-base-200 text-sm focus:border-primary">
+              <select v-model="form.eventType" class="select select-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 text-sm focus:border-primary shadow-inner">
                 <option>Klubb / pub</option>
                 <option>Festival</option>
                 <option>Privatfest / 50-årsfest</option>
@@ -215,7 +215,7 @@ const resetForm = () => {
               <input
                 v-model="form.date"
                 type="date"
-                class="input input-bordered w-full bg-base-200 text-sm focus:border-primary"
+                class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 text-sm focus:border-primary shadow-inner"
               />
             </div>
           </div>
@@ -225,8 +225,8 @@ const resetForm = () => {
             <input
               v-model="form.location"
               type="text"
-              placeholder="T.ex. Ängelholm, Helsingborg, Malmö..."
-              class="input input-bordered w-full bg-base-200 text-sm focus:border-primary"
+              placeholder="T.ex. Helsingborg, Malmö, Halmstad..."
+              class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 text-sm focus:border-primary shadow-inner"
             />
           </div>
 
@@ -236,8 +236,8 @@ const resetForm = () => {
               v-model="form.message"
               required
               rows="4"
-              placeholder="Berätta lite om er tillställning, förväntad publik och tider!"
-              class="textarea textarea-bordered w-full bg-base-200 text-sm focus:border-primary"
+              placeholder="Berätta lite om spelstället, publik, förväntad speltid..."
+              class="textarea textarea-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 text-sm focus:border-primary shadow-inner"
             />
           </div>
 
@@ -247,10 +247,10 @@ const resetForm = () => {
 
           <button
             type="submit"
-            class="btn btn-primary w-full font-bold shadow-lg shadow-primary/20 text-base"
+            class="btn btn-primary w-full font-bold shadow-lg shadow-primary/20 text-base cursor-pointer"
             :disabled="formLoading"
           >
-            {{ formLoading ? 'Skickar...' : 'Skicka bokningsförfrågan →' }}
+            {{ formLoading ? 'Skickar...' : 'Skicka förfrågan →' }}
           </button>
         </form>
 

@@ -320,7 +320,7 @@ const formatTime = (secs: number) => {
             </div>
 
             <!-- Right: Digital / Analog Track Status & Equalizer Display -->
-            <div class="space-y-4 bg-base-200/90 dark:bg-neutral/80 p-5 sm:p-6 rounded-2xl border border-primary/30 shadow-xl">
+            <div class="space-y-5 bg-base-200/90 dark:bg-neutral/80 p-5 sm:p-7 pb-7 rounded-2xl border border-primary/30 shadow-xl">
               <!-- Digital Track Code Screen -->
               <div class="bg-base-300/90 dark:bg-black/90 p-4 rounded-xl border border-primary/40 font-mono text-center space-y-1 shadow-inner">
                 <div class="flex items-center justify-between text-[11px] text-secondary font-bold">
@@ -356,7 +356,7 @@ const formatTime = (secs: number) => {
               </div>
 
               <!-- Animated Equalizer Bars -->
-              <div class="flex items-end justify-center gap-1.5 h-8 px-2">
+              <div class="flex items-end justify-center gap-1.5 h-7 px-2">
                 <div
                   v-for="bar in 16"
                   :key="bar"
@@ -370,12 +370,12 @@ const formatTime = (secs: number) => {
               </div>
 
               <!-- Jukebox Transport Controls (Play / Pause / Next / Prev) -->
-              <div class="flex items-center justify-between pt-1">
+              <div class="flex items-center justify-between pt-2 px-1 gap-2 sm:gap-4">
                 <!-- Volume & Mute Button -->
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1 flex-shrink-0">
                   <button
                     type="button"
-                    class="btn btn-circle btn-xs btn-ghost text-secondary"
+                    class="btn btn-circle btn-xs btn-ghost text-secondary hover:bg-base-300 cursor-pointer"
                     :title="isMuted ? 'Slå på ljud' : 'Ljud av'"
                     @click="toggleMute"
                   >
@@ -387,16 +387,16 @@ const formatTime = (secs: number) => {
                     max="1"
                     step="0.05"
                     :value="isMuted ? 0 : volume"
-                    class="range range-xs range-secondary w-16 hidden sm:inline-block cursor-pointer"
+                    class="range range-xs range-secondary w-12 sm:w-14 hidden sm:inline-block cursor-pointer"
                     @input="setAudioVolume(parseFloat(($event.target as HTMLInputElement).value))"
                   />
                 </div>
 
-                <!-- Center Controls -->
-                <div class="flex items-center gap-2">
+                <!-- Center Playback Controls -->
+                <div class="flex items-center gap-3 sm:gap-3.5 mx-auto">
                   <button
                     type="button"
-                    class="btn btn-circle btn-sm btn-ghost border border-primary/30 text-primary hover:bg-primary/20 cursor-pointer"
+                    class="btn btn-circle btn-sm btn-ghost border border-primary/40 text-primary hover:bg-primary/20 cursor-pointer"
                     :title="t('music.prev_song')"
                     @click="prevTrack"
                   >
@@ -414,7 +414,7 @@ const formatTime = (secs: number) => {
 
                   <button
                     type="button"
-                    class="btn btn-circle btn-sm btn-ghost border border-primary/30 text-primary hover:bg-primary/20 cursor-pointer"
+                    class="btn btn-circle btn-sm btn-ghost border border-primary/40 text-primary hover:bg-primary/20 cursor-pointer"
                     :title="t('music.next_song')"
                     @click="nextTrack"
                   >
@@ -423,17 +423,19 @@ const formatTime = (secs: number) => {
                 </div>
 
                 <!-- External Player Link -->
-                <a
-                  v-if="currentSong?.embedUrl"
-                  :href="currentSong.embedUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="btn btn-xs btn-outline btn-secondary rounded-full font-bold"
-                  :title="`${t('music.open_in')} ${currentSong.embedProvider}`"
-                >
-                  <span>{{ currentSong.embedProvider }} ↗</span>
-                </a>
-                <div v-else class="w-10" />
+                <div class="flex-shrink-0">
+                  <a
+                    v-if="currentSong?.embedUrl"
+                    :href="currentSong.embedUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-xs btn-outline btn-secondary rounded-full font-bold px-2.5 py-0.5"
+                    :title="`${t('music.open_in')} ${currentSong.embedProvider}`"
+                  >
+                    <span>{{ currentSong.embedProvider }} ↗</span>
+                  </a>
+                  <div v-else class="w-8" />
+                </div>
               </div>
             </div>
           </div>
@@ -647,7 +649,7 @@ const formatTime = (secs: number) => {
         <!-- Stage Floor / Monitor Surface with Gaffer-Taped Paper Sheet -->
         <div class="stage-floor-board p-4 sm:p-10 rounded-3xl border border-primary/30 relative shadow-2xl">
           <!-- Worn Paper Setlist Sheet (With realistic angle & gaffer tape on corners) -->
-          <div class="stage-setlist-sheet relative mx-auto max-w-2xl bg-[#faf6ed] text-[#1c1611] p-6 sm:p-10 rounded-sm shadow-[0_20px_45px_rgba(0,0,0,0.85)] border border-[#dfd2be] select-none overflow-hidden">
+          <div class="stage-setlist-sheet relative mx-auto max-w-2xl bg-[#faf6ed] text-[#1c1611] p-6 sm:p-10 rounded-sm shadow-[0_20px_45px_rgba(0,0,0,0.85)] border border-[#dfd2be] select-none">
             <!-- Silver Gaffer Tape Strips -->
             <div class="gaffer-tape gaffer-tape-tl" />
             <div class="gaffer-tape gaffer-tape-tr" />
@@ -839,6 +841,16 @@ const formatTime = (secs: number) => {
   background-image: 
     radial-gradient(ellipse at 50% 20%, #1e150f 0%, #120c08 60%, #0a0705 100%),
     repeating-linear-gradient(90deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 2px, transparent 2px, transparent 40px);
+  border-color: rgba(226, 189, 114, 0.3);
+}
+
+:global([data-theme='light']) .stage-floor-board {
+  background: radial-gradient(ellipse at 50% 20%, #f8f1e6 0%, #efe4d3 60%, #e2d2bc 100%);
+  background-image: 
+    radial-gradient(ellipse at 50% 20%, #f8f1e6 0%, #efe4d3 60%, #e2d2bc 100%),
+    repeating-linear-gradient(90deg, rgba(140, 90, 40, 0.05) 0px, rgba(140, 90, 40, 0.05) 2px, transparent 2px, transparent 40px);
+  border: 4px solid rgba(184, 125, 59, 0.35);
+  box-shadow: 0 20px 40px -10px rgba(90, 55, 20, 0.15);
 }
 
 .stage-setlist-sheet {
@@ -846,6 +858,12 @@ const formatTime = (secs: number) => {
   transform: rotate(-0.75deg);
   transition: transform 0.3s ease;
 }
+
+:global([data-theme='light']) .stage-setlist-sheet {
+  box-shadow: 0 12px 30px rgba(80, 45, 15, 0.18);
+  border: 1px solid #d8c7ad;
+}
+
 .stage-setlist-sheet:hover {
   transform: rotate(0deg);
 }

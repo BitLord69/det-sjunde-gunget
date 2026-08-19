@@ -6,6 +6,7 @@
     "band": "The band",
     "gallery": "Gallery",
     "fan_central": "Fan Central",
+    "merch": "Merch",
     "book": "Book us"
   },
   "tagline": "Blues, rock, and just the right amount of noise.",
@@ -173,6 +174,10 @@
     "tagline": "Blues, rock, and just the right amount of noise. Based in Ängelholm and touring Skåne.",
     "quick_links": "Quick links",
     "follow_us": "Follow us",
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "email_label": "Email",
+    "location_label": "Location",
+    "location_value": "Ängelholm & Skåne, Sweden",
+    "merch_shop": "👕 Official Merch Shop ↗"
   }
 }

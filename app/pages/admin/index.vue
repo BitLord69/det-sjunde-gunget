@@ -500,6 +500,9 @@ const galForm = reactive({
   frameStyle: 'polaroid',
   rotation: 0,
   captionSv: '',
+  captionEn: '',
+  altTextSv: '',
+  altTextEn: '',
 })
 
 const openAddGal = () => {
@@ -509,6 +512,9 @@ const openAddGal = () => {
   galForm.frameStyle = 'polaroid'
   galForm.rotation = 0
   galForm.captionSv = ''
+  galForm.captionEn = ''
+  galForm.altTextSv = ''
+  galForm.altTextEn = ''
   editingGal.value = 'new'
 }
 
@@ -519,6 +525,9 @@ const openEditGal = (g: any) => {
   galForm.frameStyle = g.frameStyle || 'polaroid'
   galForm.rotation = g.rotation || 0
   galForm.captionSv = g.captionSv || ''
+  galForm.captionEn = g.captionEn || ''
+  galForm.altTextSv = g.altTextSv || ''
+  galForm.altTextEn = g.altTextEn || ''
   editingGal.value = g.id
 }
 
@@ -1186,9 +1195,21 @@ const deleteAdminUser = async (admin: any) => {
             <label class="block text-xs font-bold text-secondary mb-1">Lutning / rotation (-3° till 3°)</label>
             <input v-model.number="galForm.rotation" type="number" min="-5" max="5" class="input input-bordered w-full bg-base-200 input-sm font-mono" />
           </div>
-          <div class="sm:col-span-2">
+          <div>
             <label class="block text-xs font-bold text-secondary mb-1">Bildtext (svenska)</label>
             <input v-model="galForm.captionSv" type="text" placeholder="Hela gänget samlat inför sommarsäsongen..." class="input input-bordered w-full bg-base-200 input-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Bildtext (engelska / English)</label>
+            <input v-model="galForm.captionEn" type="text" placeholder="The whole band gathered before the summer season..." class="input input-bordered w-full bg-base-200 input-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Alt-text (svenska / tillgänglighet)</label>
+            <input v-model="galForm.altTextSv" type="text" placeholder="Det 7:e Gunget live på scen" class="input input-bordered w-full bg-base-200 input-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Alt-text (engelska / accessibility)</label>
+            <input v-model="galForm.altTextEn" type="text" placeholder="Det 7:e Gunget performing live on stage" class="input input-bordered w-full bg-base-200 input-sm" />
           </div>
         </div>
 

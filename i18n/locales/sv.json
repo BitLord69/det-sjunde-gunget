@@ -6,6 +6,7 @@
     "band": "Bandet",
     "gallery": "Galleri",
     "fan_central": "Fan Central",
+    "merch": "Merch",
     "book": "Boka oss"
   },
   "tagline": "Blues, rock och lagom mycket oväsen.",
@@ -173,6 +174,10 @@
     "tagline": "Blues, rock och lagom mycket oväsen. Baserade i Ängelholm med omnejd.",
     "quick_links": "Snabblänkar",
     "follow_us": "Följ oss",
-    "rights": "Alla rättigheter förbehållna."
+    "rights": "Alla rättigheter förbehållna.",
+    "email_label": "E-post",
+    "location_label": "Plats",
+    "location_value": "Ängelholm & Skåne",
+    "merch_shop": "👕 Officiell Merch-shop ↗"
   }
 }

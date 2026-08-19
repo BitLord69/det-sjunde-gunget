@@ -199,6 +199,15 @@ const handleNewsletter = async () => {
             {{ t('nav.fan_central') }}
             <svg class="h-4 w-0 group-hover:w-4 group-hover:ml-1.5 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300 fan-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M14.167 10.5c.722 -1.538 1.156 -3.043 1.303 -4.514c.22 -1.63 -.762 -2.986 -3.47 -2.986s-3.69 1.357 -3.47 2.986c.147 1.471 .581 2.976 1.303 4.514"/><path d="M13.169 16.751c.97 1.395 2.057 2.523 3.257 3.386c1.3 1 2.967 .833 4.321 -1.512c1.354 -2.345 .67 -3.874 -.85 -4.498c-1.348 -.608 -2.868 -.985 -4.562 -1.128"/><path d="M8.664 13c-1.693 .143 -3.213 .52 -4.56 1.128c-1.522 .623 -2.206 2.153 -.852 4.498s3.02 2.517 4.321 1.512c1.2 -.863 2.287 -1.991 3.258 -3.386"/></svg>
           </NuxtLink>
+          <a
+            href="https://det-7e-gunget.myspreadshop.se"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary inline-flex items-center gap-1 text-secondary/90 font-bold"
+          >
+            <span>👕 {{ t('nav.merch') }}</span>
+            <span class="text-[10px] opacity-70">↗</span>
+          </a>
         </nav>
 
         <!-- Interactive Volume Knob, Booking CTA, and Hamburger Button -->
@@ -296,6 +305,16 @@ const handleNewsletter = async () => {
               <span>💨 {{ t('nav.fan_central') }}</span>
               <span class="text-xs text-base-content/40">›</span>
             </NuxtLink>
+            <a
+              href="https://det-7e-gunget.myspreadshop.se"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-secondary font-bold"
+              @click="isMobileMenuOpen = false"
+            >
+              <span>👕 {{ t('nav.merch') }} (Spreadshop)</span>
+              <span class="text-xs text-base-content/40">↗</span>
+            </a>
             <NuxtLink
               :to="localePath('/contact')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-secondary"
@@ -402,7 +421,7 @@ const handleNewsletter = async () => {
                 rel="noopener noreferrer"
                 class="hover:text-secondary text-primary/90 font-bold transition-colors inline-flex items-center gap-1"
               >
-                <span>👕 Officiell Merch-shop ↗</span>
+                <span>{{ t('footer.merch_shop') }}</span>
               </a>
             </li>
           </ul>
@@ -415,8 +434,8 @@ const handleNewsletter = async () => {
             {{ t('contact.desc') }}
           </p>
           <div class="space-y-1.5 text-sm font-medium">
-            <p><span class="text-secondary font-bold">E-post:</span> kontakt@det7egunget.se</p>
-            <p><span class="text-secondary font-bold">Plats:</span> Ängelholm & Skåne</p>
+            <p><span class="text-secondary font-bold">{{ t('footer.email_label') }}:</span> kontakt@det7egunget.se</p>
+            <p><span class="text-secondary font-bold">{{ t('footer.location_label') }}:</span> {{ t('footer.location_value') }}</p>
           </div>
           <div class="mt-4">
             <NuxtLink :to="localePath('/contact')" class="btn btn-outline btn-sm btn-primary rounded-full px-5">
@@ -438,7 +457,7 @@ const handleNewsletter = async () => {
               type="email"
               required
               :placeholder="t('newsletter.placeholder')"
-              class="input input-bordered input-sm w-full bg-neutral text-neutral-content focus:border-primary text-xs"
+              class="input input-bordered input-sm w-full bg-neutral focus:border-primary text-xs"
             />
             <div v-if="newsletterError" class="text-error text-[11px] font-semibold">
               ⚠️ {{ newsletterError }}

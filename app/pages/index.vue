@@ -263,6 +263,10 @@ const formatGigDate = (dateVal: number | string | Date) => {
     </section>
 
 
+    <!-- 2.5 OFFICIELL BAND-MERCH SHOWCASE -->
+    <MerchSection />
+
+
     <!-- 3. JUKEBOX & MUSIK SEKTION -->
     <section id="music" class="mx-auto max-w-7xl px-6 lg:px-10 scroll-mt-24">
       <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 pb-4 border-b border-primary/20 gap-4">
@@ -648,7 +652,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 type="text"
                 required
                 :placeholder="t('contact.name_placeholder')"
-                class="input input-bordered w-full bg-base-200 text-neutral-content focus:border-primary text-sm"
+                class="input input-bordered w-full bg-base-200 focus:border-primary text-sm"
               />
             </div>
 
@@ -659,14 +663,14 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 type="email"
                 required
                 placeholder="namn@exempel.se"
-                class="input input-bordered w-full bg-base-200 text-neutral-content focus:border-primary text-sm"
+                class="input input-bordered w-full bg-base-200 focus:border-primary text-sm"
               />
             </div>
 
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">{{ t('contact.event_type_label') }}</label>
-                <select v-model="form.eventType" class="select select-bordered w-full bg-base-200 text-neutral-content focus:border-primary text-sm">
+                <select v-model="form.eventType" class="select select-bordered w-full bg-base-200 focus:border-primary text-sm">
                   <option>{{ t('contact.event_club') }}</option>
                   <option>{{ t('contact.event_festival') }}</option>
                   <option>{{ t('contact.event_private') }}</option>
@@ -678,7 +682,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 <input
                   v-model="form.date"
                   type="date"
-                  class="input input-bordered w-full bg-base-200 text-neutral-content focus:border-primary text-sm"
+                  class="input input-bordered w-full bg-base-200 focus:border-primary text-sm"
                 />
               </div>
             </div>
@@ -690,7 +694,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 required
                 rows="4"
                 :placeholder="t('contact.message_placeholder')"
-                class="textarea textarea-bordered w-full bg-base-200 text-neutral-content focus:border-primary text-sm"
+                class="textarea textarea-bordered w-full bg-base-200 focus:border-primary text-sm"
               />
             </div>
 

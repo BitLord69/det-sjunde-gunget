@@ -175,6 +175,20 @@ await client.execute(`
 `)
 
 await client.execute(`
+  CREATE TABLE IF NOT EXISTS setlist_items (
+    id text PRIMARY KEY NOT NULL,
+    title text NOT NULL,
+    artist text,
+    is_original integer DEFAULT 0 NOT NULL,
+    set_name text DEFAULT 'Set 1' NOT NULL,
+    notes text,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+  )
+`)
+
+await client.execute(`
   CREATE TABLE IF NOT EXISTS admins (
     id text PRIMARY KEY NOT NULL,
     name text NOT NULL,
@@ -443,6 +457,18 @@ const defaultHashtags = [
   { id: 'tag-19', tag: '#FanCentral', category: 'photo', sortOrder: 19 },
 ]
 
+const defaultSetlist = [
+  { id: 'set-1', title: 'Det Sjunde Gunget', artist: 'Det 7:e Gunget', isOriginal: true, setName: 'Set 1: Klubbstart', notes: 'Gungig bluesrock-öppnare', sortOrder: 1 },
+  { id: 'set-2', title: 'Hoochie Coochie Man', artist: 'Muddy Waters', isOriginal: false, setName: 'Set 1: Klubbstart', notes: 'Klassisk Chicago-blues & munspel', sortOrder: 2 },
+  { id: 'set-3', title: 'Born Under a Bad Sign', artist: 'Albert King', isOriginal: false, setName: 'Set 1: Klubbstart', notes: 'Tungt gung & gitarriff', sortOrder: 3 },
+  { id: 'set-4', title: 'The Thrill is Gone', artist: 'B.B. King', isOriginal: false, setName: 'Set 1: Klubbstart', notes: 'Melodiskt och dynamiskt gitarrsolo', sortOrder: 4 },
+  { id: 'set-5', title: 'Sväng i Källaren', artist: 'Det 7:e Gunget', isOriginal: true, setName: 'Set 2: Svettigt ös', notes: 'Rå replokalsenergi', sortOrder: 5 },
+  { id: 'set-6', title: 'Sweet Home Chicago', artist: 'Robert Johnson', isOriginal: false, setName: 'Set 2: Svettigt ös', notes: 'Upptempo shuffle & allsång', sortOrder: 6 },
+  { id: 'set-7', title: 'Pride and Joy', artist: 'Stevie Ray Vaughan', isOriginal: false, setName: 'Set 2: Svettigt ös', notes: 'Texas blues med fullt ställ', sortOrder: 7 },
+  { id: 'set-8', title: 'Got My Mojo Working', artist: 'Muddy Waters', isOriginal: false, setName: 'Set 2: Svettigt ös', notes: 'Snabb shuffle & munspelsduell', sortOrder: 8 },
+  { id: 'set-9', title: 'Rock Me Baby', artist: 'B.B. King', isOriginal: false, setName: 'Extranummer / Encores', notes: 'Långt jammigt avslut med publikkontakt', sortOrder: 9 },
+]
+
 await client.batch(
   [
     ...gigs.map((g) => ({
@@ -526,8 +552,13 @@ await client.batch(
         values (?, ?, ?, 1, ?, ?, ?)`,
       args: [h.id, h.tag, h.category, h.sortOrder, now, now],
     })),
+    ...defaultSetlist.map((s) => ({
+      sql: `insert into setlist_items (id, title, artist, is_original, set_name, notes, sort_order, created_at, updated_at)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [s.id, s.title, s.artist, s.isOriginal ? 1 : 0, s.setName, s.notes, s.sortOrder, now, now],
+    })),
   ],
   'write',
 )
 
-console.log(`Seeded ${admins.length} admins, ${gigs.length} gigs, ${members.length} band members, ${gallery.length} gallery items, ${songs.length} songs, and ${defaultHashtags.length} hashtags.`)
+console.log(`Seeded ${admins.length} admins, ${gigs.length} gigs, ${members.length} band members, ${gallery.length} gallery items, ${songs.length} songs, ${defaultHashtags.length} hashtags, and ${defaultSetlist.length} setlist tracks.`)

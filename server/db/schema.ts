@@ -205,6 +205,17 @@ export const socialHashtags = sqliteTable('social_hashtags', {
   ...timestamps,
 })
 
+export const setlistItems = sqliteTable('setlist_items', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  artist: text('artist'),
+  isOriginal: integer('is_original', { mode: 'boolean' }).notNull().default(false),
+  setName: text('set_name').notNull().default('Set 1'),
+  notes: text('notes'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  ...timestamps,
+})
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),

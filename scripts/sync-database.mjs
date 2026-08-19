@@ -20,7 +20,7 @@ const remoteClient = createClient({
 })
 
 async function runMigration() {
-  console.log('Creating production tables in Turso Cloud...')
+  console.log('Creating & updating production tables in Turso Cloud...')
 
   // 1. Gigs table
   await remoteClient.execute(`
@@ -85,11 +85,21 @@ async function runMigration() {
       original_artist text,
       embed_provider text NOT NULL,
       embed_url text NOT NULL,
+      audio_url text,
+      duration integer,
       sort_order integer DEFAULT 0 NOT NULL,
       created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
       updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
     )
   `)
+
+  // Auto-migrate missing columns on songs if table existed before
+  try {
+    await remoteClient.execute('ALTER TABLE songs ADD COLUMN audio_url text')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE songs ADD COLUMN duration integer')
+  } catch {}
 
   // 5. Admins table
   await remoteClient.execute(`
@@ -159,7 +169,35 @@ async function runMigration() {
     )
   `)
 
-  console.log('✓ All database tables successfully created in Turso Cloud!')
+  // 8. Social Hashtags table
+  await remoteClient.execute(`
+    CREATE TABLE IF NOT EXISTS social_hashtags (
+      id text PRIMARY KEY NOT NULL,
+      tag text NOT NULL,
+      category text NOT NULL DEFAULT 'all',
+      is_active integer NOT NULL DEFAULT 1,
+      sort_order integer NOT NULL DEFAULT 0,
+      created_at integer NOT NULL DEFAULT (unixepoch() * 1000),
+      updated_at integer NOT NULL DEFAULT (unixepoch() * 1000)
+    )
+  `)
+
+  // 9. Setlist Items table
+  await remoteClient.execute(`
+    CREATE TABLE IF NOT EXISTS setlist_items (
+      id text PRIMARY KEY NOT NULL,
+      title text NOT NULL,
+      artist text,
+      is_original integer NOT NULL DEFAULT 0,
+      set_name text NOT NULL DEFAULT 'Set 1',
+      notes text,
+      sort_order integer NOT NULL DEFAULT 0,
+      created_at integer NOT NULL DEFAULT (unixepoch() * 1000),
+      updated_at integer NOT NULL DEFAULT (unixepoch() * 1000)
+    )
+  `)
+
+  console.log('✓ All database tables & columns successfully verified in Turso Cloud!')
 
   // Check if data should be synced from local SQLite
   const localClient = createClient({ url: 'file:local.db' })
@@ -169,6 +207,8 @@ async function runMigration() {
     const localMembers = await localClient.execute('SELECT * FROM band_members')
     const localGallery = await localClient.execute('SELECT * FROM gallery_items')
     const localSongs = await localClient.execute('SELECT * FROM songs')
+    const localHashtags = await localClient.execute('SELECT * FROM social_hashtags')
+    const localSetlist = await localClient.execute('SELECT * FROM setlist_items')
 
     console.log(`\nSyncing data from local database:`)
     console.log(`- ${localAdmins.rows.length} admins`)
@@ -176,6 +216,8 @@ async function runMigration() {
     console.log(`- ${localMembers.rows.length} band members`)
     console.log(`- ${localGallery.rows.length} gallery items`)
     console.log(`- ${localSongs.rows.length} songs`)
+    console.log(`- ${localHashtags.rows.length} social hashtags`)
+    console.log(`- ${localSetlist.rows.length} setlist tracks`)
 
     // Clean remote tables before insert
     await remoteClient.batch([
@@ -185,6 +227,8 @@ async function runMigration() {
       { sql: 'DELETE FROM band_members', args: [] },
       { sql: 'DELETE FROM gallery_items', args: [] },
       { sql: 'DELETE FROM songs', args: [] },
+      { sql: 'DELETE FROM social_hashtags', args: [] },
+      { sql: 'DELETE FROM setlist_items', args: [] },
     ], 'write')
 
     // Batch insert into remote
@@ -206,8 +250,16 @@ async function runMigration() {
         args: [row.id, row.category, row.media_url, row.frame_style, row.rotation, row.caption_sv, row.caption_en, row.alt_text_sv, row.alt_text_en, row.taken_at, row.created_at, row.updated_at],
       })),
       ...localSongs.rows.map((row) => ({
-        sql: `INSERT INTO songs (id, title, is_original, original_artist, embed_provider, embed_url, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [row.id, row.title, row.is_original, row.original_artist, row.embed_provider, row.embed_url, row.sort_order, row.created_at, row.updated_at],
+        sql: `INSERT INTO songs (id, title, is_original, original_artist, embed_provider, embed_url, audio_url, duration, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.title, row.is_original, row.original_artist, row.embed_provider, row.embed_url, row.audio_url || null, row.duration || null, row.sort_order, row.created_at, row.updated_at],
+      })),
+      ...localHashtags.rows.map((row) => ({
+        sql: `INSERT INTO social_hashtags (id, tag, category, is_active, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.tag, row.category, row.is_active, row.sort_order, row.created_at, row.updated_at],
+      })),
+      ...localSetlist.rows.map((row) => ({
+        sql: `INSERT INTO setlist_items (id, title, artist, is_original, set_name, notes, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.title, row.artist, row.is_original, row.set_name, row.notes, row.sort_order, row.created_at, row.updated_at],
       })),
     ]
 

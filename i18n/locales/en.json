@@ -109,6 +109,10 @@
     "next_song": "Next track",
     "play": "Play",
     "pause": "Pause",
+    "mode_vinyl": "Turntable (Hi-Fi)",
+    "mode_vinyl_tooltip": "Show vintage turntable with spinning vinyl and vacuum tube glow",
+    "mode_embed": "Spotify / YouTube",
+    "mode_embed_tooltip": "Show embedded official Spotify or YouTube player with full controls",
     "repertoire_tag": "From the rehearsal room",
     "repertoire_title": "What does an evening with Det 7:e Gunget sound like?",
     "repertoire_desc": "We play two or three sets featuring a mix of sweaty Chicago blues, swampy heavy rock and melodic solos. A taste from our setlist:"

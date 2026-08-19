@@ -8,6 +8,28 @@ useSeoMeta({
 
 const { data: songsData } = await useFetch('/api/songs')
 
+interface SetlistItem {
+  id: string
+  title: string
+  artist: string | null
+  isOriginal: boolean
+  setName: string
+  notes: string | null
+  sortOrder: number
+}
+const { data: setlistData } = await useFetch<SetlistItem[]>('/api/setlist')
+
+const groupedSetlist = computed(() => {
+  const items = setlistData.value || []
+  const groups: Record<string, SetlistItem[]> = {}
+  for (const item of items) {
+    const set = item.setName || 'Set 1'
+    if (!groups[set]) groups[set] = []
+    groups[set].push(item)
+  }
+  return groups
+})
+
 const songFilter = ref<'all' | 'original' | 'cover'>('all')
 const playerDisplayMode = ref<'vinyl' | 'embed'>('vinyl')
 
@@ -205,23 +227,36 @@ const formatTime = (secs: number) => {
               Hi-Fi Stereophonic Sound • 45 R.P.M.
             </span>
 
-            <!-- Mode Switcher: Vinyl vs Embed Player -->
-            <div class="flex items-center gap-1 bg-black/60 p-1 rounded-full border border-primary/30 mx-auto sm:mx-0">
+            <!-- Mode Switcher: Black Vinyl vs Embed Player with Tooltips -->
+            <div class="flex items-center gap-1.5 bg-black/75 p-1 rounded-full border border-primary/40 shadow-inner mx-auto sm:mx-0">
               <button
                 type="button"
-                class="px-3 py-0.5 rounded-full text-xs font-bold transition-all"
-                :class="playerDisplayMode === 'vinyl' ? 'bg-primary text-neutral shadow' : 'text-base-content/70 hover:text-primary'"
+                class="px-3.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5"
+                :class="playerDisplayMode === 'vinyl' ? 'bg-primary text-neutral shadow-md shadow-primary/30 font-black' : 'text-base-content/75 hover:text-primary hover:bg-white/5'"
+                :title="t('music.mode_vinyl_tooltip')"
                 @click="playerDisplayMode = 'vinyl'"
               >
-                🎛️ Skivtallrik (Hi-Fi)
+                <!-- Authentic Black Vinyl LP Icon -->
+                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="11" fill="#14110f" stroke="#3d332a" stroke-width="1.2"/>
+                  <circle cx="12" cy="12" r="8.5" stroke="#2b231d" stroke-width="0.75" stroke-dasharray="2 1"/>
+                  <circle cx="12" cy="12" r="6.5" stroke="#241d18" stroke-width="0.75"/>
+                  <circle cx="12" cy="12" r="4.2" fill="#9e2325" stroke="#d97706" stroke-width="0.6"/>
+                  <circle cx="12" cy="12" r="1.3" fill="#14110f"/>
+                </svg>
+                <span>{{ t('music.mode_vinyl') }}</span>
               </button>
               <button
                 type="button"
-                class="px-3 py-0.5 rounded-full text-xs font-bold transition-all"
-                :class="playerDisplayMode === 'embed' ? 'bg-primary text-neutral shadow' : 'text-base-content/70 hover:text-primary'"
+                class="px-3.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5"
+                :class="playerDisplayMode === 'embed' ? 'bg-primary text-neutral shadow-md shadow-primary/30 font-black' : 'text-base-content/75 hover:text-primary hover:bg-white/5'"
+                :title="t('music.mode_embed_tooltip')"
                 @click="playerDisplayMode = 'embed'"
               >
-                ▶️ Inbäddad spelare
+                <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <span>{{ t('music.mode_embed') }}</span>
               </button>
             </div>
           </div>
@@ -527,51 +562,59 @@ const formatTime = (secs: number) => {
             <div
               v-for="song in filteredSongs"
               :key="song.id"
-              class="relative rounded-lg p-3 sm:p-4 border-2 transition-all duration-200 cursor-pointer shadow-md select-none group"
+              class="vintage-title-strip relative rounded-md p-3 sm:p-3.5 transition-all duration-200 cursor-pointer select-none group border"
               :class="
                 activeSongId === song.id
-                  ? 'bg-[#fff9e6] border-[#d97706] ring-4 ring-primary/40 shadow-xl scale-[1.02]'
-                  : 'bg-[#fefce8] border-[#b45309]/30 hover:border-primary hover:shadow-lg'
+                  ? 'vintage-strip-active ring-2 ring-primary/80 shadow-2xl scale-[1.01]'
+                  : 'vintage-strip-inactive hover:brightness-105'
               "
               @click="selectSong(song.id)"
             >
-              <!-- Colored Header Band (Red for Side A, Blue/Teal for Side B) -->
+              <!-- Perforation Edge Marks on Left & Right -->
+              <div class="strip-perf-left"></div>
+              <div class="strip-perf-right"></div>
+
+              <!-- Weathered Header Band (Aged Red for Side A, Aged Navy for Side B) -->
               <div
-                class="absolute top-0 left-0 right-0 h-4 rounded-t-sm flex items-center justify-between px-3 text-[8px] font-mono font-bold tracking-widest text-white uppercase shadow-sm"
-                :class="song.isOriginal ? 'bg-red-700' : 'bg-sky-800'"
+                class="strip-header h-5 rounded-t-sm flex items-center justify-between px-3 text-[9px] font-mono font-black tracking-widest uppercase shadow-sm"
+                :class="song.isOriginal ? 'strip-header-a' : 'strip-header-b'"
               >
-                <span>★ DET 7:E GUNGET ★</span>
-                <span>SIDE {{ song.side }}</span>
+                <span class="flex items-center gap-1.5">
+                  <span class="opacity-70">★</span>
+                  <span>DET 7:E GUNGET</span>
+                  <span class="opacity-70">★</span>
+                </span>
+                <span class="opacity-90 font-mono tracking-wider">SIDE {{ song.side }} • 45 RPM</span>
               </div>
 
-              <!-- Strip Content inside classic border -->
-              <div class="pt-3 pb-1 px-1 flex items-center justify-between gap-3 text-neutral">
-                <!-- Code Badge (e.g. A1, B2) -->
+              <!-- Strip Content with Letterpress Paper Look -->
+              <div class="pt-2.5 pb-1.5 px-2 flex items-center justify-between gap-3 text-neutral">
+                <!-- Stamped Code Badge (A1, B1...) -->
                 <div
-                  class="w-9 h-9 rounded-lg font-mono font-black text-sm flex items-center justify-center border shadow-inner flex-shrink-0"
-                  :class="song.isOriginal ? 'bg-red-100 text-red-900 border-red-300' : 'bg-sky-100 text-sky-900 border-sky-300'"
+                  class="w-8 h-8 rounded font-mono font-black text-sm flex items-center justify-center shadow-inner flex-shrink-0 border"
+                  :class="song.isOriginal ? 'stamp-badge-a' : 'stamp-badge-b'"
                 >
                   {{ song.code }}
                 </div>
 
-                <!-- Song Details (Bold typewriter style) -->
+                <!-- Song Details (Vintage Typeset) -->
                 <div class="flex-grow min-w-0">
-                  <div class="font-heading font-black text-sm sm:text-base text-stone-900 truncate group-hover:text-amber-900 leading-snug">
+                  <div class="font-heading font-black text-sm sm:text-base text-[#241a14] truncate group-hover:text-[#6e1e0a] leading-tight strip-title">
                     {{ song.title }}
                   </div>
-                  <div class="text-[11px] font-sans font-medium text-stone-600 truncate mt-0.5">
+                  <div class="text-[11px] font-mono font-semibold text-[#665243] truncate mt-0.5">
                     {{ song.isOriginal ? t('music.original_composition') : `${t('music.original_by')} ${song.originalArtist}` }}
                   </div>
                 </div>
 
-                <!-- Play Indicator Icon -->
+                <!-- Vintage Play Jewel Indicator -->
                 <div class="flex-shrink-0 flex items-center gap-1.5">
                   <span
-                    class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-sm transition-transform"
+                    class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow transition-transform border border-amber-900/30"
                     :class="
                       activeSongId === song.id
-                        ? 'bg-amber-500 text-white animate-pulse scale-110'
-                        : 'bg-stone-200 text-stone-700 group-hover:bg-primary group-hover:text-neutral'
+                        ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-[#1a1208] shadow-[0_0_10px_rgba(245,158,11,0.8)] animate-pulse'
+                        : 'bg-[#d8caa8] text-[#4a3928] group-hover:bg-primary group-hover:text-neutral'
                     "
                   >
                     {{ activeSongId === song.id && isAudioPlaying ? '⏸' : '▶' }}
@@ -579,21 +622,23 @@ const formatTime = (secs: number) => {
                 </div>
               </div>
 
-              <!-- Bottom Red/Blue stripe ornament -->
+              <!-- Bottom Colored Stripe -->
               <div
-                class="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-sm"
-                :class="song.isOriginal ? 'bg-red-700' : 'bg-sky-800'"
+                class="h-1 rounded-b-sm"
+                :class="song.isOriginal ? 'strip-footer-a' : 'strip-footer-b'"
               />
             </div>
           </div>
         </div>
       </div>
 
-      <!-- VINTAGE CHALKBOARD REPERTOIRE & LIVE SETLIST -->
-      <div class="stage-card p-8 sm:p-12 rounded-3xl border border-primary/20 space-y-6 max-w-4xl mx-auto">
-        <div class="space-y-2">
-          <span class="text-xs font-bold uppercase tracking-widest text-secondary">{{ t('music.repertoire_tag') }}</span>
-          <h2 class="font-heading text-2xl sm:text-4xl text-primary font-bold">
+      <!-- AUTHENTIC GAFFER-TAPED STAGE SETLIST & REPERTOIRE -->
+      <div class="space-y-6 max-w-4xl mx-auto">
+        <div class="text-center sm:text-left space-y-2">
+          <span class="text-xs font-bold uppercase tracking-widest text-secondary flex items-center justify-center sm:justify-start gap-2">
+            <span>📋</span> {{ t('music.repertoire_tag') }}
+          </span>
+          <h2 class="font-heading text-3xl sm:text-4xl text-primary font-bold">
             {{ t('music.repertoire_title') }}
           </h2>
           <p class="text-sm text-base-content/80 max-w-2xl">
@@ -601,15 +646,278 @@ const formatTime = (secs: number) => {
           </p>
         </div>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs font-mono">
-          <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Det 7:e Gunget ({{ t('music.original_track') }})</div>
-          <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Hoochie Coochie Man (Muddy Waters)</div>
-          <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Born Under a Bad Sign (Albert King)</div>
-          <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ The Thrill is Gone (B.B. King)</div>
-          <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Sväng i källaren ({{ t('music.original_track') }})</div>
-          <div class="p-3 bg-base-200/90 rounded-xl border border-primary/20">✦ Sweet Home Chicago (Robert Johnson)</div>
+        <!-- Stage Floor / Monitor Surface with Gaffer-Taped Paper Sheet -->
+        <div class="stage-floor-board p-4 sm:p-10 rounded-3xl border border-primary/30 relative shadow-2xl">
+          <!-- Worn Paper Setlist Sheet (With realistic angle & gaffer tape on corners) -->
+          <div class="stage-setlist-sheet relative mx-auto max-w-2xl bg-[#faf6ed] text-[#1c1611] p-6 sm:p-10 rounded-sm shadow-[0_20px_45px_rgba(0,0,0,0.85)] border border-[#dfd2be] select-none overflow-hidden">
+            <!-- Silver Gaffer Tape Strips -->
+            <div class="gaffer-tape gaffer-tape-tl" />
+            <div class="gaffer-tape gaffer-tape-tr" />
+            <div class="gaffer-tape gaffer-tape-bl" />
+            <div class="gaffer-tape gaffer-tape-br" />
+
+            <!-- Authentic Coffee Mug Ring Stains & Drips -->
+            <div class="coffee-stain coffee-stain-main" aria-hidden="true">
+              <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                <!-- Outer dried dark coffee ring -->
+                <circle cx="98" cy="98" r="82" stroke="#633716" stroke-width="4" stroke-dasharray="18 4 35 6 12 3 50 8" stroke-linecap="round" opacity="0.45" filter="blur(0.3px)" />
+                <!-- Secondary inner coffee edge ring -->
+                <circle cx="100" cy="100" r="78" stroke="#87532a" stroke-width="2.5" stroke-dasharray="30 8 40 5 15 6" opacity="0.35" />
+                <!-- Watery coffee translucent center wash -->
+                <circle cx="99" cy="99" r="80" fill="#a46838" opacity="0.10" />
+                <!-- Coffee drip splatters -->
+                <circle cx="184" cy="72" r="4.5" fill="#633716" opacity="0.40" />
+                <circle cx="192" cy="86" r="2.5" fill="#87532a" opacity="0.35" />
+                <circle cx="177" cy="115" r="3.2" fill="#633716" opacity="0.32" />
+                <circle cx="16" cy="138" r="3.5" fill="#87532a" opacity="0.28" />
+              </svg>
+            </div>
+
+            <!-- Second faint coffee ring near bottom-left -->
+            <div class="coffee-stain coffee-stain-secondary" aria-hidden="true">
+              <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                <circle cx="80" cy="80" r="68" stroke="#7a461e" stroke-width="3.2" stroke-dasharray="25 6 45 4 10 5" opacity="0.24" filter="blur(0.2px)" />
+                <circle cx="80" cy="80" r="65" fill="#8c5024" opacity="0.06" />
+                <circle cx="148" cy="45" r="2.5" fill="#7a461e" opacity="0.25" />
+              </svg>
+            </div>
+
+            <!-- Sharpie Band Header -->
+            <div class="text-center pb-4 mb-6 border-b-2 border-dashed border-[#8c765c]/40 relative z-10">
+              <div class="text-[10px] font-mono font-bold tracking-widest uppercase text-[#735e47]">
+                LIVE PÅ SCEN • AKTUELL SETLISTA
+              </div>
+              <h3 class="font-heading font-black text-2xl sm:text-3xl text-[#1a1209] tracking-tight uppercase mt-0.5 setlist-handwritten">
+                DET 7:E GUNGET
+              </h3>
+              <div class="text-[11px] font-mono text-[#8a725b] mt-1 italic">
+                Blues, rock & sväng i lagom doser • 2x45 min + extranummer
+              </div>
+            </div>
+
+            <!-- Grouped Sets (Set 1, Set 2, Encores...) -->
+            <div class="space-y-6">
+              <div
+                v-for="(tracks, setName) in groupedSetlist"
+                :key="setName"
+                class="space-y-2.5"
+              >
+                <!-- Set Name Header with Sharpie underline -->
+                <div class="flex items-center gap-2 border-b border-[#a8957e]/50 pb-1 pt-1">
+                  <span class="text-xs sm:text-sm font-mono font-black uppercase tracking-wider text-[#912426]">
+                    ▶ {{ setName }}
+                  </span>
+                  <span class="text-[10px] font-mono text-[#7d6852]">({{ tracks.length }} låtar)</span>
+                </div>
+
+                <!-- Song List in Set -->
+                <div class="space-y-1.5 pl-1">
+                  <div
+                    v-for="(track, idx) in tracks"
+                    :key="track.id"
+                    class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 py-1 border-b border-[#efe6d5]/80 hover:bg-[#ede3d1]/50 px-2 rounded transition-colors"
+                  >
+                    <div class="flex items-baseline gap-2.5 min-w-0">
+                      <span class="font-mono font-bold text-xs text-[#8c745c] w-5 text-right flex-shrink-0">
+                        {{ (idx + 1) < 10 ? `0${idx + 1}` : idx + 1 }}.
+                      </span>
+                      <span class="font-heading font-bold text-sm sm:text-base text-[#1c150e] tracking-tight truncate">
+                        {{ track.title }}
+                      </span>
+                      <span
+                        v-if="track.isOriginal"
+                        class="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-[#ebd1be] text-[#801b1c] border border-[#a8484a]/40 flex-shrink-0"
+                      >
+                        Egen
+                      </span>
+                      <span
+                        v-else-if="track.artist"
+                        class="text-xs font-mono text-[#6e5946] truncate hidden sm:inline"
+                      >
+                        ({{ track.artist }})
+                      </span>
+                    </div>
+
+                    <!-- Live Performance Cue / Notes -->
+                    <div v-if="track.notes" class="text-[11px] font-mono italic text-[#70563e] pl-7 sm:pl-0 sm:text-right flex-shrink-0">
+                      ✎ {{ track.notes }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="!Object.keys(groupedSetlist).length" class="text-center py-6 font-mono text-xs text-[#735e47]">
+                Laddar setlista...
+              </div>
+            </div>
+
+            <!-- Footer Stamp / Stage Sound Note -->
+            <div class="mt-8 pt-3 border-t border-dashed border-[#8c765c]/40 flex items-center justify-between text-[10px] font-mono text-[#8a725b]">
+              <span>Gung-garanti: 100%</span>
+              <span class="font-bold text-[#801b1c]">VOLYM: 11 ⚡</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Vintage Jukebox Title Strips */
+.vintage-title-strip {
+  background: radial-gradient(ellipse at 50% 30%, #f7eedb 0%, #ebe0c8 70%, #decbb0 100%);
+  border-color: #9c7a52;
+  box-shadow: inset 0 0 10px rgba(110, 80, 45, 0.22), 0 3px 8px rgba(0, 0, 0, 0.45);
+  position: relative;
+  overflow: hidden;
+}
+
+.vintage-strip-inactive {
+  border-color: #8c6a40;
+}
+
+.vintage-strip-active {
+  border-color: #d97706;
+  background: radial-gradient(ellipse at 50% 30%, #fff6e0 0%, #f2e4c2 70%, #e6d3a8 100%);
+  box-shadow: inset 0 0 12px rgba(180, 110, 30, 0.25), 0 0 20px rgba(245, 158, 11, 0.35);
+}
+
+.strip-perf-left,
+.strip-perf-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-image: radial-gradient(circle, rgba(60, 40, 20, 0.35) 1px, transparent 1.5px);
+  background-size: 4px 6px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.strip-perf-left { left: 1px; }
+.strip-perf-right { right: 1px; }
+
+/* Side A (Originals) - Aged Crimson / Burgundy Litho */
+.strip-header-a {
+  background: linear-gradient(180deg, #9e2325 0%, #751517 100%);
+  color: #fceddb;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid #5a1012;
+}
+.strip-footer-a {
+  background: linear-gradient(180deg, #9e2325 0%, #751517 100%);
+}
+.stamp-badge-a {
+  background: #ecd5c2;
+  color: #701618;
+  border-color: #a8484a;
+  box-shadow: inset 0 1px 3px rgba(112, 22, 24, 0.25);
+}
+
+/* Side B (Covers) - Aged Faded Deep Navy Litho */
+.strip-header-b {
+  background: linear-gradient(180deg, #1d4d7a 0%, #113454 100%);
+  color: #e8f1fa;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid #0d263d;
+}
+.strip-footer-b {
+  background: linear-gradient(180deg, #1d4d7a 0%, #113454 100%);
+}
+.stamp-badge-b {
+  background: #cedde8;
+  color: #0f3252;
+  border-color: #3b6b94;
+  box-shadow: inset 0 1px 3px rgba(15, 50, 82, 0.25);
+}
+
+.strip-title {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Authentic Stage Setlist & Silver Gaffer Tape Styling */
+.stage-floor-board {
+  background: radial-gradient(ellipse at 50% 20%, #1e150f 0%, #120c08 60%, #0a0705 100%);
+  background-image: 
+    radial-gradient(ellipse at 50% 20%, #1e150f 0%, #120c08 60%, #0a0705 100%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 2px, transparent 2px, transparent 40px);
+}
+
+.stage-setlist-sheet {
+  background: radial-gradient(ellipse at 50% 10%, #fffdf8 0%, #faf4e8 70%, #ede3d1 100%);
+  transform: rotate(-0.75deg);
+  transition: transform 0.3s ease;
+}
+.stage-setlist-sheet:hover {
+  transform: rotate(0deg);
+}
+
+/* Classic Silver Stage Gaffer Tape with realistic metallic cloth weave */
+.gaffer-tape {
+  position: absolute;
+  width: 95px;
+  height: 28px;
+  background: linear-gradient(135deg, #e4e4e4 0%, #bebebe 40%, #a8a8a8 70%, #d2d2d2 100%);
+  border: 1px solid #8e8e8e;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.85), inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  z-index: 10;
+  pointer-events: none;
+}
+.gaffer-tape::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 2.5px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.12) 0px, rgba(255,255,255,0.12) 1px, transparent 1px, transparent 3px);
+  opacity: 0.7;
+}
+
+.gaffer-tape-tl {
+  top: -12px;
+  left: -22px;
+  transform: rotate(-38deg);
+}
+
+.gaffer-tape-tr {
+  top: -12px;
+  right: -22px;
+  transform: rotate(36deg);
+}
+
+.gaffer-tape-bl {
+  bottom: -12px;
+  left: -22px;
+  transform: rotate(40deg);
+}
+
+.gaffer-tape-br {
+  bottom: -12px;
+  right: -22px;
+  transform: rotate(-35deg);
+}
+
+/* Authentic Rehearsal Coffee Mug Stains */
+.coffee-stain {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  mix-blend-mode: multiply;
+}
+
+.coffee-stain-main {
+  width: 175px;
+  height: 175px;
+  top: 12px;
+  right: 18px;
+  transform: rotate(-15deg);
+}
+
+.coffee-stain-secondary {
+  width: 135px;
+  height: 135px;
+  bottom: 20px;
+  left: 15px;
+  transform: rotate(25deg);
+}
+</style>

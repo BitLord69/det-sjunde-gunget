@@ -10,7 +10,7 @@ useSeoMeta({
 
 const { adminUser } = useAdminAuth()
 
-const activeTab = ref<'gigs' | 'band' | 'songs' | 'gallery' | 'admins' | 'messages' | 'subscribers' | 'hashtags'>('gigs')
+const activeTab = ref<'gigs' | 'band' | 'songs' | 'setlist' | 'gallery' | 'admins' | 'messages' | 'subscribers' | 'hashtags'>('gigs')
 const toastMessage = ref('')
 
 const showToast = (msg: string) => {
@@ -25,6 +25,9 @@ const { data: gigsData, refresh: refreshGigs } = await useFetch<{ upcoming: any[
 const { data: bandMembers, refresh: refreshBand } = await useFetch('/api/band')
 const { data: galleryItems, refresh: refreshGallery } = await useFetch('/api/gallery')
 const { data: songsData, refresh: refreshSongs } = await useFetch('/api/songs')
+const { data: setlistData, refresh: refreshSetlist } = await useFetch<any[]>('/api/setlist', {
+  default: () => [],
+})
 const { data: adminUsers, refresh: refreshAdmins } = await useFetch('/api/admin/users', {
   default: () => [],
   ignoreResponseError: true,
@@ -555,6 +558,72 @@ const deleteGalleryItem = async (id: string) => {
   showToast('✓ Bilden raderades.')
 }
 
+// ---------------- SETLIST & REPERTOIRE CRUD ----------------
+const editingSetlist = ref<string | null>(null)
+const setlistForm = reactive({
+  id: '',
+  title: '',
+  artist: '',
+  isOriginal: false,
+  setName: 'Set 1: Klubbstart',
+  notes: '',
+  sortOrder: 0,
+})
+
+const openAddSetlist = () => {
+  setlistForm.id = ''
+  setlistForm.title = ''
+  setlistForm.artist = ''
+  setlistForm.isOriginal = false
+  setlistForm.setName = 'Set 1: Klubbstart'
+  setlistForm.notes = ''
+  setlistForm.sortOrder = (setlistData.value?.length || 0) + 1
+  editingSetlist.value = 'new'
+}
+
+const openEditSetlist = (item: any) => {
+  setlistForm.id = item.id
+  setlistForm.title = item.title
+  setlistForm.artist = item.artist || ''
+  setlistForm.isOriginal = !!item.isOriginal
+  setlistForm.setName = item.setName || 'Set 1: Klubbstart'
+  setlistForm.notes = item.notes || ''
+  setlistForm.sortOrder = item.sortOrder || 0
+  editingSetlist.value = item.id
+}
+
+const saveSetlistItem = async () => {
+  if (!setlistForm.title) {
+    showToast('⚠️ Ange låttitel!')
+    return
+  }
+  try {
+    await $fetch('/api/admin/setlist', {
+      method: 'POST',
+      body: setlistForm,
+    })
+    editingSetlist.value = null
+    await refreshSetlist()
+    showToast('✓ Setlistan har uppdaterats!')
+  } catch (err: any) {
+    showToast(`⚠️ ${err?.data?.message || 'Kunde inte spara låten'}`)
+  }
+}
+
+const deleteSetlistItem = async (id: string) => {
+  if (!confirm('Vill du ta bort låten från setlistan?')) return
+  try {
+    await $fetch('/api/admin/setlist', {
+      method: 'DELETE',
+      body: { id },
+    })
+    await refreshSetlist()
+    showToast('✓ Låten togs bort från setlistan!')
+  } catch (err: any) {
+    showToast(`⚠️ ${err?.data?.message || 'Kunde inte ta bort låten'}`)
+  }
+}
+
 // ---------------- ADMIN USERS CRUD ----------------
 const isAddAdminOpen = ref(false)
 const newAdminForm = reactive({
@@ -649,6 +718,14 @@ const deleteAdminUser = async (admin: any) => {
         @click="activeTab = 'songs'"
       >
         <span>🎵</span> Låtar & jukebox ({{ songsData?.length || 0 }})
+      </button>
+      <button
+        type="button"
+        class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
+        :class="activeTab === 'setlist' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        @click="activeTab = 'setlist'"
+      >
+        <span>📋</span> Setlist & repertoar ({{ setlistData?.length || 0 }})
       </button>
       <button
         type="button"
@@ -1124,6 +1201,114 @@ const deleteAdminUser = async (admin: any) => {
                 <button type="button" class="btn btn-xs btn-outline btn-error rounded" @click="deleteSong(song.id)">
                   Ta bort
                 </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3.5. SETLIST & REPERTOIRE MANAGER -->
+    <div v-if="activeTab === 'setlist'" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="font-heading text-2xl text-primary font-bold">Hantera live setlist & repertoar</h2>
+          <p class="text-xs text-base-content/70">Organisera bandets aktiva liverepertoar uppdelad i set och extranummer.</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-5" @click="openAddSetlist">
+          + Ny låt i setlistan
+        </button>
+      </div>
+
+      <!-- Add/Edit Setlist Item Modal Form -->
+      <div v-if="editingSetlist" class="stage-card p-6 sm:p-8 rounded-2xl border border-primary/40 space-y-4 shadow-2xl">
+        <h3 class="font-heading text-xl text-primary font-bold">
+          {{ editingSetlist === 'new' ? 'Lägg till låt i setlistan' : 'Redigera låt i setlistan' }}
+        </h3>
+        <div class="grid sm:grid-cols-2 gap-4 text-sm">
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Låttitel *</label>
+            <input v-model="setlistForm.title" type="text" placeholder="T.ex. Hoochie Coochie Man" class="input input-bordered w-full bg-base-200 input-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Set / Avdelning *</label>
+            <select v-model="setlistForm.setName" class="select select-bordered w-full bg-base-200 select-sm">
+              <option value="Set 1: Klubbstart">Set 1: Klubbstart</option>
+              <option value="Set 2: Svettigt ös">Set 2: Svettigt ös</option>
+              <option value="Extranummer / Encores">Extranummer / Encores</option>
+              <option value="Reservlåtar / Akustiskt">Reservlåtar / Akustiskt</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Låttyp</label>
+            <select v-model="setlistForm.isOriginal" class="select select-bordered w-full bg-base-200 select-sm">
+              <option :value="false">Cover / Tolkning</option>
+              <option :value="true">Egen låt (Det 7:e Gunget)</option>
+            </select>
+          </div>
+          <div v-if="!setlistForm.isOriginal">
+            <label class="block text-xs font-bold text-secondary mb-1">Originalartist</label>
+            <input v-model="setlistForm.artist" type="text" placeholder="T.ex. Muddy Waters" class="input input-bordered w-full bg-base-200 input-sm" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-secondary mb-1">Live-notering / Cue (valfritt)</label>
+            <input v-model="setlistForm.notes" type="text" placeholder="T.ex. Munspelssolo i D, publikallsång, tempoökning" class="input input-bordered w-full bg-base-200 input-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Sorteringsordning</label>
+            <input v-model="setlistForm.sortOrder" type="number" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-3">
+          <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6" @click="saveSetlistItem">
+            Spara i setlistan
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm rounded-full" @click="editingSetlist = null">
+            Avbryt
+          </button>
+        </div>
+      </div>
+
+      <!-- Setlist Table -->
+      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+        <table class="table table-zebra w-full text-xs">
+          <thead>
+            <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
+              <th>Ordning</th>
+              <th>Titel</th>
+              <th>Set / Avdelning</th>
+              <th>Artist / Typ</th>
+              <th>Live-notering</th>
+              <th class="text-right">Åtgärd</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in setlistData || []" :key="item.id">
+              <td class="font-mono text-center font-bold text-secondary w-12">{{ item.sortOrder }}</td>
+              <td class="font-bold text-primary">{{ item.title }}</td>
+              <td>
+                <span class="badge badge-sm font-mono font-bold text-[10px]" :class="item.setName.includes('Extranummer') ? 'badge-accent' : 'badge-ghost'">
+                  {{ item.setName }}
+                </span>
+              </td>
+              <td>
+                <span v-if="item.isOriginal" class="badge badge-xs badge-primary font-bold">Egen</span>
+                <span v-else class="text-base-content/80">{{ item.artist || 'Cover' }}</span>
+              </td>
+              <td class="italic text-base-content/60">{{ item.notes || '—' }}</td>
+              <td class="text-right space-x-2">
+                <button type="button" class="btn btn-xs btn-outline btn-primary rounded" @click="openEditSetlist(item)">
+                  Redigera
+                </button>
+                <button type="button" class="btn btn-xs btn-outline btn-error rounded" @click="deleteSetlistItem(item.id)">
+                  Ta bort
+                </button>
+              </td>
+            </tr>
+            <tr v-if="!setlistData || setlistData.length === 0">
+              <td colspan="6" class="text-center py-6 text-base-content/50">
+                Inga låtar i setlistan ännu. Klicka på "+ Ny låt i setlistan" ovan för att lägga till!
               </td>
             </tr>
           </tbody>

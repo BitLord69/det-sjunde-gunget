@@ -7,7 +7,7 @@ useSeoMeta({
   description: 'Fyra rutinerade herrar över 50. Blues, rock, egna låtar och precis lagom mycket oväsen.',
   ogTitle: 'Det 7:e Gunget — Blues & Rock',
   ogDescription: 'Fyra herrar över 50 som fortfarande tycker ett bra riff slår friskvård. Se våra gig och lyssna!',
-  ogImage: '/media/brand/Logotyp.webp',
+  ogImage: '/media/og/og-share.jpg',
 })
 
 // Fetch data from our APIs with graceful fallbacks
@@ -89,41 +89,42 @@ const formatGigDate = (dateVal: number | string | Date) => {
   <div class="space-y-10 sm:space-y-14">
     <!-- 1. HERO SECTION -->
     <section class="relative isolate overflow-hidden pt-12 pb-20 sm:pt-16 sm:pb-28 border-b border-primary/10">
-      <!-- Background Ambient Glow & Subtle Texture -->
-      <div class="absolute inset-0 -z-10 tube-glow pointer-events-none opacity-70" />
-      <div class="absolute inset-0 -z-10 bg-[radial-gradient(#c8793f_1px,transparent_1px)] [background-size:24px_24px] opacity-15 pointer-events-none" />
+      <!-- Background Ambient Glow & Prominent Edge Speckles -->
+      <div class="absolute inset-0 -z-10 tube-glow pointer-events-none opacity-90" />
+      <div class="absolute inset-0 -z-10 edge-speckles opacity-35 pointer-events-none" />
 
       <div class="mx-auto max-w-7xl px-6 lg:px-10 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
         <!-- Left: Text & Pitch -->
         <div class="space-y-8 max-w-2xl">
-          <h1 class="font-heading text-5xl sm:text-7xl lg:text-8xl leading-[0.95] text-gritty pb-3">
+          <!-- Main Band Title in Castoro with organic speckle overlay & gold contour outline -->
+          <h1 class="text-5xl sm:text-7xl lg:text-8xl leading-[0.95] text-gritty font-castoro pb-3">
             Det 7:e<br>Gunget
           </h1>
 
-          <p class="text-lg sm:text-xl text-neutral-content/90 leading-relaxed font-normal pt-2">
+          <p class="text-lg sm:text-xl text-base-content/85 leading-relaxed font-normal pt-2">
             {{ t('hero.desc') }}
           </p>
 
           <!-- Sleek inline band metadata pills (clean Inter / font-mono) -->
           <div class="flex flex-wrap items-center gap-2 sm:gap-3 pt-2 text-xs font-sans">
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-primary/30 text-neutral-content shadow-sm">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/90 border border-primary/30 text-base-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.musicians') }}:</span>
+              <span class="text-base-content/70 font-medium">{{ t('hero.stats.musicians') }}:</span>
               <span class="font-bold text-primary text-sm">4</span>
             </div>
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-secondary/30 text-neutral-content shadow-sm">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/90 border border-secondary/30 text-base-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-secondary" />
-              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.avg_age') }}:</span>
+              <span class="text-base-content/70 font-medium">{{ t('hero.stats.avg_age') }}:</span>
               <span class="font-bold text-secondary text-sm">50+</span>
             </div>
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-accent/30 text-neutral-content shadow-sm">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/90 border border-accent/30 text-base-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-accent" />
-              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.groove') }}:</span>
+              <span class="text-base-content/70 font-medium">{{ t('hero.stats.groove') }}:</span>
               <span class="font-bold text-accent text-sm">100%</span>
             </div>
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral/80 border border-primary/30 text-neutral-content shadow-sm">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/90 border border-primary/30 text-base-content shadow-sm">
               <span class="w-1.5 h-1.5 rounded-full bg-primary" />
-              <span class="text-neutral-content/70 font-medium">{{ t('hero.stats.volume') }}:</span>
+              <span class="text-base-content/70 font-medium">{{ t('hero.stats.volume') }}:</span>
               <span class="font-bold text-primary text-sm">11</span>
             </div>
           </div>
@@ -143,13 +144,15 @@ const formatGigDate = (dateVal: number | string | Date) => {
         <div class="flex justify-center items-center relative">
           <div class="absolute -inset-4 rounded-full bg-gradient-to-tr from-secondary/20 to-primary/20 blur-2xl opacity-60" />
           <div class="relative group">
+            <!-- In light mode, a warm dark circular vignette disc behind the badge makes the gold details and microphone pop with maximum 3D contrast -->
+            <div class="absolute inset-4 rounded-full bg-[#181310] -z-10 shadow-2xl dark:hidden" />
             <NuxtImg
               src="/media/brand/Logotyp.webp"
               alt="Det 7:e Gunget emblem logotyp"
               class="w-[320px] sm:w-[420px] lg:w-[460px] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-102 group-hover:rotate-1"
               priority
             />
-            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-neutral/90 border border-primary/40 px-4 py-1.5 rounded-full text-xs font-mono text-primary shadow-lg tracking-wider whitespace-nowrap">
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-base-200/95 border border-primary/40 px-4 py-1.5 rounded-full text-xs font-mono text-primary shadow-lg tracking-wider whitespace-nowrap">
               {{ t('hero.badge_tag') }}
             </div>
           </div>
@@ -204,12 +207,12 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 <h3 class="text-xl font-heading text-primary font-bold leading-tight group-hover:text-secondary transition-colors">
                   {{ gig.venue }}
                 </h3>
-                <span class="text-sm font-medium text-neutral-content/80">{{ gig.city }}</span>
+                <span class="text-sm font-medium text-base-content/80">{{ gig.city }}</span>
               </div>
             </div>
 
             <!-- Notes -->
-            <p class="text-sm text-neutral-content/75 italic leading-relaxed mb-6">
+            <p class="text-sm text-base-content/75 italic leading-relaxed mb-6">
               "{{ gig.notesSv || gig.notesEn }}"
             </p>
           </div>
@@ -228,7 +231,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
             <span v-else-if="gig.status === 'free'" class="text-xs font-bold text-accent">
               Ingen förbokning krävs
             </span>
-            <span v-else class="text-xs font-medium text-neutral-content/50">
+            <span v-else class="text-xs font-medium text-base-content/60">
               Biljetter i dörren
             </span>
 
@@ -242,18 +245,18 @@ const formatGigDate = (dateVal: number | string | Date) => {
       <div v-else class="stage-card p-12 rounded-2xl text-center max-w-xl mx-auto space-y-4">
         <span class="text-4xl">🎸</span>
         <h3 class="text-xl font-heading text-primary">Nya datum är på gång!</h3>
-        <p class="text-sm text-neutral-content/70">
+        <p class="text-sm text-base-content/70">
           {{ t('gigs.no_upcoming') }}
         </p>
       </div>
 
       <!-- Past Shows Archive Teaser -->
-      <div v-if="pastGigs.length > 0" class="mt-8 p-5 bg-base-200/50 rounded-2xl border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div v-if="pastGigs.length > 0" class="mt-8 p-5 bg-base-200/50 rounded-2xl border border-primary/10 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <span class="text-2xl">📜</span>
           <div>
-            <span class="font-bold text-sm text-neutral-content block">Arkiv över svettiga gig</span>
-            <span class="text-xs text-neutral-content/60">Senast spelade vi på {{ pastGigs[0]?.venue }} i {{ pastGigs[0]?.city }}.</span>
+            <span class="font-bold text-sm text-base-content block">Arkiv över svettiga gig</span>
+            <span class="text-xs text-base-content/60">Senast spelade vi på {{ pastGigs[0]?.venue }} i {{ pastGigs[0]?.city }}.</span>
           </div>
         </div>
         <a href="#contact" class="btn btn-outline btn-sm btn-secondary rounded-full">
@@ -332,7 +335,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
               </button>
               <div>
                 <h3 class="font-heading text-lg text-primary font-bold">{{ song.title }}</h3>
-                <span class="text-xs text-neutral-content/60 font-medium">
+                <span class="text-xs text-base-content/70 font-medium">
                   {{ song.isOriginal ? 'Det 7:e Gunget (Egen låt)' : `Original av ${song.originalArtist}` }}
                 </span>
               </div>
@@ -348,14 +351,14 @@ const formatGigDate = (dateVal: number | string | Date) => {
           </div>
 
           <!-- Interactive Cassette / Player visual feedback -->
-          <div v-if="activePlayingSong === song.id" class="my-3 p-3 bg-neutral rounded-xl border border-primary/30 flex items-center justify-between text-xs font-mono text-primary animate-pulse">
+          <div v-if="activePlayingSong === song.id" class="my-3 p-3 bg-base-200/90 rounded-xl border border-primary/30 flex items-center justify-between text-xs font-mono text-primary animate-pulse">
             <span>📼 SPELAR: {{ song.title }}</span>
             <span class="text-accent font-bold">128 BPM • SVÄNG PÅGÅR</span>
           </div>
 
           <!-- External Links to Spotify / Bandcamp / YouTube -->
           <div class="pt-4 border-t border-white/5 flex items-center justify-between text-xs">
-            <span class="text-neutral-content/50 uppercase font-mono text-[10px]">
+            <span class="text-base-content/50 uppercase font-mono text-[10px]">
               Källa: {{ song.embedProvider }}
             </span>
             <a
@@ -597,7 +600,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
               class="w-full aspect-[4/3] object-cover rounded shadow"
               loading="lazy"
             />
-            <p class="text-xs text-center font-medium mt-3 italic text-neutral-content/90">
+            <p class="text-xs text-center font-medium mt-3 italic text-base-content/90">
               {{ locale === 'en' && item.captionEn ? item.captionEn : item.captionSv }}
             </p>
           </div>
@@ -619,7 +622,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
             {{ t('contact.title') }}
           </h2>
 
-          <p class="text-base text-neutral-content/80 leading-relaxed">
+          <p class="text-base text-base-content/80 leading-relaxed">
             {{ t('contact.desc') }}
           </p>
 

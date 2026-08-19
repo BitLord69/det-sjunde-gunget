@@ -207,14 +207,14 @@ const formatTime = (secs: number) => {
       </div>
 
       <!-- MAIN JUKEBOX MACHINE CABINET -->
-      <div class="max-w-4xl mx-auto rounded-[40px] sm:rounded-[56px] p-4 sm:p-8 bg-gradient-to-b from-[#2a1d17] via-[#1a120e] to-[#0d0907] border-4 border-[#b87d3b]/40 shadow-[0_0_80px_rgba(200,121,63,0.35)] relative">
+      <div class="max-w-4xl mx-auto rounded-[40px] sm:rounded-[56px] p-4 sm:p-8 bg-gradient-to-b from-base-200/95 via-base-100 to-base-200/95 dark:from-[#2a1d17] dark:via-[#1a120e] dark:to-[#0d0907] border-4 border-primary/40 shadow-2xl dark:shadow-[0_0_80px_rgba(200,121,63,0.35)] relative">
         <!-- Outer Glowing Neon Arch Trim -->
         <div class="absolute -inset-1 rounded-[42px] sm:rounded-[58px] bg-gradient-to-r from-secondary/30 via-primary/40 to-secondary/30 blur-sm pointer-events-none -z-10" />
 
         <!-- Chrome Top Arch & Vintage Marquee -->
         <div class="text-center pb-6 border-b border-primary/20 relative">
           <!-- Wurlitzer-Style Top Marquee Badge -->
-          <div class="inline-flex items-center justify-center gap-2 sm:gap-4 px-6 sm:px-10 py-2 rounded-full bg-gradient-to-r from-[#201712] via-[#4d321d] to-[#201712] border-2 border-primary shadow-lg shadow-primary/20">
+          <div class="inline-flex items-center justify-center gap-2 sm:gap-4 px-6 sm:px-10 py-2 rounded-full bg-gradient-to-r from-base-300 via-base-200 to-base-300 dark:from-[#201712] dark:via-[#4d321d] dark:to-[#201712] border-2 border-primary shadow-lg shadow-primary/20">
             <span class="text-secondary text-sm">✦</span>
             <span class="font-heading text-lg sm:text-2xl text-primary uppercase tracking-[0.2em] font-bold text-gritty">
               DET 7:E GUNGET JUKEBOX
@@ -223,16 +223,16 @@ const formatTime = (secs: number) => {
           </div>
 
           <div class="flex items-center justify-between mt-3 px-2 sm:px-6 text-[11px] font-mono">
-            <span class="text-secondary/80 uppercase tracking-widest hidden sm:inline">
+            <span class="text-secondary uppercase tracking-widest font-bold hidden sm:inline">
               Hi-Fi Stereophonic Sound • 45 R.P.M.
             </span>
 
             <!-- Mode Switcher: Black Vinyl vs Embed Player with Tooltips -->
-            <div class="flex items-center gap-1.5 bg-black/75 p-1 rounded-full border border-primary/40 shadow-inner mx-auto sm:mx-0">
+            <div class="flex items-center gap-1.5 bg-base-300/90 dark:bg-black/75 p-1 rounded-full border border-primary/40 shadow-inner mx-auto sm:mx-0">
               <button
                 type="button"
-                class="px-3.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5"
-                :class="playerDisplayMode === 'vinyl' ? 'bg-primary text-neutral shadow-md shadow-primary/30 font-black' : 'text-base-content/75 hover:text-primary hover:bg-white/5'"
+                class="px-3.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                :class="playerDisplayMode === 'vinyl' ? 'bg-primary text-neutral shadow-md shadow-primary/30 font-black' : 'text-base-content/75 hover:text-primary hover:bg-base-200'"
                 :title="t('music.mode_vinyl_tooltip')"
                 @click="playerDisplayMode = 'vinyl'"
               >
@@ -248,8 +248,8 @@ const formatTime = (secs: number) => {
               </button>
               <button
                 type="button"
-                class="px-3.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5"
-                :class="playerDisplayMode === 'embed' ? 'bg-primary text-neutral shadow-md shadow-primary/30 font-black' : 'text-base-content/75 hover:text-primary hover:bg-white/5'"
+                class="px-3.5 py-1 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                :class="playerDisplayMode === 'embed' ? 'bg-primary text-neutral shadow-md shadow-primary/30 font-black' : 'text-base-content/75 hover:text-primary hover:bg-base-200'"
                 :title="t('music.mode_embed_tooltip')"
                 @click="playerDisplayMode = 'embed'"
               >
@@ -263,7 +263,7 @@ const formatTime = (secs: number) => {
         </div>
 
         <!-- UPPER GLASS DOME: TURNTABLE OR EMBED PLAYER -->
-        <div class="mt-6 p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-[#0a0705] to-[#17100b] border-2 border-primary/30 relative overflow-hidden shadow-inner">
+        <div class="mt-6 p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-base-300/80 via-base-200/90 to-base-300/80 dark:from-[#0a0705] dark:to-[#17100b] border-2 border-primary/30 relative overflow-hidden shadow-inner">
           <!-- Glass reflection highlights -->
           <div class="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-white/10 pointer-events-none" />
 
@@ -320,9 +320,9 @@ const formatTime = (secs: number) => {
             </div>
 
             <!-- Right: Digital / Analog Track Status & Equalizer Display -->
-            <div class="space-y-4 bg-neutral/80 p-5 sm:p-6 rounded-2xl border border-primary/30 shadow-xl">
+            <div class="space-y-4 bg-base-200/90 dark:bg-neutral/80 p-5 sm:p-6 rounded-2xl border border-primary/30 shadow-xl">
               <!-- Digital Track Code Screen -->
-              <div class="bg-black/90 p-4 rounded-xl border border-primary/40 font-mono text-center space-y-1 shadow-inner">
+              <div class="bg-base-300/90 dark:bg-black/90 p-4 rounded-xl border border-primary/40 font-mono text-center space-y-1 shadow-inner">
                 <div class="flex items-center justify-between text-[11px] text-secondary font-bold">
                   <span>{{ isAudioPlaying ? '● ' + t('music.now_playing') : '○ STANDBY' }}</span>
                   <span class="text-accent font-black text-sm">{{ currentSong?.code || 'A1' }}</span>
@@ -396,7 +396,7 @@ const formatTime = (secs: number) => {
                 <div class="flex items-center gap-2">
                   <button
                     type="button"
-                    class="btn btn-circle btn-sm btn-ghost border border-primary/30 text-primary hover:bg-primary/20"
+                    class="btn btn-circle btn-sm btn-ghost border border-primary/30 text-primary hover:bg-primary/20 cursor-pointer"
                     :title="t('music.prev_song')"
                     @click="prevTrack"
                   >
@@ -405,7 +405,7 @@ const formatTime = (secs: number) => {
 
                   <button
                     type="button"
-                    class="btn btn-circle btn-primary font-bold text-xl shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-transform"
+                    class="btn btn-circle btn-primary font-bold text-xl shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-transform cursor-pointer"
                     :title="isAudioPlaying ? t('music.pause') : t('music.play')"
                     @click="togglePlay()"
                   >
@@ -414,7 +414,7 @@ const formatTime = (secs: number) => {
 
                   <button
                     type="button"
-                    class="btn btn-circle btn-sm btn-ghost border border-primary/30 text-primary hover:bg-primary/20"
+                    class="btn btn-circle btn-sm btn-ghost border border-primary/30 text-primary hover:bg-primary/20 cursor-pointer"
                     :title="t('music.next_song')"
                     @click="nextTrack"
                   >
@@ -448,31 +448,29 @@ const formatTime = (secs: number) => {
               </div>
               <button
                 type="button"
-                class="btn btn-xs btn-outline btn-secondary rounded-full"
+                class="btn btn-xs btn-outline btn-secondary rounded-full cursor-pointer"
                 @click="playerDisplayMode = 'vinyl'"
               >
                 ← Tillbaka till skivtallrik
               </button>
             </div>
 
-            <!-- Iframe Container -->
-            <div class="w-full rounded-2xl overflow-hidden bg-black/80 border border-primary/30 shadow-2xl flex items-center justify-center min-h-[160px] sm:min-h-[220px]">
-              <iframe
-                v-if="formattedEmbedUrl"
-                :src="formattedEmbedUrl"
-                class="w-full h-[180px] sm:h-[260px] border-0 rounded-2xl"
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy"
-              />
-              <div v-else class="text-center py-12 text-base-content/60 text-xs">
-                Ingen inbäddningslänk tillgänglig för denna låt.
-              </div>
+            <!-- Gated Iframe Container -->
+            <MediaEmbedGated
+              v-if="formattedEmbedUrl"
+              :src="formattedEmbedUrl"
+              :title="currentSong?.title"
+              :provider="currentSong?.embedProvider"
+              :direct-url="currentSong?.embedUrl"
+            />
+            <div v-else class="w-full rounded-2xl bg-base-300/80 dark:bg-black/80 border border-primary/30 shadow-2xl text-center py-12 text-base-content/60 text-xs">
+              Ingen inbäddningslänk tillgänglig för denna låt.
             </div>
           </div>
         </div>
 
         <!-- JUKEBOX INTERACTIVE KEYPAD & COIN SLOT -->
-        <div class="mt-6 p-4 sm:p-6 rounded-3xl bg-base-300/80 border border-primary/25 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="mt-6 p-4 sm:p-6 rounded-3xl bg-base-300/80 dark:bg-base-300/40 border border-primary/25 flex flex-col md:flex-row items-center justify-between gap-6">
           <!-- Left: Keypad Push Buttons (A1, A2, B1, B2...) -->
           <div class="space-y-2 w-full md:w-auto">
             <div class="text-[11px] font-mono font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5">
@@ -483,11 +481,11 @@ const formatTime = (secs: number) => {
                 v-for="song in songsWithCodes"
                 :key="song.id"
                 type="button"
-                class="px-3.5 py-2 rounded-xl font-mono font-bold text-xs sm:text-sm border-2 transition-all shadow active:scale-90"
+                class="px-3.5 py-2 rounded-xl font-mono font-bold text-xs sm:text-sm border-2 transition-all shadow active:scale-90 cursor-pointer"
                 :class="
                   activeSongId === song.id
                     ? 'bg-primary text-neutral border-primary ring-2 ring-primary/50 shadow-primary/40 font-black'
-                    : 'bg-neutral text-primary border-primary/30 hover:bg-primary/20 hover:border-primary'
+                    : 'bg-base-200 text-base-content border-primary/30 hover:bg-primary hover:text-neutral hover:border-primary'
                 "
                 @click="playByCode(song.code)"
               >
@@ -497,7 +495,7 @@ const formatTime = (secs: number) => {
           </div>
 
           <!-- Right: Interactive Coin Slot & Free Play status -->
-          <div class="flex items-center gap-4 bg-neutral/90 px-4 py-3 rounded-2xl border border-primary/30 shadow-inner">
+          <div class="flex items-center gap-4 bg-base-200/95 dark:bg-neutral/90 px-4 py-3 rounded-2xl border border-primary/30 shadow-inner">
             <div class="flex flex-col text-right">
               <span class="text-[9px] font-mono uppercase tracking-widest text-secondary font-bold">{{ t('music.free_play') }}</span>
               <span class="text-xs font-mono font-bold text-primary">{{ t('music.credits') }}: {{ credits }}</span>
@@ -505,7 +503,7 @@ const formatTime = (secs: number) => {
 
             <button
               type="button"
-              class="btn btn-secondary btn-sm rounded-full font-bold shadow hover:scale-105 active:scale-95 transition-transform flex items-center gap-1.5"
+              class="btn btn-secondary btn-sm rounded-full font-bold shadow hover:scale-105 active:scale-95 transition-transform flex items-center gap-1.5 cursor-pointer"
               :class="coinAnimation ? 'ring-4 ring-secondary animate-bounce' : ''"
               @click="insertCoin"
             >
@@ -529,10 +527,10 @@ const formatTime = (secs: number) => {
             </div>
 
             <!-- Filter Tabs -->
-            <div class="flex items-center gap-1.5 bg-neutral p-1 rounded-full border border-primary/20 text-xs font-bold">
+            <div class="flex items-center gap-1.5 bg-base-200/90 dark:bg-neutral p-1 rounded-full border border-primary/20 text-xs font-bold">
               <button
                 type="button"
-                class="px-3.5 py-1 rounded-full transition-colors"
+                class="px-3.5 py-1 rounded-full transition-colors cursor-pointer"
                 :class="songFilter === 'all' ? 'bg-primary text-neutral font-bold shadow' : 'text-base-content/70 hover:text-primary'"
                 @click="songFilter = 'all'"
               >
@@ -540,7 +538,7 @@ const formatTime = (secs: number) => {
               </button>
               <button
                 type="button"
-                class="px-3.5 py-1 rounded-full transition-colors"
+                class="px-3.5 py-1 rounded-full transition-colors cursor-pointer"
                 :class="songFilter === 'original' ? 'bg-primary text-neutral font-bold shadow' : 'text-base-content/70 hover:text-primary'"
                 @click="songFilter = 'original'"
               >
@@ -548,7 +546,7 @@ const formatTime = (secs: number) => {
               </button>
               <button
                 type="button"
-                class="px-3.5 py-1 rounded-full transition-colors"
+                class="px-3.5 py-1 rounded-full transition-colors cursor-pointer"
                 :class="songFilter === 'cover' ? 'bg-primary text-neutral font-bold shadow' : 'text-base-content/70 hover:text-primary'"
                 @click="songFilter = 'cover'"
               >

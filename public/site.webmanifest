@@ -1,0 +1,21 @@
+{
+  "name": "Det 7:e Gunget",
+  "short_name": "Det 7:e Gunget",
+  "description": "Blues, rock och lagom mycket oväsen.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#120e0b",
+  "theme_color": "#e2bd72",
+  "icons": [
+    {
+      "src": "/media/brand/Logotyp_mini.webp",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "/media/brand/Logotyp.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ]
+}

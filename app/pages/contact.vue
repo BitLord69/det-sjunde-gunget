@@ -99,6 +99,46 @@ const resetForm = () => {
                 <span>4 musiker: sång/munspel, elgitarr, elbas, trummor</span>
               </div>
             </div>
+
+            <!-- Social channels -->
+            <div class="pt-4 border-t border-primary/20">
+              <span class="text-xs text-base-content/60 uppercase font-bold block mb-2">Följ & Lyssna</span>
+              <div class="flex items-center gap-2">
+                <a
+                  href="https://www.facebook.com/Detsjundegunget"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-xs btn-outline btn-primary rounded-full gap-1 text-xs"
+                >
+                  Facebook ↗
+                </a>
+                <a
+                  href="https://www.instagram.com/det7egunget/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-xs btn-outline btn-secondary rounded-full gap-1 text-xs"
+                >
+                  Instagram ↗
+                </a>
+                <a
+                  href="https://open.spotify.com/search/Det%207%3Ae%20Gunget"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-xs btn-outline rounded-full gap-1 text-xs text-emerald-400 border-emerald-500/40 hover:bg-emerald-950/40"
+                  title="Kommer snart på Spotify"
+                >
+                  Spotify ↗
+                </a>
+                <a
+                  href="https://www.youtube.com/@det7egunget"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-xs btn-outline rounded-full gap-1 text-xs text-red-400 border-red-500/40 hover:bg-red-950/40"
+                >
+                  YouTube ↗
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -7,10 +7,30 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'Det 7:e Gunget | Blues och rock med glimt i ögat',
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'description', content: 'Blues, rock, egna låtar och precis lagom mycket oväsen. Det 7:e Gunget från Ängelholm & Skåne.' },
+        { name: 'theme-color', content: '#e2bd72' },
+        { property: 'og:site_name', content: 'Det 7:e Gunget' },
+        { property: 'og:title', content: 'Det 7:e Gunget | Blues och rock med glimt i ögat' },
+        { property: 'og:description', content: 'Blues, rock, egna låtar och precis lagom mycket oväsen. Spelningar, musik och gött gung.' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:image', content: '/media/og/og-share.jpg' },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { property: 'og:image:alt', content: 'Det 7:e Gunget - Blues & Rock \'n\' Roll' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: 'Det 7:e Gunget | Blues och rock med glimt i ögat' },
+        { name: 'twitter:description', content: 'Blues, rock, egna låtar och precis lagom mycket oväsen. Se gig och lyssna i jukeboxen!' },
+        { name: 'twitter:image', content: '/media/og/og-share.jpg' },
+      ],
       link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         { rel: 'icon', type: 'image/webp', href: '/media/brand/favicon.webp' },
         { rel: 'icon', type: 'image/webp', href: '/media/brand/Logotyp_mini.webp' },
         { rel: 'apple-touch-icon', href: '/media/brand/Logotyp_mini.webp' },
+        { rel: 'manifest', href: '/site.webmanifest' },
       ],
     },
   },
@@ -28,7 +48,10 @@ export default defineNuxtConfig({
   fonts: {
     families: [
       { name: 'Inter', provider: 'google' },
-      { name: 'Arvo', provider: 'google', weights: [400, 700], styles: ['normal', 'italic'] },
+      { name: 'Corben', provider: 'google', weights: [700] },
+      { name: 'Crete Round', provider: 'google', weights: [400], styles: ['normal', 'italic'] },
+      { name: 'Rye', provider: 'google' },
+      { name: 'Ultra', provider: 'google' },
     ],
   },
   i18n: {

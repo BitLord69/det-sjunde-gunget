@@ -85,14 +85,14 @@ const tearTicket = (gigId: string) => {
         <div class="inline-block relative">
           <!-- Bulb border simulation -->
           <div class="absolute -inset-3 rounded-2xl border-4 border-dashed border-primary/40 pointer-events-none" />
-          <div class="bg-gradient-to-r from-[#201712] via-[#3d2816] to-[#201712] border-2 border-primary/60 rounded-xl px-8 sm:px-14 py-4 shadow-[0_0_60px_rgba(200,121,63,0.3)]">
-            <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.3em] text-secondary/80 mb-1">
+          <div class="bg-gradient-to-r from-base-200 via-base-100 to-base-200 dark:from-[#201712] dark:via-[#3d2816] dark:to-[#201712] border-2 border-primary/60 rounded-xl px-8 sm:px-14 py-4 shadow-xl dark:shadow-[0_0_60px_rgba(200,121,63,0.3)]">
+            <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.3em] text-secondary font-bold mb-1">
               ★ Det 7:e Gunget presenterar ★
             </div>
             <h1 class="font-heading text-3xl sm:text-5xl lg:text-6xl text-primary text-gritty uppercase tracking-wider pb-2">
               {{ t('gigs.subtitle') }}
             </h1>
-            <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] text-secondary/70 mt-1">
+            <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] text-secondary/80 mt-1">
               {{ t('gigs.section_tag') }} • Blues & rock
             </div>
           </div>
@@ -106,15 +106,15 @@ const tearTicket = (gigId: string) => {
       <!-- TICKET BOOTH WINDOW / COUNTER -->
       <div class="max-w-5xl mx-auto">
         <!-- Booth Window Frame -->
-        <div class="rounded-[32px] sm:rounded-[48px] bg-gradient-to-b from-[#2a1d15] via-[#1a120c] to-[#0d0907] border-4 border-[#b87d3b]/30 p-4 sm:p-8 shadow-[0_0_60px_rgba(200,121,63,0.2)] relative">
+        <div class="rounded-[32px] sm:rounded-[48px] bg-gradient-to-b from-base-200/90 via-base-100 to-base-200 dark:from-[#2a1d15] dark:via-[#1a120c] dark:to-[#0d0907] border-4 border-primary/40 p-4 sm:p-8 shadow-2xl dark:shadow-[0_0_60px_rgba(200,121,63,0.2)] relative">
           <!-- Outer glow -->
           <div class="absolute -inset-1 rounded-[34px] sm:rounded-[50px] bg-gradient-to-r from-secondary/20 via-primary/30 to-secondary/20 blur-sm pointer-events-none -z-10" />
 
           <!-- Glass Window Header with "TICKETS" sign -->
           <div class="text-center mb-6 relative">
-            <div class="inline-flex items-center gap-3 px-8 py-2.5 rounded-full bg-gradient-to-r from-[#1a1310] via-[#3a2618] to-[#1a1310] border-2 border-secondary shadow-lg shadow-secondary/20">
+            <div class="inline-flex items-center gap-3 px-8 py-2.5 rounded-full bg-gradient-to-r from-base-300 via-base-200 to-base-300 dark:from-[#1a1310] dark:via-[#3a2618] dark:to-[#1a1310] border-2 border-primary/60 shadow-lg">
               <span class="text-primary text-sm">🎫</span>
-              <span class="font-heading text-xl sm:text-2xl text-secondary uppercase tracking-[0.25em] font-black">
+              <span class="font-heading text-xl sm:text-2xl text-primary dark:text-secondary uppercase tracking-[0.25em] font-black">
                 {{ t('gigs.ticket_booth') }}
               </span>
               <span class="text-primary text-sm">🎫</span>
@@ -122,7 +122,7 @@ const tearTicket = (gigId: string) => {
             <!-- "OPEN" neon -->
             <div class="mt-2 inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-widest">
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span class="text-emerald-400">{{ t('gigs.open') }}</span>
+              <span class="text-emerald-600 dark:text-emerald-400">{{ t('gigs.open') }}</span>
             </div>
           </div>
 
@@ -130,11 +130,11 @@ const tearTicket = (gigId: string) => {
           <div class="flex items-center justify-center gap-3 mb-8">
             <button
               type="button"
-              class="px-6 py-2.5 rounded-full font-bold text-sm transition-all border-2"
+              class="px-6 py-2.5 rounded-full font-bold text-sm transition-all border-2 cursor-pointer"
               :class="
                 currentTab === 'upcoming'
                   ? 'bg-primary text-neutral border-primary shadow-lg shadow-primary/30 font-black'
-                  : 'bg-neutral text-primary border-primary/30 hover:border-primary hover:bg-primary/10'
+                  : 'bg-base-200/90 text-base-content border-primary/30 hover:border-primary hover:bg-base-300'
               "
               @click="currentTab = 'upcoming'"
             >
@@ -142,11 +142,11 @@ const tearTicket = (gigId: string) => {
             </button>
             <button
               type="button"
-              class="px-6 py-2.5 rounded-full font-bold text-sm transition-all border-2"
+              class="px-6 py-2.5 rounded-full font-bold text-sm transition-all border-2 cursor-pointer"
               :class="
                 currentTab === 'past'
                   ? 'bg-primary text-neutral border-primary shadow-lg shadow-primary/30 font-black'
-                  : 'bg-neutral text-primary border-primary/30 hover:border-primary hover:bg-primary/10'
+                  : 'bg-base-200/90 text-base-content border-primary/30 hover:border-primary hover:bg-base-300'
               "
               @click="currentTab = 'past'"
             >

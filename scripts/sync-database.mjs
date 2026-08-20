@@ -91,6 +91,7 @@ async function runMigration() {
       embed_provider text NOT NULL,
       embed_url text NOT NULL,
       audio_url text,
+      cover_image text,
       duration integer,
       lyrics text,
       lyrics_en text,
@@ -104,6 +105,9 @@ async function runMigration() {
   // Auto-migrate missing columns on songs if table existed before
   try {
     await remoteClient.execute('ALTER TABLE songs ADD COLUMN audio_url text')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE songs ADD COLUMN cover_image text')
   } catch {}
   try {
     await remoteClient.execute('ALTER TABLE songs ADD COLUMN duration integer')
@@ -355,8 +359,8 @@ async function runMigration() {
         args: [row.id, row.category, row.media_url, row.frame_style, row.rotation, row.caption_sv, row.caption_en, row.alt_text_sv, row.alt_text_en, row.taken_at, row.created_at, row.updated_at],
       })),
       ...localSongs.rows.map((row) => ({
-        sql: `INSERT INTO songs (id, title, is_original, original_artist, embed_provider, embed_url, audio_url, duration, lyrics, lyrics_en, chords, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [row.id, row.title, row.is_original, row.original_artist, row.embed_provider, row.embed_url, row.audio_url || null, row.duration || null, row.lyrics || null, row.lyrics_en || null, row.chords || null, row.sort_order, row.created_at, row.updated_at],
+        sql: `INSERT INTO songs (id, title, is_original, original_artist, embed_provider, embed_url, audio_url, cover_image, duration, lyrics, lyrics_en, chords, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.title, row.is_original, row.original_artist, row.embed_provider, row.embed_url, row.audio_url || null, row.cover_image || null, row.duration || null, row.lyrics || null, row.lyrics_en || null, row.chords || null, row.sort_order, row.created_at, row.updated_at],
       })),
       ...localHashtags.rows.map((row) => ({
         sql: `INSERT INTO social_hashtags (id, tag, category, is_active, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,

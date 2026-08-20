@@ -1,8 +1,25 @@
 <script setup lang="ts">
 const { locale } = useI18n()
 
-const { data: products } = await useFetch<any[]>('/api/merch', {
+const { data: settingsData, refresh: refreshSettings } = await useFetch<any>('/api/settings', {
+  default: () => ({ landingMerchCount: 4 }),
+})
+
+const { data: products, refresh: refreshProducts } = await useFetch<any[]>('/api/merch', {
   default: () => [],
+})
+
+onMounted(() => {
+  refreshSettings()
+  refreshProducts()
+})
+
+const landingMerchCount = computed(() => {
+  return Number(settingsData.value?.landingMerchCount) || 4
+})
+
+const displayedProducts = computed(() => {
+  return (products.value || []).slice(0, landingMerchCount.value)
 })
 </script>
 
@@ -32,15 +49,20 @@ const { data: products } = await useFetch<any[]>('/api/merch', {
       </div>
     </div>
 
-    <!-- Single Compact Row of Real Products (4 items) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- Dynamic Single-Row Grid of Products (Always exactly 1 row on desktop/tablet) -->
+    <div class="grid grid-cols-2 sm:grid-flow-col sm:auto-cols-fr gap-3.5 lg:gap-4 w-full overflow-hidden">
       <div
-        v-for="item in (products || []).slice(0, 4)"
+        v-for="item in displayedProducts"
         :key="item.id"
         class="stage-card rounded-xl overflow-hidden border border-primary/20 flex flex-col justify-between group transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 shadow-lg"
       >
-        <!-- Product Photo from Spreadshop CDN -->
-        <div class="relative overflow-hidden aspect-square bg-[#1a1614] flex items-center justify-center p-2">
+        <!-- Product Photo from Spreadshop CDN with Direct Deep Link -->
+        <a
+          :href="item.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="relative overflow-hidden aspect-square bg-[#1a1614] flex items-center justify-center p-2 block cursor-pointer"
+        >
           <NuxtImg
             :src="item.image"
             :alt="locale === 'en' ? item.typeEn : item.typeSv"
@@ -48,25 +70,32 @@ const { data: products } = await useFetch<any[]>('/api/merch', {
             loading="lazy"
           />
           <!-- Price pill -->
-          <div class="absolute bottom-2.5 right-2.5 bg-black/85 backdrop-blur-sm text-primary font-mono font-bold text-xs px-2.5 py-0.5 rounded border border-primary/30 shadow">
+          <div class="absolute bottom-2 right-2 bg-black/85 backdrop-blur-sm text-primary font-mono font-bold text-[11px] px-2 py-0.5 rounded border border-primary/30 shadow">
             {{ item.price }}
           </div>
-        </div>
+        </a>
 
         <!-- Product Info & Direct Shop Button -->
-        <div class="p-3.5 flex items-center justify-between gap-2 border-t border-primary/10 bg-base-200/40">
-          <div class="truncate">
-            <h3 class="font-heading text-sm text-primary font-bold truncate">
+        <div class="p-2.5 sm:p-3 flex items-center justify-between gap-1.5 border-t border-primary/10 bg-base-200/40">
+          <div class="truncate pr-0.5 min-w-0">
+            <span
+              v-if="item.categorySv"
+              class="inline-block text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-secondary/90 mb-0.5 truncate block"
+            >
+              {{ locale === 'en' ? item.categoryEn : item.categorySv }}
+            </span>
+            <h3 class="font-heading text-xs sm:text-sm text-primary font-bold truncate" :title="locale === 'en' ? item.typeEn : item.typeSv">
               {{ locale === 'en' ? item.typeEn : item.typeSv }}
             </h3>
-            <span class="text-[10px] text-base-content/60 block font-mono">Spreadshop</span>
+            <span class="text-[9px] text-base-content/60 block font-mono truncate">Spreadshop</span>
           </div>
 
           <a
             :href="item.url"
             target="_blank"
             rel="noopener noreferrer"
-            class="btn btn-xs btn-primary font-bold rounded-full px-3 flex-shrink-0"
+            class="btn btn-xs btn-primary font-bold rounded-full px-2.5 flex-shrink-0 text-[11px]"
+            title="Köp på Spreadshop"
           >
             <span>{{ locale === 'en' ? 'Buy' : 'Köp' }}</span>
             <span>↗</span>

@@ -127,6 +127,7 @@ export const songs = sqliteTable('songs', {
   }).notNull(),
   embedUrl: text('embed_url').notNull(),
   audioUrl: text('audio_url'),
+  coverImage: text('cover_image'),
   duration: integer('duration'),
   lyrics: text('lyrics'),
   lyricsEn: text('lyrics_en'),
@@ -142,8 +143,8 @@ export const galleryItems = sqliteTable('gallery_items', {
   }).notNull(),
   mediaUrl: text('media_url').notNull(),
   frameStyle: text('frame_style', {
-    enum: ['polaroid', 'taped', 'grunge', 'wood'],
-  }).default('polaroid'),
+    enum: ['polaroid', 'taped', 'grunge', 'wood', 'pinned', 'random'],
+  }).default('random'),
   rotation: integer('rotation').default(0),
   captionSv: text('caption_sv'),
   captionEn: text('caption_en'),
@@ -220,9 +221,45 @@ export const setlistItems = sqliteTable('setlist_items', {
   ...timestamps,
 })
 
+export const merchProducts = sqliteTable('merch_products', {
+  id: text('id').primaryKey(), // sellableId e.g. w8dZkrLmpBurqyz9gdg8-813-8
+  productTypeId: text('product_type_id').notNull(),
+  name: text('name').notNull().default('Det 7:e gunget'),
+  typeSv: text('type_sv').notNull(),
+  typeEn: text('type_en').notNull(),
+  categorySv: text('category_sv').notNull().default('Kläder & Mode'),
+  categoryEn: text('category_en').notNull().default('Apparel & Clothing'),
+  price: text('price').notNull(),
+  priceAmount: integer('price_amount').notNull().default(0),
+  currency: text('currency').notNull().default('SEK'),
+  imageUrl: text('image_url').notNull(),
+  productUrl: text('product_url').notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  lastSyncedAt: integer('last_synced_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .default(sql`(unixepoch() * 1000)`),
+  ...timestamps,
+})
+
 export const siteSettings = sqliteTable('site_settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
+  ...timestamps,
+})
+
+export const gigSetlistItems = sqliteTable('gig_setlist_items', {
+  id: text('id').primaryKey(),
+  gigId: text('gig_id')
+    .notNull()
+    .references(() => gigs.id, { onDelete: 'cascade' }),
+  songId: text('song_id')
+    .references(() => songs.id, { onDelete: 'set null' }),
+  title: text('title').notNull(),
+  artist: text('artist'),
+  isOriginal: integer('is_original', { mode: 'boolean' }).notNull().default(false),
+  setName: text('set_name').notNull().default('Set 1'),
+  notes: text('notes'),
+  sortOrder: integer('sort_order').notNull().default(0),
   ...timestamps,
 })
 
@@ -243,4 +280,23 @@ export const accountRelations = relations(account, ({ one }) => ({
     fields: [account.userId],
     references: [user.id],
   }),
+}))
+
+export const gigsRelations = relations(gigs, ({ many }) => ({
+  setlistItems: many(gigSetlistItems),
+}))
+
+export const gigSetlistItemsRelations = relations(gigSetlistItems, ({ one }) => ({
+  gig: one(gigs, {
+    fields: [gigSetlistItems.gigId],
+    references: [gigs.id],
+  }),
+  song: one(songs, {
+    fields: [gigSetlistItems.songId],
+    references: [songs.id],
+  }),
+}))
+
+export const songsRelations = relations(songs, ({ many }) => ({
+  gigSetlistItems: many(gigSetlistItems),
 }))

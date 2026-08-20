@@ -66,16 +66,13 @@ const fanItems = computed(() => {
         class="stage-card p-6 sm:p-8 rounded-2xl flex flex-col justify-between border border-primary/30 shadow-xl"
       >
         <div>
-          <div class="frame-polaroid mb-6">
-            <NuxtImg
-              src="/media/fan-central/5B0EBD96-EAC2-4554-B7AF-433307968BD0.webp"
-              alt="Troget publikfan"
-              class="w-full aspect-[4/3] object-cover rounded"
-            />
-            <div class="text-center font-heading text-xs font-bold text-neutral mt-2">
-              {{ t('fan_central.human_badge') }}
-            </div>
-          </div>
+          <FramedPhoto
+            media-url="/media/fan-central/5B0EBD96-EAC2-4554-B7AF-433307968BD0.webp"
+            alt-text-sv="Troget publikfan"
+            :caption-sv="t('fan_central.human_badge')"
+            frame-style="polaroid"
+            class="mb-6"
+          />
 
           <h2 class="font-heading text-2xl text-primary font-bold">{{ t('fan_central.human_title') }}</h2>
           <p class="text-sm text-base-content/80 mt-2 leading-relaxed">
@@ -99,16 +96,13 @@ const fanItems = computed(() => {
         class="stage-card p-6 sm:p-8 rounded-2xl flex flex-col justify-between border border-secondary/40 shadow-xl"
       >
         <div>
-          <div class="frame-taped mb-6">
-            <NuxtImg
-              src="/media/fan-central/fanpic.png"
-              alt="Elektrisk bordsfläkt på scen"
-              class="w-full aspect-[4/3] object-cover rounded"
-            />
-            <div class="text-center font-mono text-xs font-bold text-secondary mt-2">
-              {{ t('fan_central.electric_model') }}
-            </div>
-          </div>
+          <FramedPhoto
+            media-url="/media/fan-central/fanpic.png"
+            alt-text-sv="Elektrisk bordsfläkt på scen"
+            :caption-sv="t('fan_central.electric_model')"
+            frame-style="taped"
+            class="mb-6"
+          />
 
           <h2 class="font-heading text-2xl text-secondary font-bold">{{ t('fan_central.electric_title') }}</h2>
           <p class="text-sm text-base-content/80 mt-2 leading-relaxed">

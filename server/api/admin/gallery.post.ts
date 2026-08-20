@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
       .set({
         category: body.category || 'photo',
         mediaUrl: body.mediaUrl,
-        frameStyle: body.frameStyle || 'polaroid',
+        frameStyle: body.frameStyle || 'random',
         rotation: parseInt(body.rotation || 0),
         captionSv: body.captionSv || null,
         captionEn: body.captionEn || null,
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
       id,
       category: body.category || 'photo',
       mediaUrl: body.mediaUrl,
-      frameStyle: body.frameStyle || 'polaroid',
+      frameStyle: body.frameStyle || 'random',
       rotation: parseInt(body.rotation || 0),
       captionSv: body.captionSv || null,
       captionEn: body.captionEn || null,

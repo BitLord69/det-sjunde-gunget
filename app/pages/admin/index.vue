@@ -10,7 +10,7 @@ useSeoMeta({
 
 const { adminUser } = useAdminAuth()
 
-const activeTab = ref<'gigs' | 'band' | 'songs' | 'setlist' | 'gallery' | 'admins' | 'messages' | 'subscribers' | 'hashtags'>('gigs')
+const activeTab = ref<'gigs' | 'band' | 'songs' | 'setlist' | 'gallery' | 'merch' | 'admins' | 'messages' | 'subscribers' | 'hashtags'>('gigs')
 const toastMessage = ref('')
 
 const showToast = (msg: string) => {
@@ -26,6 +26,9 @@ const { data: bandMembers, refresh: refreshBand } = await useFetch('/api/band')
 const { data: galleryItems, refresh: refreshGallery } = await useFetch('/api/gallery')
 const { data: songsData, refresh: refreshSongs } = await useFetch('/api/songs')
 const { data: setlistData, refresh: refreshSetlist } = await useFetch<any[]>('/api/setlist', {
+  default: () => [],
+})
+const { data: merchData, refresh: refreshMerch } = await useFetch<any[]>('/api/merch', {
   default: () => [],
 })
 const { data: adminUsers, refresh: refreshAdmins } = await useFetch('/api/admin/users', {
@@ -45,9 +48,171 @@ const { data: hashtagsData, refresh: refreshHashtags } = await useFetch<any[]>('
   ignoreResponseError: true,
 })
 
-const { data: adminSettings, refresh: refreshSettings } = await useFetch<{ newsletterEnabled: boolean; settings: Record<string, string> }>('/api/admin/settings', {
+const { data: adminSettings, refresh: refreshSettings } = await useFetch<{ newsletterEnabled: boolean; landingSongCount?: number; landingMerchCount?: number; lastMerchSync?: number; settings: Record<string, string> }>('/api/admin/settings', {
   default: () => ({ newsletterEnabled: false, settings: {} }),
   ignoreResponseError: true,
+})
+
+const { data: songsStatsData, refresh: refreshSongsStats } = await useFetch<{
+  stats: any[]
+  lookupByTitle: Record<string, number>
+  lookupById: Record<string, number>
+  totalPerformances: number
+  uniqueSongsCount: number
+}>('/api/admin/songs/stats', {
+  default: () => ({ stats: [], lookupByTitle: {}, lookupById: {}, totalPerformances: 0, uniqueSongsCount: 0 }),
+  ignoreResponseError: true,
+})
+
+const selectedSongStatsModal = ref<any | null>(null)
+const getSongPlayCount = (song: any) => {
+  if (!song) return 0
+  if (song.id && songsStatsData.value?.lookupById?.[song.id] !== undefined) {
+    return songsStatsData.value.lookupById[song.id]
+  }
+  const norm = (song.title || '').toLowerCase().trim()
+  return songsStatsData.value?.lookupByTitle?.[norm] || 0
+}
+
+const openSongStats = (song: any) => {
+  const normTitle = (song.title || '').toLowerCase().trim()
+  const found = (songsStatsData.value?.stats || []).find((s: any) =>
+    (s.id && song.id && s.id === song.id) ||
+    (s.title && s.title.toLowerCase().trim() === normTitle)
+  )
+
+  if (found) {
+    selectedSongStatsModal.value = found
+  } else {
+    selectedSongStatsModal.value = {
+      title: song.title,
+      artist: song.originalArtist || song.artist,
+      isOriginal: song.isOriginal,
+      playCount: 0,
+      gigs: [],
+    }
+  }
+}
+
+// 🎵 Song Sorting State & Computed
+type SongSortKey = 'title' | 'isOriginal' | 'originalArtist' | 'embedProvider' | 'playCount'
+const songSortKey = ref<SongSortKey>('title')
+const songSortDir = ref<'asc' | 'desc'>('asc')
+
+const toggleSongSort = (key: SongSortKey) => {
+  if (songSortKey.value === key) {
+    songSortDir.value = songSortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    songSortKey.value = key
+    songSortDir.value = key === 'playCount' ? 'desc' : 'asc'
+  }
+}
+
+const sortedSongs = computed(() => {
+  const list = [...(songsData.value || [])]
+  const dir = songSortDir.value === 'asc' ? 1 : -1
+
+  return list.sort((a, b) => {
+    if (songSortKey.value === 'title') {
+      return dir * (a.title || '').localeCompare(b.title || '', 'sv')
+    }
+    if (songSortKey.value === 'isOriginal') {
+      const aVal = a.isOriginal ? 1 : 0
+      const bVal = b.isOriginal ? 1 : 0
+      return dir * (bVal - aVal)
+    }
+    if (songSortKey.value === 'originalArtist') {
+      const aArt = a.isOriginal ? '' : (a.originalArtist || '')
+      const bArt = b.isOriginal ? '' : (b.originalArtist || '')
+      return dir * aArt.localeCompare(bArt, 'sv')
+    }
+    if (songSortKey.value === 'embedProvider') {
+      return dir * (a.embedProvider || '').localeCompare(b.embedProvider || '', 'sv')
+    }
+    if (songSortKey.value === 'playCount') {
+      const aCount = getSongPlayCount(a)
+      const bCount = getSongPlayCount(b)
+      return dir * (aCount - bCount)
+    }
+    return 0
+  })
+})
+
+// 📋 Setlist Sorting State & Computed
+type SetlistSortKey = 'sortOrder' | 'title' | 'setName' | 'isOriginal' | 'playCount'
+const setlistSortKey = ref<SetlistSortKey>('sortOrder')
+const setlistSortDir = ref<'asc' | 'desc'>('asc')
+
+const toggleSetlistSort = (key: SetlistSortKey) => {
+  if (setlistSortKey.value === key) {
+    setlistSortDir.value = setlistSortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    setlistSortKey.value = key
+    setlistSortDir.value = key === 'playCount' ? 'desc' : 'asc'
+  }
+}
+
+const sortedSetlist = computed(() => {
+  const list = [...(setlistData.value || [])]
+  const dir = setlistSortDir.value === 'asc' ? 1 : -1
+
+  return list.sort((a, b) => {
+    if (setlistSortKey.value === 'sortOrder') {
+      return dir * ((a.sortOrder || 0) - (b.sortOrder || 0))
+    }
+    if (setlistSortKey.value === 'title') {
+      return dir * (a.title || '').localeCompare(b.title || '', 'sv')
+    }
+    if (setlistSortKey.value === 'setName') {
+      return dir * (a.setName || '').localeCompare(b.setName || '', 'sv')
+    }
+    if (setlistSortKey.value === 'isOriginal') {
+      const aVal = a.isOriginal ? 1 : 0
+      const bVal = b.isOriginal ? 1 : 0
+      return dir * (bVal - aVal)
+    }
+    if (setlistSortKey.value === 'playCount') {
+      const aCount = getSongPlayCount(a)
+      const bCount = getSongPlayCount(b)
+      return dir * (aCount - bCount)
+    }
+    return 0
+  })
+})
+
+// 📅 Gigs Sorting State & Computed
+type GigSortKey = 'date' | 'venue' | 'city' | 'status'
+const gigSortKey = ref<GigSortKey>('date')
+const gigSortDir = ref<'asc' | 'desc'>('asc')
+
+const toggleGigSort = (key: GigSortKey) => {
+  if (gigSortKey.value === key) {
+    gigSortDir.value = gigSortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    gigSortKey.value = key
+    gigSortDir.value = 'asc'
+  }
+}
+
+const sortedGigs = computed(() => {
+  const list = [...(gigsData.value?.all || [])]
+  const dir = gigSortDir.value === 'asc' ? 1 : -1
+
+  return list.sort((a, b) => {
+    if (gigSortKey.value === 'date') {
+      return dir * (new Date(a.date).getTime() - new Date(b.date).getTime())
+    }
+    if (gigSortKey.value === 'venue') {
+      return dir * (a.venue || '').localeCompare(b.venue || '', 'sv')
+    }
+    if (gigSortKey.value === 'city') {
+      return dir * (a.city || '').localeCompare(b.city || '', 'sv')
+    }
+    if (gigSortKey.value === 'status') {
+      return dir * (a.status || '').localeCompare(b.status || '', 'sv')
+    }
+    return 0
+  })
 })
 
 const newsletterEnabledSetting = ref(false)
@@ -59,7 +224,150 @@ watch(
   { immediate: true },
 )
 
-const isSavingSettings = ref(false)
+const landingSongCountSetting = ref(4)
+watch(
+  () => (adminSettings.value as any)?.landingSongCount,
+  (val) => {
+    if (val !== undefined && val !== null) {
+      landingSongCountSetting.value = Number(val)
+    }
+  },
+  { immediate: true },
+)
+
+const songSliderPercent = computed(() => {
+  const min = 2, max = 10
+  const val = Math.max(min, Math.min(max, Number(landingSongCountSetting.value) || 4))
+  return ((val - min) / (max - min)) * 100
+})
+
+const isSlidingSongs = ref(false)
+let songSlideTimeout: any = null
+const showSongTooltipTemporarily = () => {
+  isSlidingSongs.value = true
+  if (songSlideTimeout) clearTimeout(songSlideTimeout)
+  songSlideTimeout = setTimeout(() => {
+    isSlidingSongs.value = false
+  }, 1200)
+}
+
+let saveSongDebounceTimer: any = null
+const saveLandingSongCountSetting = (newVal?: number) => {
+  const count = newVal !== undefined ? Math.max(2, Math.min(10, Number(newVal))) : Math.max(2, Math.min(10, Number(landingSongCountSetting.value) || 4))
+  // 1. Instant 0ms optimistic local update
+  landingSongCountSetting.value = count
+  if (adminSettings.value) {
+    (adminSettings.value as any).landingSongCount = count
+  }
+  showSongTooltipTemporarily()
+
+  // 2. Debounced single atomic network update (250ms)
+  if (saveSongDebounceTimer) clearTimeout(saveSongDebounceTimer)
+  saveSongDebounceTimer = setTimeout(async () => {
+    try {
+      await $fetch('/api/admin/settings', {
+        method: 'POST',
+        body: { landingSongCount: count },
+      })
+      showToast(`✓ Antal låtar på landningssidan ändrades till ${count} st!`)
+    } catch (err: any) {
+      showToast('⚠️ Fel vid sparande av inställning: ' + (err?.data?.message || err?.message || ''))
+    }
+  }, 250)
+}
+
+const landingMerchCountSetting = ref(4)
+watch(
+  () => (adminSettings.value as any)?.landingMerchCount,
+  (val) => {
+    if (val !== undefined && val !== null) {
+      landingMerchCountSetting.value = Number(val)
+    }
+  },
+  { immediate: true },
+)
+
+const merchSliderPercent = computed(() => {
+  const min = 2, max = 8
+  const val = Math.max(min, Math.min(max, Number(landingMerchCountSetting.value) || 4))
+  return ((val - min) / (max - min)) * 100
+})
+
+const isSlidingMerch = ref(false)
+let merchSlideTimeout: any = null
+const showMerchTooltipTemporarily = () => {
+  isSlidingMerch.value = true
+  if (merchSlideTimeout) clearTimeout(merchSlideTimeout)
+  merchSlideTimeout = setTimeout(() => {
+    isSlidingMerch.value = false
+  }, 1200)
+}
+
+let saveMerchDebounceTimer: any = null
+const saveLandingMerchCountSetting = (newVal?: number) => {
+  const count = newVal !== undefined ? Math.max(2, Math.min(8, Number(newVal))) : Math.max(2, Math.min(8, Number(landingMerchCountSetting.value) || 4))
+  // 1. Instant 0ms optimistic local update
+  landingMerchCountSetting.value = count
+  if (adminSettings.value) {
+    (adminSettings.value as any).landingMerchCount = count
+  }
+  showMerchTooltipTemporarily()
+
+  // 2. Debounced single atomic network update (250ms)
+  if (saveMerchDebounceTimer) clearTimeout(saveMerchDebounceTimer)
+  saveMerchDebounceTimer = setTimeout(async () => {
+    try {
+      await $fetch('/api/admin/settings', {
+        method: 'POST',
+        body: { landingMerchCount: count },
+      })
+      showToast(`✓ Antal merch-artiklar på landningssidan ändrades till ${count} st!`)
+    } catch (err: any) {
+      showToast('⚠️ Fel vid sparande av inställning: ' + (err?.data?.message || err?.message || ''))
+    }
+  }, 250)
+}
+
+onMounted(() => {
+  refreshSettings()
+  refreshSongs()
+  refreshGigs()
+  refreshGallery()
+})
+
+const isSyncingMerch = ref(false)
+
+const triggerMerchSync = async () => {
+  isSyncingMerch.value = true
+  try {
+    const res: any = await $fetch('/api/admin/merch/sync', {
+      method: 'POST',
+    })
+    await refreshMerch()
+    await refreshSettings()
+    if (res?.success) {
+      showToast(`✓ ${res.totalItems} produkter synkades från Spreadshop till databasen!`)
+    } else {
+      showToast(`⚠️ Synkfel: ${res?.error || 'Kunde inte synka från Spreadshop'}`)
+    }
+  } catch (err: any) {
+    showToast('⚠️ Fel vid synkning: ' + (err?.data?.message || err?.message || ''))
+  } finally {
+    isSyncingMerch.value = false
+  }
+}
+
+const formatSyncTimestamp = (ts?: number | null) => {
+  if (!ts) return 'Aldrig synkad'
+  return new Intl.DateTimeFormat('sv-SE', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(ts))
+}
+
 const toggleNewsletterSetting = async () => {
   newsletterEnabledSetting.value = !newsletterEnabledSetting.value
   isSavingSettings.value = true
@@ -345,6 +653,7 @@ const songForm = reactive({
   embedProvider: 'spotify',
   embedUrl: '',
   audioUrl: '',
+  coverImage: '',
   duration: '',
   lyrics: '',
   lyricsEn: '',
@@ -360,6 +669,7 @@ const openAddSong = () => {
   songForm.embedProvider = 'spotify'
   songForm.embedUrl = ''
   songForm.audioUrl = ''
+  songForm.coverImage = ''
   songForm.duration = ''
   songForm.lyrics = ''
   songForm.lyricsEn = ''
@@ -377,6 +687,7 @@ const openEditSong = (s: any) => {
   songForm.embedProvider = s.embedProvider || 'spotify'
   songForm.embedUrl = s.embedUrl || ''
   songForm.audioUrl = s.audioUrl || ''
+  songForm.coverImage = s.coverImage || ''
   songForm.duration = s.duration ? String(s.duration) : ''
   songForm.lyrics = s.lyrics || ''
   songForm.lyricsEn = s.lyricsEn || ''
@@ -399,8 +710,8 @@ ${tagsStr}`
 })
 
 const saveSong = async () => {
-  if (!songForm.title || !songForm.embedUrl) {
-    showToast('⚠️ Ange låttitel och länk!')
+  if (!songForm.title || (!songForm.embedUrl && !songForm.audioUrl)) {
+    showToast('⚠️ Ange låttitel och antingen en ljudfil eller en länk!')
     return
   }
   const res = await $fetch<{ success: boolean; social?: any }>('/api/admin/songs', {
@@ -624,6 +935,31 @@ const saveGalleryItem = async () => {
   showToast('✓ Bilden har sparats!')
 }
 
+const quickChangeFrameStyle = async (item: any, newStyle: string) => {
+  try {
+    await $fetch('/api/admin/gallery', {
+      method: 'POST',
+      body: {
+        ...item,
+        frameStyle: newStyle,
+      },
+    })
+    item.frameStyle = newStyle
+    await refreshGallery()
+    const labelMap: Record<string, string> = {
+      random: '🎲 Slumpad',
+      pinned: '📌 Nålat',
+      polaroid: '📷 Polaroid',
+      taped: '🏷️ Tejpat',
+      grunge: '🎞️ Grunge',
+      wood: '🖼️ Träram',
+    }
+    showToast(`✓ Fastsättning ändrad till ${labelMap[newStyle] || newStyle}!`)
+  } catch (err: any) {
+    showToast('⚠️ Kunde inte uppdatera fastsättning: ' + (err?.data?.message || err?.message || ''))
+  }
+}
+
 const deleteGalleryItem = async (id: string) => {
   if (!confirm('Vill du ta bort bilden?')) return
   await $fetch('/api/admin/gallery', {
@@ -775,6 +1111,7 @@ const deleteAdminUser = async (admin: any) => {
         type="button"
         class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
         :class="activeTab === 'gigs' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        title="Hantera turnédatum, skapa spellista för spelningar, uppdatera biljettlänkar och status"
         @click="activeTab = 'gigs'"
       >
         <span>📅</span> Gig & spelningar ({{ gigsData?.all?.length || 0 }})
@@ -783,6 +1120,7 @@ const deleteAdminUser = async (admin: any) => {
         type="button"
         class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
         :class="activeTab === 'band' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        title="Hantera bandmedlemmarnas profiler, instrument och biografier"
         @click="activeTab = 'band'"
       >
         <span>🎸</span> Bandet & medlemmar ({{ bandMembers?.length || 4 }})
@@ -791,6 +1129,7 @@ const deleteAdminUser = async (admin: any) => {
         type="button"
         class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
         :class="activeTab === 'songs' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        title="Hantera bandets låtskatt och ljudfiler som spelas i jukeboxen på musiksidan"
         @click="activeTab = 'songs'"
       >
         <span>🎵</span> Låtar & jukebox ({{ songsData?.length || 0 }})
@@ -799,6 +1138,7 @@ const deleteAdminUser = async (admin: any) => {
         type="button"
         class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
         :class="activeTab === 'setlist' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        title="Organisera bandets aktiva liverepertoar och setlist som visas för fansen på musiksidan"
         @click="activeTab = 'setlist'"
       >
         <span>📋</span> Setlist & repertoar ({{ setlistData?.length || 0 }})
@@ -807,6 +1147,7 @@ const deleteAdminUser = async (admin: any) => {
         type="button"
         class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
         :class="activeTab === 'gallery' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        title="Hantera fotogalleri, Fan Central och välj ramstilar / fastsättning"
         @click="activeTab = 'gallery'"
       >
         <span>📷</span> Galleri & Fan Central ({{ galleryItems?.length || 0 }})
@@ -814,7 +1155,17 @@ const deleteAdminUser = async (admin: any) => {
       <button
         type="button"
         class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
+        :class="activeTab === 'merch' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        title="Hantera merch, priser och synkronisering med Spreadshop-butiken"
+        @click="activeTab = 'merch'"
+      >
+        <span>👕</span> Merch & webbshop ({{ merchData?.length || 0 }})
+      </button>
+      <button
+        type="button"
+        class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
         :class="activeTab === 'messages' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        title="Hantera inkomna bokningsförfrågningar och meddelanden"
         @click="activeTab = 'messages'"
       >
         <span>✉️</span> Bokningar & förfrågningar ({{ messagesData?.length || 0 }})
@@ -826,6 +1177,7 @@ const deleteAdminUser = async (admin: any) => {
         type="button"
         class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
         :class="activeTab === 'subscribers' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        title="Visa och hantera e-postprenumeranter till nyhetsbrevet"
         @click="activeTab = 'subscribers'"
       >
         <span>📬</span> Nyhetsbrev ({{ subscribersData?.length || 0 }})
@@ -834,6 +1186,7 @@ const deleteAdminUser = async (admin: any) => {
         type="button"
         class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
         :class="activeTab === 'admins' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        title="Hantera administratörskonton och behörigheter"
         @click="activeTab = 'admins'"
       >
         <span>👥</span> Administratörer ({{ adminUsers?.length || 4 }})
@@ -842,6 +1195,7 @@ const deleteAdminUser = async (admin: any) => {
         type="button"
         class="px-5 py-2.5 rounded-full transition-all flex items-center gap-1.5"
         :class="activeTab === 'hashtags' ? 'bg-primary text-primary-content shadow' : 'bg-base-200 text-base-content/70 hover:text-primary'"
+        title="Hantera förvalda hashtags för sociala medier-delning"
         @click="activeTab = 'hashtags'"
       >
         <span>🏷️</span> Sociala taggar ({{ hashtagsData?.length || 0 }})
@@ -853,9 +1207,14 @@ const deleteAdminUser = async (admin: any) => {
       <div class="flex items-center justify-between">
         <div>
           <h2 class="font-heading text-2xl text-primary font-bold">Hantera gig & spelningar</h2>
-          <p class="text-xs text-base-content/70">Lägg till turnédatum, uppdatera biljettlänkar och markera slutsålt.</p>
+          <p class="text-xs text-base-content/70">Lägg till turnédatum, skapa spellista, uppdatera biljettlänkar och markera status.</p>
         </div>
-        <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-5" @click="openAddGig">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm rounded-full font-bold px-5"
+          title="Lägg till ett nytt gig med spelplats, datum, låtlista och biljettlänk"
+          @click="openAddGig"
+        >
           + Nytt gig
         </button>
       </div>
@@ -1089,16 +1448,140 @@ const deleteAdminUser = async (admin: any) => {
         <table class="table table-zebra w-full text-xs">
           <thead>
             <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
-              <th>Datum & Tid</th>
-              <th>Spelplats</th>
-              <th>Stad</th>
-              <th>Status</th>
+              <!-- DATUM -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="gigSortKey === 'date' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleGigSort('date')"
+                >
+                  <span>Datum & Tid</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="gigSortKey === 'date' ? (gigSortDir === 'asc' ? 'Kronologisk: Äldst först (Klicka för nyast)' : 'Omvänd: Nyast först (Klicka för äldst)') : 'Klicka för att sortera efter datum'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        gigSortKey === 'date'
+                          ? (gigSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- SPELPLATS -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="gigSortKey === 'venue' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleGigSort('venue')"
+                >
+                  <span>Spelplats</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="gigSortKey === 'venue' ? (gigSortDir === 'asc' ? 'Sorterat A till Ö (Klicka för Ö till A)' : 'Sorterat Ö till A (Klicka för A till Ö)') : 'Klicka för att sortera efter spelplats'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        gigSortKey === 'venue'
+                          ? (gigSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- STAD -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="gigSortKey === 'city' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleGigSort('city')"
+                >
+                  <span>Stad</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="gigSortKey === 'city' ? (gigSortDir === 'asc' ? 'Sorterat A till Ö (Klicka för Ö till A)' : 'Sorterat Ö till A (Klicka för A till Ö)') : 'Klicka för att sortera efter stad'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        gigSortKey === 'city'
+                          ? (gigSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- STATUS -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="gigSortKey === 'status' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleGigSort('status')"
+                >
+                  <span>Status</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="gigSortKey === 'status' ? (gigSortDir === 'asc' ? 'Sorterat efter status (Klicka för omvänd)' : 'Sorterat omvänt (Klicka för stigande)') : 'Klicka för att sortera efter status'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        gigSortKey === 'status'
+                          ? (gigSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
               <th>Biljettlänk</th>
               <th class="text-right">Åtgärd</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="gig in gigsData?.all || []" :key="gig.id" class="hover:bg-base-200/50">
+            <tr v-for="gig in sortedGigs" :key="gig.id" class="hover:bg-base-200/50">
               <td class="font-mono font-bold">{{ new Date(gig.date).toLocaleDateString('sv-SE') }}</td>
               <td class="font-bold text-primary">{{ gig.venue }}</td>
               <td>{{ gig.city }}</td>
@@ -1258,6 +1741,78 @@ const deleteAdminUser = async (admin: any) => {
         </button>
       </div>
 
+      <!-- Landing Page Song Count Slider Setting -->
+      <div class="stage-card p-5 sm:p-6 rounded-2xl border border-primary/30 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-6 bg-base-200/60">
+        <div class="space-y-1.5 max-w-xl">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🎛️</span>
+            <h3 class="font-heading text-lg text-primary font-bold">
+              Antal låtar som visas på landningssidan
+            </h3>
+            <span class="badge badge-primary font-mono font-black text-xs px-2.5 py-1">
+              {{ landingSongCountSetting }} st
+            </span>
+          </div>
+          <p class="text-xs text-base-content/75 leading-relaxed">
+            Ställ in hur många slumpade singlar som ska visas i låtskatten på startsidan (2 till 10 låtar). Ändringen sparas direkt.
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-1 w-full md:w-80 flex-shrink-0 pt-3">
+          <!-- Floating Live Tooltip Bubble above slider thumb (Only visible when sliding) -->
+          <div class="relative w-full h-6 px-10 pointer-events-none">
+            <div
+              class="absolute bottom-0 -translate-x-1/2 transition-all duration-200 ease-out"
+              :class="isSlidingSongs ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-75 translate-y-2'"
+              :style="{ left: `calc(2.5rem + ${songSliderPercent} * (100% - 5rem) / 100)` }"
+            >
+              <div class="bg-primary text-primary-content text-[11px] font-mono font-black px-2.5 py-0.5 rounded-full shadow-2xl flex items-center gap-1 border border-amber-300/60 relative">
+                <span>🎵</span>
+                <span>{{ landingSongCountSetting }} st</span>
+                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rotate-45" />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="btn btn-xs btn-circle btn-primary font-bold shadow"
+              :disabled="landingSongCountSetting <= 2"
+              title="Minska antal"
+              @click="saveLandingSongCountSetting(landingSongCountSetting - 1)"
+            >
+              −
+            </button>
+            <span class="text-xs font-mono font-bold text-secondary">2</span>
+            <input
+              v-model.number="landingSongCountSetting"
+              type="range"
+              min="2"
+              max="10"
+              step="1"
+              class="range range-primary range-sm flex-grow cursor-pointer"
+              @input="isSlidingSongs = true"
+              @mousedown="isSlidingSongs = true"
+              @touchstart="isSlidingSongs = true"
+              @mouseup="showSongTooltipTemporarily()"
+              @touchend="showSongTooltipTemporarily()"
+              @change="saveLandingSongCountSetting()"
+            />
+            <span class="text-xs font-mono font-bold text-secondary">10</span>
+            <button
+              type="button"
+              class="btn btn-xs btn-circle btn-primary font-bold shadow"
+              :disabled="landingSongCountSetting >= 10"
+              title="Öka antal"
+              @click="saveLandingSongCountSetting(landingSongCountSetting + 1)"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Add/Edit Song Modal Form -->
       <div v-if="editingSong" class="stage-card p-6 sm:p-8 rounded-2xl border border-primary/40 space-y-4 shadow-2xl">
         <h3 class="font-heading text-xl text-primary font-bold">
@@ -1279,6 +1834,69 @@ const deleteAdminUser = async (admin: any) => {
             <label class="block text-xs font-bold text-secondary mb-1">Originalartist</label>
             <input v-model="songForm.originalArtist" type="text" placeholder="T.ex. Muddy Waters" class="input input-bordered w-full bg-base-200 input-sm" />
           </div>
+          <!-- Audio File Uploader & Direct Audio URL -->
+          <div class="sm:col-span-2 p-4 bg-base-200/60 rounded-xl border border-primary/20 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-secondary">🎙️ Ljudfil / MP3 (Egen uppladdning)</label>
+              <span class="text-[10px] text-base-content/60 font-mono">MP3, WAV, AAC, M4A</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="songForm.audioUrl"
+                type="text"
+                placeholder="/media/uploads/min-lat.mp3 eller klistra in URL"
+                class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs"
+              />
+              <label class="btn btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
+                <span>📁 Ladda upp ljudfil</span>
+                <input
+                  type="file"
+                  accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg"
+                  class="hidden"
+                  @change="uploadFile($event, url => songForm.audioUrl = url)"
+                />
+              </label>
+            </div>
+            <p class="text-[10px] text-base-content/60">
+              Om du laddar upp en egen ljudfil spelas den direkt i webbläsarens jukebox med vinylknaster, helt utan Spotify.
+            </p>
+            <div v-if="songForm.audioUrl" class="pt-2">
+              <audio :src="songForm.audioUrl" controls class="w-full h-8" />
+            </div>
+          </div>
+
+          <!-- Cover Artwork Image Uploader (Optional) -->
+          <div class="sm:col-span-2 p-4 bg-base-200/60 rounded-xl border border-primary/20 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-secondary">🎨 Eget Skivomslag / Artwork (Valfritt)</label>
+              <span class="text-[10px] text-base-content/60 font-mono">PNG, JPG, WebP</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="songForm.coverImage"
+                type="text"
+                placeholder="/images/records/mitt-omslag.jpg eller lämna tomt för automatisk vintage-design"
+                class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs"
+              />
+              <label class="btn btn-secondary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
+                <span>📷 Ladda upp omslag</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  @change="uploadFile($event, url => songForm.coverImage = url)"
+                />
+              </label>
+            </div>
+            <p class="text-[10px] text-base-content/60">
+              Lämnas detta tomt skapas automatiskt ett autentiskt 7"-singelomslag med låtens titel & artist i klassisk vinylstil.
+            </p>
+            <div v-if="songForm.coverImage" class="pt-2 flex items-center gap-3">
+              <img :src="songForm.coverImage" alt="Preview" class="w-16 h-16 object-cover rounded-md border border-primary/40 shadow" />
+              <button type="button" class="btn btn-ghost btn-xs text-error" @click="songForm.coverImage = ''">Ta bort bild ✕</button>
+            </div>
+          </div>
+
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Plattform / leverantör</label>
             <select v-model="songForm.embedProvider" class="select select-bordered w-full bg-base-200 select-sm">
@@ -1287,15 +1905,11 @@ const deleteAdminUser = async (admin: any) => {
               <option value="youtube">YouTube</option>
             </select>
           </div>
-          <div class="sm:col-span-2">
-            <label class="block text-xs font-bold text-secondary mb-1">Länk / Embed URL *</label>
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">Extern länk / Embed URL (valfritt om ljudfil finns)</label>
             <input v-model="songForm.embedUrl" type="url" placeholder="https://open.spotify.com/track/..." class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
           </div>
-          <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Direkt ljudspår / MP3-preview (valfritt)</label>
-            <input v-model="songForm.audioUrl" type="text" placeholder="/media/audio/sample.mp3" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
-          </div>
-          <div>
+          <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Längd (sekunder, valfritt)</label>
             <input v-model="songForm.duration" type="number" placeholder="215" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
           </div>
@@ -1405,15 +2019,171 @@ const deleteAdminUser = async (admin: any) => {
         <table class="table table-zebra w-full text-xs">
           <thead>
             <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
-              <th>Titel</th>
-              <th>Typ</th>
-              <th>Originalartist</th>
-              <th>Plattform</th>
+              <!-- TITEL -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="songSortKey === 'title' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleSongSort('title')"
+                >
+                  <span>Titel</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="songSortKey === 'title' ? (songSortDir === 'asc' ? 'Sorterat A till Ö (Klicka för Ö till A)' : 'Sorterat Ö till A (Klicka för A till Ö)') : 'Klicka för att sortera efter titel'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        songSortKey === 'title'
+                          ? (songSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- TYP -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="songSortKey === 'isOriginal' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleSongSort('isOriginal')"
+                >
+                  <span>Typ</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="songSortKey === 'isOriginal' ? (songSortDir === 'asc' ? 'Original först (Klicka för Covers först)' : 'Covers först (Klicka för Original först)') : 'Klicka för att sortera efter låttyp'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        songSortKey === 'isOriginal'
+                          ? (songSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- ORIGINALARTIST -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="songSortKey === 'originalArtist' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleSongSort('originalArtist')"
+                >
+                  <span>Originalartist</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="songSortKey === 'originalArtist' ? (songSortDir === 'asc' ? 'Sorterat A till Ö (Klicka för Ö till A)' : 'Sorterat Ö till A (Klicka för A till Ö)') : 'Klicka för att sortera efter originalartist'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        songSortKey === 'originalArtist'
+                          ? (songSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- PLATTFORM -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="songSortKey === 'embedProvider' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleSongSort('embedProvider')"
+                >
+                  <span>Plattform</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="songSortKey === 'embedProvider' ? (songSortDir === 'asc' ? 'Sorterat A till Ö (Klicka för Ö till A)' : 'Sorterat Ö till A (Klicka för A till Ö)') : 'Klicka för att sortera efter plattform'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        songSortKey === 'embedProvider'
+                          ? (songSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- LIVE-SPELNINGAR -->
+              <th class="text-center">
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded mx-auto"
+                  :class="songSortKey === 'playCount' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleSongSort('playCount')"
+                >
+                  <span>Live-spelningar</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="songSortKey === 'playCount' ? (songSortDir === 'desc' ? 'Flest spelningar först ⚡ (Klicka för minst)' : 'Minst spelningar först (Klicka för flest)') : 'Klicka för att sortera efter antal live-spelningar'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        songSortKey === 'playCount'
+                          ? (songSortDir === 'desc' ? 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
               <th class="text-right">Åtgärd</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="song in songsData || []" :key="song.id">
+            <tr v-for="song in sortedSongs" :key="song.id">
               <td class="font-bold text-primary">{{ song.title }}</td>
               <td>
                 <span class="badge badge-xs font-bold uppercase text-[9px]" :class="song.isOriginal ? 'badge-primary' : 'badge-secondary'">
@@ -1422,6 +2192,18 @@ const deleteAdminUser = async (admin: any) => {
               </td>
               <td>{{ song.isOriginal ? '—' : song.originalArtist }}</td>
               <td class="font-mono capitalize text-[10px]">{{ song.embedProvider }}</td>
+              <td class="text-center">
+                <button
+                  type="button"
+                  class="btn btn-xs rounded-full font-mono text-[10px] gap-1 transition-all cursor-pointer"
+                  :class="getSongPlayCount(song) > 0 ? 'btn-primary font-bold shadow' : 'btn-ghost opacity-60 hover:opacity-100'"
+                  title="Klicka för att se vilka gig låten har spelats på"
+                  @click="openSongStats(song)"
+                >
+                  <span>🎸</span>
+                  <span>{{ getSongPlayCount(song) }} ggr</span>
+                </button>
+              </td>
               <td class="text-right space-x-2">
                 <button type="button" class="btn btn-xs btn-outline btn-primary rounded" @click="openEditSong(song)">
                   Redigera
@@ -1440,8 +2222,8 @@ const deleteAdminUser = async (admin: any) => {
     <div v-if="activeTab === 'setlist'" class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="font-heading text-2xl text-primary font-bold">Hantera live setlist & repertoar</h2>
-          <p class="text-xs text-base-content/70">Organisera bandets aktiva liverepertoar uppdelad i set och extranummer.</p>
+          <h2 class="font-heading text-2xl text-primary font-bold">Hantera live setlist & repertoar (på musiksidan)</h2>
+          <p class="text-xs text-base-content/70">Organisera bandets aktiva liverepertoar uppdelad i set och extranummer som visas för fansen på musiksidan (<NuxtLink to="/music" target="_blank" class="text-secondary underline hover:text-primary font-mono">/music</NuxtLink>).</p>
         </div>
         <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-5" @click="openAddSetlist">
           + Ny låt i setlistan
@@ -1503,16 +2285,172 @@ const deleteAdminUser = async (admin: any) => {
         <table class="table table-zebra w-full text-xs">
           <thead>
             <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
-              <th>Ordning</th>
-              <th>Titel</th>
-              <th>Set / Avdelning</th>
-              <th>Artist / Typ</th>
+              <!-- ORDNING -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="setlistSortKey === 'sortOrder' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleSetlistSort('sortOrder')"
+                >
+                  <span>Ordning</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="setlistSortKey === 'sortOrder' ? (setlistSortDir === 'asc' ? 'Sorterat 1 till N (Klicka för fallande)' : 'Sorterat N till 1 (Klicka för stigande)') : 'Klicka för att sortera efter spelordning'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        setlistSortKey === 'sortOrder'
+                          ? (setlistSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- TITEL -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="setlistSortKey === 'title' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleSetlistSort('title')"
+                >
+                  <span>Titel</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="setlistSortKey === 'title' ? (setlistSortDir === 'asc' ? 'Sorterat A till Ö (Klicka för Ö till A)' : 'Sorterat Ö till A (Klicka för A till Ö)') : 'Klicka för att sortera efter låttitel'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        setlistSortKey === 'title'
+                          ? (setlistSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- SET / AVDELNING -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="setlistSortKey === 'setName' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleSetlistSort('setName')"
+                >
+                  <span>Set / Avdelning</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="setlistSortKey === 'setName' ? (setlistSortDir === 'asc' ? 'Sorterat Set 1 till Extranummer (Klicka för omvänd)' : 'Sorterat Extranummer till Set 1 (Klicka för omvänd)') : 'Klicka för att sortera efter set'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        setlistSortKey === 'setName'
+                          ? (setlistSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- ARTIST / TYP -->
+              <th>
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded"
+                  :class="setlistSortKey === 'isOriginal' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleSetlistSort('isOriginal')"
+                >
+                  <span>Artist / Typ</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="setlistSortKey === 'isOriginal' ? (setlistSortDir === 'asc' ? 'Egna låtar först (Klicka för Covers först)' : 'Covers först (Klicka för Egna låtar först)') : 'Klicka för att sortera efter låttyp'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        setlistSortKey === 'isOriginal'
+                          ? (setlistSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
+              <!-- LIVE-SPELNINGAR -->
+              <th class="text-center">
+                <button
+                  type="button"
+                  class="group inline-flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer py-1 px-1.5 rounded mx-auto"
+                  :class="setlistSortKey === 'playCount' ? 'text-primary font-black bg-primary/10 border-b-2 border-primary' : 'text-secondary hover:text-primary hover:bg-base-300/60'"
+                  @click="toggleSetlistSort('playCount')"
+                >
+                  <span>Live-spelningar</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="setlistSortKey === 'playCount' ? (setlistSortDir === 'desc' ? 'Flest spelningar först ⚡ (Klicka för minst)' : 'Minst spelningar först (Klicka för flest)') : 'Klicka för att sortera efter live-spelningar'"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="transition-transform duration-300"
+                      :class="[
+                        setlistSortKey === 'playCount'
+                          ? (setlistSortDir === 'desc' ? 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100')
+                          : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content'
+                      ]"
+                    >
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+              </th>
+
               <th>Live-notering</th>
               <th class="text-right">Åtgärd</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in setlistData || []" :key="item.id">
+            <tr v-for="item in sortedSetlist" :key="item.id">
               <td class="font-mono text-center font-bold text-secondary w-12">{{ item.sortOrder }}</td>
               <td class="font-bold text-primary">{{ item.title }}</td>
               <td>
@@ -1523,6 +2461,18 @@ const deleteAdminUser = async (admin: any) => {
               <td>
                 <span v-if="item.isOriginal" class="badge badge-xs badge-primary font-bold">Egen</span>
                 <span v-else class="text-base-content/80">{{ item.artist || 'Cover' }}</span>
+              </td>
+              <td class="text-center">
+                <button
+                  type="button"
+                  class="btn btn-xs rounded-full font-mono text-[10px] gap-1 transition-all cursor-pointer"
+                  :class="getSongPlayCount(item) > 0 ? 'btn-primary font-bold shadow' : 'btn-ghost opacity-60 hover:opacity-100'"
+                  title="Klicka för att se vilka gig låten har spelats på"
+                  @click="openSongStats(item)"
+                >
+                  <span>🎸</span>
+                  <span>{{ getSongPlayCount(item) }} ggr</span>
+                </button>
               </td>
               <td class="italic text-base-content/60">{{ item.notes || '—' }}</td>
               <td class="text-right space-x-2">
@@ -1535,7 +2485,7 @@ const deleteAdminUser = async (admin: any) => {
               </td>
             </tr>
             <tr v-if="!setlistData || setlistData.length === 0">
-              <td colspan="6" class="text-center py-6 text-base-content/50">
+              <td colspan="7" class="text-center py-6 text-base-content/50">
                 Inga låtar i setlistan ännu. Klicka på "+ Ny låt i setlistan" ovan för att lägga till!
               </td>
             </tr>
@@ -1563,16 +2513,16 @@ const deleteAdminUser = async (admin: any) => {
         </h3>
         <div class="grid sm:grid-cols-2 gap-4 text-sm">
           <!-- Image File Uploader & URL Input -->
-          <div class="sm:col-span-2 flex flex-col sm:flex-row items-center gap-4 p-4 bg-base-200/60 rounded-xl border border-primary/20">
+          <div class="sm:col-span-2 flex flex-col sm:flex-row items-center gap-6 p-4 bg-base-200/60 rounded-xl border border-primary/20">
             <div
               v-if="galForm.mediaUrl"
-              class="w-24 h-24 rounded-lg overflow-hidden border border-primary/40 shadow-md flex-shrink-0 flex items-center justify-center bg-black/40"
-              :style="{ transform: `rotate(${galForm.rotation || 0}deg)` }"
+              class="w-32 flex-shrink-0"
             >
-              <NuxtImg
-                :src="galForm.mediaUrl"
-                alt="Preview"
-                class="w-full h-full object-cover"
+              <FramedPhoto
+                :media-url="galForm.mediaUrl"
+                :frame-style="galForm.frameStyle || 'random'"
+                :rotation="galForm.rotation || 0"
+                pin-color="gold"
               />
             </div>
             <div class="flex-grow space-y-2 w-full">
@@ -1598,10 +2548,12 @@ const deleteAdminUser = async (admin: any) => {
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Ramstil (visual frame)</label>
             <select v-model="galForm.frameStyle" class="select select-bordered w-full bg-base-200 select-sm">
-              <option value="polaroid">Vintage Polaroid (med tejp)</option>
-              <option value="taped">Scenprint (mörk med tejpade hörn)</option>
-              <option value="grunge">Sliten mörkrumskant (grunge)</option>
-              <option value="wood">Klassisk trä- & mässingsram</option>
+              <option value="random">🎲 Slumpad ramstil (Auto-variation)</option>
+              <option value="pinned">📌 Nålat (3D Kartnål / Pushpin)</option>
+              <option value="polaroid">📷 Vintage Polaroid (med tejp)</option>
+              <option value="taped">🏷️ Scenprint (mörk med tejpade hörn)</option>
+              <option value="grunge">🎞️ Sliten mörkrumskant (grunge)</option>
+              <option value="wood">🖼️ Klassisk trä- & mässingsram</option>
             </select>
           </div>
           <div>
@@ -1644,17 +2596,23 @@ const deleteAdminUser = async (admin: any) => {
           class="stage-card p-4 rounded-2xl border border-primary/20 flex flex-col justify-between"
         >
           <div>
-            <NuxtImg
-              :src="item.mediaUrl"
-              class="w-full aspect-[4/3] object-cover rounded mb-3"
-              loading="lazy"
-            />
+            <div class="pt-2 pb-1">
+              <FramedPhoto
+                :media-url="item.mediaUrl"
+                :caption-sv="item.captionSv"
+                :caption-en="item.captionEn"
+                :frame-style="item.frameStyle || 'random'"
+                :rotation="item.rotation || 0"
+                pin-color="random"
+                class="mb-3"
+              />
+            </div>
             <div class="flex items-center justify-between gap-2 mb-2">
               <span class="badge badge-xs font-mono font-bold uppercase text-[9px]">
                 {{ item.category }}
               </span>
               <span class="text-[10px] font-mono text-secondary">
-                Ram: {{ item.frameStyle }}
+                Ram: {{ item.frameStyle || 'random' }}
               </span>
             </div>
             <p class="text-xs text-base-content/80 italic line-clamp-2">
@@ -1662,13 +2620,230 @@ const deleteAdminUser = async (admin: any) => {
             </p>
           </div>
 
-          <div class="pt-3 border-t border-base-content/10 flex items-center justify-end gap-2 mt-4">
-            <button type="button" class="btn btn-xs btn-outline btn-primary rounded" @click="openEditGal(item)">
-              Redigera
+          <div class="pt-3 border-t border-base-content/10 flex items-center justify-between gap-2 mt-4">
+            <!-- Quick Frame Style Selector Dropdown (Left side) -->
+            <div class="flex items-center gap-1.5 flex-grow max-w-[150px]">
+              <select
+                :value="item.frameStyle || 'random'"
+                class="select select-bordered select-xs w-full bg-base-200 text-[11px] font-sans border-primary/40 focus:border-primary rounded-lg cursor-pointer font-bold"
+                title="Ändra fastsättning / ramstil direkt"
+                @change="quickChangeFrameStyle(item, ($event.target as HTMLSelectElement).value)"
+              >
+                <option value="random">🎲 Slumpad</option>
+                <option value="pinned">📌 Nålat</option>
+                <option value="polaroid">📷 Polaroid</option>
+                <option value="taped">🏷️ Tejpat</option>
+                <option value="grunge">🎞️ Grunge</option>
+                <option value="wood">🖼️ Träram</option>
+              </select>
+            </div>
+
+            <!-- Action buttons (Right side) -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <button type="button" class="btn btn-xs btn-outline btn-primary rounded" @click="openEditGal(item)">
+                Redigera
+              </button>
+              <button type="button" class="btn btn-xs btn-outline btn-error rounded" @click="deleteGalleryItem(item.id)">
+                Ta bort
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4.5. MERCH & SPREADSHOP MANAGER -->
+    <div v-if="activeTab === 'merch'" class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="font-heading text-2xl text-primary font-bold">Band-merch & Spreadshop-synk</h2>
+          <p class="text-xs text-base-content/70">
+            Artiklar cachas säkert i databasen för blixtsnabb visning och synkas automatiskt 2 ggr/dygn via Vercel Cron.
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <a
+            href="https://det-7e-gunget.myspreadshop.se/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex items-center gap-1.5"
+          >
+            <span>Öppna Spreadshop</span>
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 1. Landing Page Merch Count Slider Setting -->
+      <div class="stage-card p-5 sm:p-6 rounded-2xl border border-primary/30 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-6 bg-base-200/60">
+        <div class="space-y-1.5 max-w-xl">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🎛️</span>
+            <h3 class="font-heading text-lg text-primary font-bold">
+              Antal merch-artiklar som visas på landningssidan
+            </h3>
+            <span class="badge badge-primary font-mono font-black text-xs px-2.5 py-1">
+              {{ landingMerchCountSetting }} st
+            </span>
+          </div>
+          <p class="text-xs text-base-content/75 leading-relaxed">
+            Ställ in hur många slumpade artiklar ur sortimentet som ska visas i merch-sektionen på förstasidan (2 till 8 artiklar). Ändringen sparas direkt.
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-1 w-full md:w-80 flex-shrink-0 pt-3">
+          <!-- Floating Live Tooltip Bubble above slider thumb (Only visible when sliding) -->
+          <div class="relative w-full h-6 px-10 pointer-events-none">
+            <div
+              class="absolute bottom-0 -translate-x-1/2 transition-all duration-200 ease-out"
+              :class="isSlidingMerch ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-75 translate-y-2'"
+              :style="{ left: `calc(2.5rem + ${merchSliderPercent} * (100% - 5rem) / 100)` }"
+            >
+              <div class="bg-primary text-primary-content text-[11px] font-mono font-black px-2.5 py-0.5 rounded-full shadow-2xl flex items-center gap-1 border border-amber-300/60 relative">
+                <span>👕</span>
+                <span>{{ landingMerchCountSetting }} st</span>
+                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rotate-45" />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="btn btn-xs btn-circle btn-primary font-bold shadow"
+              :disabled="landingMerchCountSetting <= 2"
+              title="Minska antal"
+              @click="saveLandingMerchCountSetting(landingMerchCountSetting - 1)"
+            >
+              −
             </button>
-            <button type="button" class="btn btn-xs btn-outline btn-error rounded" @click="deleteGalleryItem(item.id)">
-              Ta bort
+            <span class="text-xs font-mono font-bold text-secondary">2</span>
+            <input
+              v-model.number="landingMerchCountSetting"
+              type="range"
+              min="2"
+              max="8"
+              step="1"
+              class="range range-primary range-sm flex-grow cursor-pointer"
+              @input="isSlidingMerch = true"
+              @mousedown="isSlidingMerch = true"
+              @touchstart="isSlidingMerch = true"
+              @mouseup="showMerchTooltipTemporarily()"
+              @touchend="showMerchTooltipTemporarily()"
+              @change="saveLandingMerchCountSetting()"
+            />
+            <span class="text-xs font-mono font-bold text-secondary">8</span>
+            <button
+              type="button"
+              class="btn btn-xs btn-circle btn-primary font-bold shadow"
+              :disabled="landingMerchCountSetting >= 8"
+              title="Öka antal"
+              @click="saveLandingMerchCountSetting(landingMerchCountSetting + 1)"
+            >
+              +
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Sync Card with Status and Manual Trigger -->
+      <div class="stage-card p-5 sm:p-6 rounded-2xl border border-primary/30 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-6 bg-base-200/60">
+        <div class="space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🔄</span>
+            <h3 class="font-heading text-lg text-primary font-bold">
+              Spreadshop Databassynkronisering
+            </h3>
+          </div>
+          <p class="text-xs text-base-content/75 leading-relaxed max-w-xl">
+            Hämtar alla artiklar och deras namn på svenska och engelska direkt från Spreadshops katalog till databasen.
+          </p>
+          <div class="flex flex-wrap items-center gap-3 text-xs font-mono pt-1">
+            <span class="badge badge-sm badge-neutral border border-primary/30">
+              🕒 Senast synkad: {{ formatSyncTimestamp((adminSettings as any)?.lastMerchSync) }}
+            </span>
+            <span class="badge badge-sm badge-neutral border border-primary/30">
+              📦 Totalt i databasen: {{ merchData?.length || 0 }} st
+            </span>
+            <span class="badge badge-sm badge-primary/20 text-primary font-bold">
+              ⚡ Schemalagd: 2 ggr/dygn (Vercel Cron)
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-primary rounded-full font-bold px-6 flex items-center gap-2 shadow-md hover:scale-105 transition-transform flex-shrink-0"
+          :class="isSyncingMerch ? 'loading' : ''"
+          :disabled="isSyncingMerch"
+          @click="triggerMerchSync"
+        >
+          <span v-if="!isSyncingMerch">🔄</span>
+          <span>{{ isSyncingMerch ? 'Synkar från butiken...' : 'Synka Merch Nu' }}</span>
+        </button>
+      </div>
+
+      <!-- 3. Merch Products Catalog Grid in Database -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-heading text-lg text-primary font-bold">
+            Synkade artiklar i databasen ({{ merchData?.length || 0 }})
+          </h3>
+          <span class="text-xs text-base-content/60 font-mono">
+            Klick öppnar produkten i Spreadshop
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div
+            v-for="item in merchData || []"
+            :key="item.id"
+            class="stage-card p-3 rounded-xl border border-primary/20 flex flex-col justify-between group hover:border-primary/50 transition-all shadow"
+          >
+            <div>
+              <div class="aspect-square bg-black/40 rounded-lg overflow-hidden flex items-center justify-center p-2 mb-2">
+                <NuxtImg
+                  :src="item.image"
+                  :alt="item.typeSv"
+                  class="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                  loading="lazy"
+                />
+              </div>
+              <div class="space-y-1.5 mt-1">
+                <!-- Category badge -->
+                <div v-if="item.categorySv" class="flex items-center gap-1">
+                  <span class="badge badge-xs badge-outline border-secondary/40 text-secondary font-mono text-[9px] font-bold px-1.5 py-0.5">
+                    📁 {{ item.categorySv }}
+                  </span>
+                </div>
+
+                <div class="flex items-start gap-1.5">
+                  <span class="badge badge-xs badge-primary font-mono text-[9px] font-black px-1.5 py-0.5 mt-0.5 flex-shrink-0">SV</span>
+                  <span class="font-heading text-xs text-primary font-bold line-clamp-2 leading-snug" :title="item.typeSv">
+                    {{ item.typeSv }}
+                  </span>
+                </div>
+                <div class="flex items-start gap-1.5">
+                  <span class="badge badge-xs badge-neutral border border-primary/30 font-mono text-[9px] font-bold px-1.5 py-0.5 mt-0.5 flex-shrink-0 text-secondary">EN</span>
+                  <span class="text-[10px] text-base-content/75 line-clamp-2 leading-snug" :title="item.typeEn">
+                    {{ item.typeEn }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-2 mt-2 border-t border-primary/10 flex items-center justify-between gap-1">
+              <span class="font-mono text-xs font-bold text-amber-300">{{ item.price }}</span>
+              <a
+                :href="item.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-ghost btn-xs text-primary hover:text-amber-300 px-1.5 font-mono text-[10px]"
+                title="Öppna produkt i Spreadshop"
+              >
+                Öppna ↗
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -2262,6 +3437,74 @@ const deleteAdminUser = async (admin: any) => {
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- SONG LIVE PLAY STATISTICS MODAL -->
+    <div
+      v-if="selectedSongStatsModal"
+      class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+      @click="selectedSongStatsModal = null"
+    >
+      <div class="stage-card max-w-lg w-full p-6 sm:p-8 rounded-3xl border-2 border-primary/40 shadow-2xl space-y-5 bg-base-100" @click.stop>
+        <div class="flex items-start justify-between gap-4 border-b border-primary/20 pb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">🎸</span>
+              <h3 class="font-heading text-xl text-primary font-bold">
+                {{ selectedSongStatsModal.title }}
+              </h3>
+            </div>
+            <p class="text-xs text-base-content/70 mt-1">
+              {{ selectedSongStatsModal.isOriginal ? 'Originalkomposition' : `Cover (${selectedSongStatsModal.artist || 'Okänd'})` }}
+            </p>
+          </div>
+
+          <button type="button" class="btn btn-sm btn-circle btn-ghost text-lg" @click="selectedSongStatsModal = null">✕</button>
+        </div>
+
+        <!-- Stats Summary Pill -->
+        <div class="p-4 bg-base-200/90 rounded-2xl border border-primary/20 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-secondary block">Totalt framförd live</span>
+            <span class="text-2xl font-heading font-black text-primary">{{ selectedSongStatsModal.playCount }} gånger</span>
+          </div>
+          <div v-if="selectedSongStatsModal.firstPlayed" class="text-right text-[11px] font-mono text-base-content/75">
+            <div>Första: {{ new Date(selectedSongStatsModal.firstPlayed).toLocaleDateString('sv-SE') }}</div>
+            <div>Senaste: {{ new Date(selectedSongStatsModal.lastPlayed).toLocaleDateString('sv-SE') }}</div>
+          </div>
+        </div>
+
+        <!-- List of Gigs -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-secondary">
+            Spelad på följande gig ({{ selectedSongStatsModal.gigs?.length || 0 }} st):
+          </h4>
+          <div v-if="selectedSongStatsModal.gigs && selectedSongStatsModal.gigs.length > 0" class="max-h-60 overflow-y-auto space-y-2 pr-1">
+            <div
+              v-for="(g, i) in selectedSongStatsModal.gigs"
+              :key="i"
+              class="p-3 bg-base-200/60 rounded-xl border border-white/5 flex items-center justify-between text-xs font-mono"
+            >
+              <div>
+                <span class="font-bold text-primary block">{{ g.venue }}, {{ g.city }}</span>
+                <span class="text-[10px] text-base-content/60">{{ new Date(g.date).toLocaleDateString('sv-SE', { year: 'numeric', month: 'short', day: 'numeric' }) }}</span>
+              </div>
+              <span class="badge badge-sm badge-outline border-secondary/40 text-secondary text-[10px]">
+                {{ g.setName }}
+              </span>
+            </div>
+          </div>
+          <div v-else class="text-xs text-base-content/50 italic py-4 text-center">
+            Låten har ännu inte registrerats i någon spelad gig-setlist.
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6" @click="selectedSongStatsModal = null">
+            Stäng
+          </button>
+        </div>
       </div>
     </div>
   </div>

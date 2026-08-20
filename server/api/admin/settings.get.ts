@@ -12,6 +12,9 @@ export default defineEventHandler(async (event) => {
 
   return {
     newsletterEnabled: map.newsletter_enabled === 'true',
+    landingSongCount: map.landing_song_count ? Math.max(2, Math.min(10, parseInt(map.landing_song_count, 10))) : 4,
+    landingMerchCount: map.landing_merch_count ? Math.max(2, Math.min(8, parseInt(map.landing_merch_count, 10))) : 4,
+    lastMerchSync: map.last_merch_sync ? parseInt(map.last_merch_sync, 10) : null,
     settings: map,
   }
 })

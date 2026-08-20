@@ -5,9 +5,9 @@
  */
 
 export function useJukeboxAudio() {
-  const isAudioPlaying = ref(false)
-  const currentTime = ref(0)
-  const duration = ref(30)
+  const isAudioPlaying = useState<boolean>('jukebox_is_audio_playing', () => false)
+  const currentTime = useState<number>('jukebox_current_time', () => 0)
+  const duration = useState<number>('jukebox_duration', () => 30)
 
   // Persisted state via Nuxt useState store & cookies
   const repeatCookie = useCookie<boolean>('jukebox_repeat', {
@@ -157,7 +157,7 @@ export function useJukeboxAudio() {
       // After 2 seconds of lead-in, smoothly reduce to warm background bed level
       crackleFadeTimeout = setTimeout(() => {
         if (crackleAudio && isAudioPlaying.value) {
-          crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
+          crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.3)
         }
       }, 2000)
     } catch {
@@ -174,7 +174,7 @@ export function useJukeboxAudio() {
     if (synthGainNode) {
       try {
         synthGainNode.gain.setValueAtTime(0, audioCtx?.currentTime || 0)
-      } catch (_) {}
+      } catch (_) { }
       synthGainNode = null
     }
   }
@@ -291,8 +291,11 @@ export function useJukeboxAudio() {
     synthInterval = setInterval(playStep, tempoMs)
   }
 
+  let currentPlayingSong: { id: string; code?: string; title: string; audioUrl?: string | null } | null = null
+
   // 4. Direct Audio Playback & Transport Controls
   const playTrack = (song: { id: string; code?: string; title: string; audioUrl?: string | null }) => {
+    currentPlayingSong = song
     stopSynth()
     if (htmlAudio) {
       htmlAudio.pause()
@@ -359,17 +362,24 @@ export function useJukeboxAudio() {
     }
   }
 
-  const resumeTrack = (song: { id: string; code?: string; title: string; audioUrl?: string | null }) => {
+  const resumeTrack = (song?: { id: string; code?: string; title: string; audioUrl?: string | null }) => {
+    const targetSong = song || currentPlayingSong
+    if (!targetSong) return
+
+    currentPlayingSong = targetSong
+    isAudioPlaying.value = true
+
     if (htmlAudio && audioSourceType.value === 'file') {
-      isAudioPlaying.value = true
-      htmlAudio.play()
+      htmlAudio.play().catch((err) => {
+        console.warn('[JukeboxAudio] Error resuming HTML5 audio, restarting track:', err)
+        playTrack(targetSong)
+      })
       if (crackleAudio) {
         crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
         crackleAudio.play().catch(() => {})
       }
     } else {
-      isAudioPlaying.value = true
-      startBluesSynth(song.code || 'A1')
+      startBluesSynth(targetSong.code || 'A1')
       if (crackleAudio) {
         crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
         crackleAudio.play().catch(() => {})
@@ -433,6 +443,7 @@ export function useJukeboxAudio() {
     playTrack,
     pauseTrack,
     resumeTrack,
+    stopSong: pauseTrack,
     playCoinChime,
     playNeedleDrop,
     setAudioVolume,

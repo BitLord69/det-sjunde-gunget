@@ -246,6 +246,47 @@ async function runMigration() {
     )
   `)
 
+  // 11. Gig Setlist Items table
+  await remoteClient.execute(`
+    CREATE TABLE IF NOT EXISTS gig_setlist_items (
+      id text PRIMARY KEY NOT NULL,
+      gig_id text NOT NULL,
+      song_id text,
+      title text NOT NULL,
+      artist text,
+      is_original integer DEFAULT 0 NOT NULL,
+      set_name text DEFAULT 'Set 1' NOT NULL,
+      notes text,
+      sort_order integer DEFAULT 0 NOT NULL,
+      created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+      updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+      FOREIGN KEY (gig_id) REFERENCES gigs(id) ON DELETE CASCADE,
+      FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE SET NULL
+    )
+  `)
+
+  // 12. Merch Products table
+  await remoteClient.execute(`
+    CREATE TABLE IF NOT EXISTS merch_products (
+      id text PRIMARY KEY NOT NULL,
+      product_type_id text NOT NULL,
+      name text DEFAULT 'Det 7:e gunget' NOT NULL,
+      type_sv text NOT NULL,
+      type_en text NOT NULL,
+      category_sv text DEFAULT 'Kläder & Mode' NOT NULL,
+      category_en text DEFAULT 'Apparel & Clothing' NOT NULL,
+      price text NOT NULL,
+      price_amount integer DEFAULT 0 NOT NULL,
+      currency text DEFAULT 'SEK' NOT NULL,
+      image_url text NOT NULL,
+      product_url text NOT NULL,
+      is_active integer DEFAULT 1 NOT NULL,
+      last_synced_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+      created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+      updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+    )
+  `)
+
   console.log('✓ All database tables & columns successfully verified in Turso Cloud!')
 
   // Check if data should be synced from local SQLite
@@ -259,6 +300,14 @@ async function runMigration() {
     const localHashtags = await localClient.execute('SELECT * FROM social_hashtags')
     const localSetlist = await localClient.execute('SELECT * FROM setlist_items')
     const localSettings = await localClient.execute('SELECT * FROM site_settings')
+    let localGigSetlist = { rows: [] }
+    try {
+      localGigSetlist = await localClient.execute('SELECT * FROM gig_setlist_items')
+    } catch {}
+    let localMerch = { rows: [] }
+    try {
+      localMerch = await localClient.execute('SELECT * FROM merch_products')
+    } catch {}
 
     console.log(`\nSyncing data from local database:`)
     console.log(`- ${localAdmins.rows.length} admins`)
@@ -268,10 +317,14 @@ async function runMigration() {
     console.log(`- ${localSongs.rows.length} songs`)
     console.log(`- ${localHashtags.rows.length} social hashtags`)
     console.log(`- ${localSetlist.rows.length} setlist tracks`)
+    console.log(`- ${localGigSetlist.rows.length} gig setlist items`)
+    console.log(`- ${localMerch.rows.length} merch products`)
     console.log(`- ${localSettings.rows.length} site settings`)
 
     // Clean remote tables before insert
     await remoteClient.batch([
+      { sql: 'DELETE FROM gig_setlist_items', args: [] },
+      { sql: 'DELETE FROM merch_products', args: [] },
       { sql: 'DELETE FROM admin_sessions', args: [] },
       { sql: 'DELETE FROM admins', args: [] },
       { sql: 'DELETE FROM gigs', args: [] },
@@ -312,6 +365,14 @@ async function runMigration() {
       ...localSetlist.rows.map((row) => ({
         sql: `INSERT INTO setlist_items (id, title, artist, is_original, set_name, notes, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [row.id, row.title, row.artist, row.is_original, row.set_name, row.notes, row.sort_order, row.created_at, row.updated_at],
+      })),
+      ...localGigSetlist.rows.map((row) => ({
+        sql: `INSERT INTO gig_setlist_items (id, gig_id, song_id, title, artist, is_original, set_name, notes, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.gig_id, row.song_id || null, row.title, row.artist, row.is_original, row.set_name, row.notes, row.sort_order, row.created_at, row.updated_at],
+      })),
+      ...localMerch.rows.map((row) => ({
+        sql: `INSERT INTO merch_products (id, product_type_id, name, type_sv, type_en, category_sv, category_en, price, price_amount, currency, image_url, product_url, is_active, last_synced_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.product_type_id, row.name, row.type_sv, row.type_en, row.category_sv, row.category_en, row.price, row.price_amount, row.currency, row.image_url, row.product_url, row.is_active, row.last_synced_at, row.created_at, row.updated_at],
       })),
       ...localSettings.rows.map((row) => ({
         sql: `INSERT INTO site_settings (key, value, created_at, updated_at) VALUES (?, ?, ?, ?)`,

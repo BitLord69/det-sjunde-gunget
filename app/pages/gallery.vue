@@ -28,31 +28,20 @@ const photos = computed(() => galleryItems.value?.filter((i) => i.category !== '
 
     <!-- Gallery Grid -->
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      <div
+      <FramedPhoto
         v-for="item in photos"
         :key="item.id"
-        class="cursor-pointer"
+        :media-url="item.mediaUrl"
+        :alt-text-sv="item.altTextSv"
+        :alt-text-en="item.altTextEn"
+        :caption-sv="item.captionSv"
+        :caption-en="item.captionEn"
+        :frame-style="item.frameStyle"
+        :rotation="item.rotation"
+        :pin-color="'random'"
+        :clickable="true"
         @click="selectedImage = item"
-      >
-        <div
-          :class="[
-            item.frameStyle === 'polaroid' ? 'frame-polaroid' :
-            item.frameStyle === 'taped' ? 'frame-taped' :
-            item.frameStyle === 'grunge' ? 'frame-grunge' : 'frame-wood'
-          ]"
-          :style="{ transform: `rotate(${item.rotation || 0}deg)` }"
-        >
-          <NuxtImg
-            :src="item.mediaUrl"
-            :alt="locale === 'en' && item.altTextEn ? item.altTextEn : item.altTextSv"
-            class="w-full aspect-[4/3] object-cover rounded shadow"
-            loading="lazy"
-          />
-          <p class="text-xs text-center font-medium mt-3 italic text-base-content/90">
-            {{ locale === 'en' && item.captionEn ? item.captionEn : item.captionSv }}
-          </p>
-        </div>
-      </div>
+      />
     </div>
 
     <!-- Fan Central Callout -->

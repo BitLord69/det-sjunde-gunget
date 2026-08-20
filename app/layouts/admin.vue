@@ -1,16 +1,40 @@
 <script setup lang="ts">
-const colorMode = useColorMode()
 const { adminUser, logout, changePassword, isLoading } = useAdminAuth()
+
+// Dedicated cookie-based theme persistence for Admin
+const adminTheme = useCookie<'dark' | 'light'>('admin_theme', {
+  maxAge: 60 * 60 * 24 * 365,
+  default: () => 'dark',
+})
+
+const applyTheme = (theme: 'dark' | 'light') => {
+  adminTheme.value = theme
+  if (import.meta.client) {
+    document.documentElement.setAttribute('data-theme', theme)
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+      document.documentElement.classList.remove('light')
+    } else {
+      document.documentElement.classList.add('light')
+      document.documentElement.classList.remove('dark')
+    }
+  }
+}
+
+const toggleTheme = () => {
+  const next = adminTheme.value === 'dark' ? 'light' : 'dark'
+  applyTheme(next)
+}
+
+onMounted(() => {
+  applyTheme(adminTheme.value || 'dark')
+})
 
 const isPasswordModalOpen = ref(false)
 const oldPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
 const passwordMsg = ref<{ type: 'success' | 'error'; text: string } | null>(null)
-
-const toggleTheme = () => {
-  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-}
 
 const handlePasswordChange = async () => {
   passwordMsg.value = null
@@ -84,16 +108,19 @@ const handlePasswordChange = async () => {
             🔑 <span class="hidden sm:inline">Byt lösenord</span>
           </button>
 
-          <!-- Light / Dark Mode Toggle -->
+          <!-- Light / Dark Mode Toggle with Dedicated Cookie -->
           <ClientOnly>
             <button
               type="button"
-              class="btn btn-ghost btn-circle btn-sm text-base hover:bg-primary/20 transition-colors"
-              :title="colorMode.value === 'dark' ? 'Växla till ljust läge' : 'Växla till mörkt läge'"
+              class="btn btn-sm rounded-full gap-2 transition-all duration-300 font-bold border"
+              :class="adminTheme === 'dark'
+                ? 'bg-base-200 text-yellow-300 border-primary/30 hover:border-primary hover:bg-base-300'
+                : 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200 shadow-sm'"
+              :title="adminTheme === 'dark' ? 'Växla till ljust läge (Sparas i cookie: admin_theme)' : 'Växla till mörkt läge (Sparas i cookie: admin_theme)'"
               @click="toggleTheme"
             >
-              <span v-if="colorMode.value === 'dark'">☀️</span>
-              <span v-else>🌙</span>
+              <span class="text-base">{{ adminTheme === 'dark' ? '🌙' : '☀️' }}</span>
+              <span class="text-xs font-mono hidden md:inline">{{ adminTheme === 'dark' ? 'Mörkt läge' : 'Ljust läge' }}</span>
             </button>
           </ClientOnly>
 

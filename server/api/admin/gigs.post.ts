@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { db } from '../../db/client'
-import { gigs } from '../../db/schema'
+import { gigs, gigSetlistItems, songs } from '../../db/schema'
 import { requireAdminAuth } from '../../utils/auth'
 import { publishToSocialMedia } from '../../utils/social'
 
@@ -17,10 +17,20 @@ export default defineEventHandler(async (event) => {
   const gigDate = new Date(body.date)
   const now = new Date()
 
-  const setlistJson = body.setlist ? (typeof body.setlist === 'string' ? body.setlist : JSON.stringify(body.setlist)) : null
+  let rawSetlist = body.setlistItems || body.setlist
+  let parsedSetlist: any[] = []
+  if (typeof rawSetlist === 'string') {
+    try {
+      parsedSetlist = JSON.parse(rawSetlist)
+    } catch {}
+  } else if (Array.isArray(rawSetlist)) {
+    parsedSetlist = rawSetlist
+  }
+
+  const setlistJson = parsedSetlist.length > 0 ? JSON.stringify(parsedSetlist) : null
 
   if (body.id) {
-    // Update
+    // Update gig
     await db
       .update(gigs)
       .set({
@@ -36,7 +46,7 @@ export default defineEventHandler(async (event) => {
       })
       .where(eq(gigs.id, body.id))
   } else {
-    // Insert
+    // Insert gig
     await db.insert(gigs).values({
       id,
       venue: body.venue,
@@ -50,6 +60,38 @@ export default defineEventHandler(async (event) => {
       createdAt: now,
       updatedAt: now,
     })
+  }
+
+  // 2. Relational setlist management
+  await db.delete(gigSetlistItems).where(eq(gigSetlistItems.gigId, id))
+
+  if (parsedSetlist.length > 0) {
+    // Fetch all existing songs to cross-match songId
+    const allSongs = await db.select({ id: songs.id, title: songs.title }).from(songs)
+    const songMap = new Map<string, string>()
+    for (const s of allSongs) {
+      if (s.title) songMap.set(s.title.toLowerCase().trim(), s.id)
+    }
+
+    for (let idx = 0; idx < parsedSetlist.length; idx++) {
+      const item = parsedSetlist[idx]
+      const title = item.title || item.name || 'Namnlös låt'
+      const matchedSongId = songMap.get(title.toLowerCase().trim()) || item.songId || null
+
+      await db.insert(gigSetlistItems).values({
+        id: `gsi-${nanoid(8)}`,
+        gigId: id,
+        songId: matchedSongId,
+        title,
+        artist: item.artist || item.originalArtist || null,
+        isOriginal: Boolean(item.isOriginal),
+        setName: item.setName || item.set || 'Set 1',
+        notes: item.notes || null,
+        sortOrder: item.sortOrder !== undefined ? item.sortOrder : idx,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
   }
 
   // Cross-post to Facebook & Instagram if requested

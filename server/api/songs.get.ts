@@ -3,8 +3,13 @@ import { db } from '../db/client'
 import { songs } from '../db/schema'
 
 export default defineEventHandler(async () => {
-  return await db
-    .select()
-    .from(songs)
-    .orderBy(asc(songs.sortOrder))
+  try {
+    return await db
+      .select()
+      .from(songs)
+      .orderBy(asc(songs.sortOrder))
+  } catch (err: any) {
+    console.error('[songs.get] Error fetching songs:', err)
+    return []
+  }
 })

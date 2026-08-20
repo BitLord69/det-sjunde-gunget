@@ -19,12 +19,12 @@ export default defineEventHandler(async (event) => {
   if (!fileItem || !fileItem.data || fileItem.data.length === 0) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Ingen giltig bildfil hittades.',
+      statusMessage: 'Ingen giltig fil skickades med.',
     })
   }
 
-  const originalName = fileItem.filename || 'upload.jpg'
-  const ext = path.extname(originalName).toLowerCase() || '.jpg'
+  const originalName = fileItem.filename || 'upload.bin'
+  const ext = path.extname(originalName).toLowerCase() || '.bin'
   const safeFilename = `${Date.now()}-${nanoid(6)}${ext}`
 
   // 1. If Vercel Blob token is configured (e.g. production)
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
     try {
       const blob = await put(`media/${safeFilename}`, fileItem.data, {
         access: 'public',
-        contentType: fileItem.type || 'image/jpeg',
+        contentType: fileItem.type || 'application/octet-stream',
       })
       return {
         success: true,

@@ -9,12 +9,14 @@ export default defineEventHandler(async (event) => {
   await requireAdminAuth(event)
   const body = await readBody(event)
 
-  if (!body.title || !body.embedUrl) {
-    throw createError({ statusCode: 400, message: 'Title and embedUrl are required' })
+  if (!body.title || (!body.embedUrl && !body.audioUrl)) {
+    throw createError({ statusCode: 400, message: 'Låttitel samt antingen en ljudfil eller en extern länk krävs.' })
   }
 
   const id = body.id || `song-${nanoid(8)}`
   const now = new Date()
+  const embedUrl = body.embedUrl || body.audioUrl || '#'
+  const embedProvider = body.embedProvider || (body.audioUrl ? 'fil' : 'spotify')
 
   if (body.id) {
     await db
@@ -23,9 +25,10 @@ export default defineEventHandler(async (event) => {
         title: body.title,
         isOriginal: Boolean(body.isOriginal),
         originalArtist: body.originalArtist || null,
-        embedProvider: body.embedProvider || 'spotify',
-        embedUrl: body.embedUrl,
+        embedProvider,
+        embedUrl,
         audioUrl: body.audioUrl || null,
+        coverImage: body.coverImage || null,
         duration: body.duration ? parseInt(body.duration, 10) : null,
         lyrics: body.lyrics || null,
         lyricsEn: body.lyricsEn || null,
@@ -42,6 +45,7 @@ export default defineEventHandler(async (event) => {
       embedProvider: body.embedProvider || 'spotify',
       embedUrl: body.embedUrl,
       audioUrl: body.audioUrl || null,
+      coverImage: body.coverImage || null,
       duration: body.duration ? parseInt(body.duration, 10) : null,
       lyrics: body.lyrics || null,
       lyricsEn: body.lyricsEn || null,

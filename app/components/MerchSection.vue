@@ -1,17 +1,12 @@
 <script setup lang="ts">
 const { locale } = useI18n()
 
-const { data: settingsData, refresh: refreshSettings } = await useFetch<any>('/api/settings', {
+const { data: settingsData } = await useFetch<any>('/api/settings', {
   default: () => ({ landingMerchCount: 4 }),
 })
 
-const { data: products, refresh: refreshProducts } = await useFetch<any[]>('/api/merch', {
+const { data: products } = await useFetch<any[]>('/api/merch', {
   default: () => [],
-})
-
-onMounted(() => {
-  refreshSettings()
-  refreshProducts()
 })
 
 const landingMerchCount = computed(() => {

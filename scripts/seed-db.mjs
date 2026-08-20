@@ -72,6 +72,7 @@ await client.execute(`
     status text DEFAULT 'upcoming',
     notes_sv text,
     notes_en text,
+    setlist text,
     created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
     updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
   )
@@ -113,10 +114,6 @@ await client.execute(`
   )
 `)
 
-try {
-  await client.execute('DROP TABLE IF EXISTS songs')
-} catch (_) {}
-
 await client.execute(`
   CREATE TABLE IF NOT EXISTS songs (
     id text PRIMARY KEY NOT NULL,
@@ -127,11 +124,34 @@ await client.execute(`
     embed_url text NOT NULL,
     audio_url text,
     duration integer,
+    lyrics text,
+    lyrics_en text,
+    chords text,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
     updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
   )
 `)
+
+try {
+  await client.execute('ALTER TABLE gigs ADD COLUMN setlist text')
+} catch (_) {}
+
+try {
+  await client.execute('ALTER TABLE songs ADD COLUMN audio_url text')
+} catch (_) {}
+try {
+  await client.execute('ALTER TABLE songs ADD COLUMN duration integer')
+} catch (_) {}
+try {
+  await client.execute('ALTER TABLE songs ADD COLUMN lyrics text')
+} catch (_) {}
+try {
+  await client.execute('ALTER TABLE songs ADD COLUMN lyrics_en text')
+} catch (_) {}
+try {
+  await client.execute('ALTER TABLE songs ADD COLUMN chords text')
+} catch (_) {}
 
 await client.execute(`
   CREATE TABLE IF NOT EXISTS subscribers (
@@ -215,6 +235,15 @@ await client.execute(`
   )
 `)
 
+await client.execute(`
+  CREATE TABLE IF NOT EXISTS site_settings (
+    key text PRIMARY KEY NOT NULL,
+    value text NOT NULL,
+    created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+  )
+`)
+
 // Clean up existing data to prevent unique constraint conflicts
 try {
   await client.execute('DELETE FROM admin_sessions')
@@ -224,6 +253,8 @@ try {
   await client.execute('DELETE FROM gallery_items')
   await client.execute('DELETE FROM songs')
   await client.execute('DELETE FROM social_hashtags')
+  await client.execute('DELETE FROM setlist_items')
+  await client.execute('DELETE FROM site_settings')
 } catch (e) {
   console.log('Error cleaning tables:', e.message)
 }
@@ -238,6 +269,17 @@ const gigs = [
     notesSv: 'Dörrarna öppnar 18:30. Ta med dansskorna, vi bjuder på tungt gung på hemmaplan!',
     notesEn: 'Doors open 18:30. Bring your dancing shoes for a night of heavy blues-rock at our home turf!',
     ticketUrl: 'https://billetto.se',
+    setlist: JSON.stringify([
+      { title: 'Det Sjunde Gunget', artist: 'Det 7:e Gunget', isOriginal: true, setName: 'Set 1: Klubbstart', notes: 'Gungig bluesrock-öppnare' },
+      { title: 'Hoochie Coochie Man', artist: 'Muddy Waters', isOriginal: false, setName: 'Set 1: Klubbstart', notes: 'Klassisk Chicago-blues & munspel' },
+      { title: 'Born Under a Bad Sign', artist: 'Albert King', isOriginal: false, setName: 'Set 1: Klubbstart', notes: 'Tungt gung & gitarriff' },
+      { title: 'The Thrill is Gone', artist: 'B.B. King', isOriginal: false, setName: 'Set 1: Klubbstart', notes: 'Melodiskt och dynamiskt gitarrsolo' },
+      { title: 'Sväng i Källaren', artist: 'Det 7:e Gunget', isOriginal: true, setName: 'Set 2: Svettigt ös', notes: 'Rå replokalsenergi' },
+      { title: 'Sweet Home Chicago', artist: 'Robert Johnson', isOriginal: false, setName: 'Set 2: Svettigt ös', notes: 'Upptempo shuffle & allsång' },
+      { title: 'Pride and Joy', artist: 'Stevie Ray Vaughan', isOriginal: false, setName: 'Set 2: Svettigt ös', notes: 'Texas blues med fullt ställ' },
+      { title: 'Got My Mojo Working', artist: 'Muddy Waters', isOriginal: false, setName: 'Set 2: Svettigt ös', notes: 'Snabb shuffle & munspelsduell' },
+      { title: 'Rock Me Baby', artist: 'B.B. King', isOriginal: false, setName: 'Extranummer / Encores', notes: 'Långt jammigt avslut' },
+    ]),
   },
   {
     id: 'gig-helsingborg-2026',
@@ -248,6 +290,12 @@ const gigs = [
     notesSv: 'En helkväll med egna låtar, gamla favoriter och tveksamt mellansnack.',
     notesEn: 'An evening of originals, classics, and questionable stage banter.',
     ticketUrl: '#',
+    setlist: JSON.stringify([
+      { title: 'Det Sjunde Gunget', artist: 'Det 7:e Gunget', isOriginal: true, setName: 'Set 1: Klubbstart' },
+      { title: 'Hoochie Coochie Man', artist: 'Muddy Waters', isOriginal: false, setName: 'Set 1: Klubbstart' },
+      { title: 'Sväng i Källaren', artist: 'Det 7:e Gunget', isOriginal: true, setName: 'Set 2: Svettigt ös' },
+      { title: 'Got My Mojo Working', artist: 'Muddy Waters', isOriginal: false, setName: 'Set 2: Svettigt ös' },
+    ]),
   },
   {
     id: 'gig-hoganas-2026',
@@ -258,6 +306,7 @@ const gigs = [
     notesSv: 'Fri entré! Trångt, svettigt, burgare och bra öl i kranarna.',
     notesEn: 'Free entry! Cozy, energetic, great food and cold beer.',
     ticketUrl: '',
+    setlist: null,
   },
   {
     id: 'gig-malmo-2026',
@@ -268,6 +317,12 @@ const gigs = [
     notesSv: 'Fullt ös, lapp på luckan och allsång till sista tonen.',
     notesEn: 'Packed venue, sold out show, and singalongs to the very last chord.',
     ticketUrl: '',
+    setlist: JSON.stringify([
+      { title: 'Det Sjunde Gunget', artist: 'Det 7:e Gunget', isOriginal: true, setName: 'Set 1' },
+      { title: 'Born Under a Bad Sign', artist: 'Albert King', isOriginal: false, setName: 'Set 1' },
+      { title: 'Sväng i Källaren', artist: 'Det 7:e Gunget', isOriginal: true, setName: 'Set 2' },
+      { title: 'Rock Me Baby', artist: 'B.B. King', isOriginal: false, setName: 'Extranummer' },
+    ]),
   },
 ]
 
@@ -398,6 +453,77 @@ const songs = [
     embedUrl: 'https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT',
     audioUrl: null,
     duration: 214,
+    lyrics: `[Vers 1]
+Klockan slår tolv i en skånsk källarlokal
+Rören i stärkaren glöder så sval
+Marcus trampar igång sin gamla overdrive
+Bosse sätter basen – nu är vi vid liv!
+
+[Refräng]
+För när klockan slår och kaffet tar slut
+Finns det bara en sak som får oss att stå ut
+Rulla upp volymen, låt munspelen sjunga
+Känn hur hela huset börjar gunga!
+Det är det sjunde gunget – blues i varje ton!
+Det sjunde gunget – rockens revolution!
+
+[Vers 2]
+Janis drar ett riff på sin Marine Band harp
+Tonen är skitig, rå och skarp
+Jonas räknar in på virvel två och fyra
+Hela Skåne känner svängets yra!
+
+[Refräng]
+För när klockan slår och kaffet tar slut
+Finns det bara en sak som får oss att stå ut
+Rulla upp volymen, låt munspelen sjunga
+Känn hur hela huset börjar gunga!
+Det är det sjunde gunget – blues i varje ton!
+Det sjunde gunget – rockens revolution!
+
+[Stick / Solo]
+Tolvtakters blues i nattens dimma
+Här ska ingen sova en enda timma!
+
+[Outro]
+Det 7:e Gunget rullar på...
+Ja, det 7:e Gunget rullar på!
+Tills sista strängen brister!`,
+    lyricsEn: `[Verse 1]
+Midnight strikes in a cellar in the South
+Tube glow warming from the speaker's mouth
+Marcus stomps on his trusty overdrive
+Bosse locks the bass line – we are alive!
+
+[Chorus]
+When the night gets late and the coffee runs dry
+There's only one thing keeping spirits high
+Crank up the volume, let the harmonica ring
+Feel the foundation start to swing!
+It's the Seventh Groove – blues in every vein!
+The Seventh Groove – rolling like a train!
+
+[Verse 2]
+Janis blows a riff on his Marine Band harp
+Gritty and soulful, loud and sharp
+Jonas lays the backbeat on two and four
+Shaking the rafters right down through the floor!
+
+[Chorus]
+When the night gets late and the coffee runs dry
+There's only one thing keeping spirits high
+Crank up the volume, let the harmonica ring
+Feel the foundation start to swing!
+It's the Seventh Groove – blues in every vein!
+The Seventh Groove – rolling like a train!
+
+[Outro]
+The Seventh Groove rolls on...
+Until the last string breaks!`,
+    chords: `Intro: A7 - D7 - A7 - E7 - D7 - A7 - E7
+Vers: A7 | A7 | A7 | A7 | D7 | D7 | A7 | A7 | E7 | D7 | A7 | E7
+Refräng: A7 | D7 | A7 | E7 | D7 | A7
+Solo: 12-bar blues in A7`,
     sortOrder: 1,
   },
   {
@@ -409,6 +535,23 @@ const songs = [
     embedUrl: 'https://www.youtube.com/embed/e_l6A76NulA',
     audioUrl: null,
     duration: 185,
+    lyrics: `[Verse 1]
+The gypsy woman told my mother
+Before I was born
+I got a boy child's comin'
+He's gonna be a son of a gun
+He gonna make pretty wimmens
+Jump and shout
+Then the world wanna know
+What this all about
+
+[Chorus]
+'Cause you know I'm him
+Everybody knows I'm him
+Well you know I'm the hoochie coochie man
+Everybody knows I'm him`,
+    lyricsEn: null,
+    chords: `Key: A (Stop-time blues in A7)`,
     sortOrder: 2,
   },
   {
@@ -420,6 +563,19 @@ const songs = [
     embedUrl: 'https://open.spotify.com/embed/track/303W6xRzNqXJvHchW9bW19',
     audioUrl: null,
     duration: 168,
+    lyrics: `[Verse 1]
+Born under a bad sign
+Been down since I began to crawl
+If it wasn't for bad luck
+I wouldn't have no luck at all
+
+[Verse 2]
+Hard luck and trouble
+Been my only friend
+I've been on my own
+Ever since I was ten`,
+    lyricsEn: null,
+    chords: `Key: C#m / Db blues`,
     sortOrder: 3,
   },
   {
@@ -431,6 +587,47 @@ const songs = [
     embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     audioUrl: null,
     duration: 195,
+    lyrics: `[Vers 1]
+Det droppar från ett rör i taket
+Men här nere är vi klarvaket
+Två gitarrer och en gammal bas
+Kaffekoppar som går i kras!
+
+[Refräng]
+Det är sväng i källaren, rök och glöd
+Bluesen håller oss borta från nöd
+Höj upp till elva, stampa i golvet nu
+Sväng i källaren – jag och du!
+
+[Vers 2]
+Grannarna bankar i elementet ovanpå
+Men vi har ett groove som inte går att slå
+En tolva i E med ett jävla drag
+Här spelar vi till gryningens behag!
+
+[Refräng]
+Det är sväng i källaren, rök och glöd
+Bluesen håller oss borta från nöd
+Höj upp till elva, stampa i golvet nu
+Sväng i källaren – jag och du!
+
+[Outro]
+Stampa takten!
+Sväng i källaren!
+Det 7:e Gunget!`,
+    lyricsEn: `[Verse 1]
+Water dripping from the cellar ceiling
+Down here we've got that midnight feeling
+Two vintage guitars and a heavy bass
+Coffee cups rattling all over the place!
+
+[Chorus]
+Groove in the basement, smoke and glow
+The blues will save us wherever we go
+Turn it up to eleven, stomp the floor
+Groove in the basement, give us more!`,
+    chords: `Intro: E7 - A7 - E7 - B7 - A7 - E7
+Vers/Refräng: 12-takt i E7`,
     sortOrder: 4,
   },
 ]
@@ -472,9 +669,9 @@ const defaultSetlist = [
 await client.batch(
   [
     ...gigs.map((g) => ({
-      sql: `insert into gigs (id, date, venue, city, status, notes_sv, notes_en, ticket_url, created_at, updated_at)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [g.id, g.date, g.venue, g.city, g.status, g.notesSv, g.notesEn, g.ticketUrl, now, now],
+      sql: `insert into gigs (id, date, venue, city, status, notes_sv, notes_en, ticket_url, setlist, created_at, updated_at)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [g.id, g.date, g.venue, g.city, g.status, g.notesSv, g.notesEn, g.ticketUrl, g.setlist, now, now],
     })),
     ...members.map((m) => ({
       sql: `insert into band_members (id, name, role, bio_sv, bio_en, photo_url, gear_sv, gear_en, favorite_chord, weakness_sv, coffee_consumption, sort_order, created_at, updated_at)
@@ -514,8 +711,8 @@ await client.batch(
       ],
     })),
     ...songs.map((s) => ({
-      sql: `insert into songs (id, title, is_original, original_artist, embed_provider, embed_url, audio_url, duration, sort_order, created_at, updated_at)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sql: `insert into songs (id, title, is_original, original_artist, embed_provider, embed_url, audio_url, duration, lyrics, lyrics_en, chords, sort_order, created_at, updated_at)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         s.id,
         s.title,
@@ -525,6 +722,9 @@ await client.batch(
         s.embedUrl,
         s.audioUrl,
         s.duration,
+        s.lyrics,
+        s.lyricsEn,
+        s.chords,
         s.sortOrder,
         now,
         now,
@@ -557,6 +757,10 @@ await client.batch(
         values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [s.id, s.title, s.artist, s.isOriginal ? 1 : 0, s.setName, s.notes, s.sortOrder, now, now],
     })),
+    {
+      sql: `insert or replace into site_settings (key, value, created_at, updated_at) values (?, ?, ?, ?)`,
+      args: ['newsletter_enabled', 'false', now, now],
+    },
   ],
   'write',
 )

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 useSeoMeta({
   title: 'Jukebox & musik | Det 7:e Gunget',
@@ -57,6 +58,8 @@ const filteredSongs = computed(() => {
   return list
 })
 
+const route = useRoute()
+
 // Active song state
 const activeSongId = ref<string | null>('song-det-sjunde-gunget')
 const credits = ref(5)
@@ -73,6 +76,7 @@ const {
   duration,
   volume,
   isMuted,
+  isRepeatEnabled,
   audioSourceType,
   playTrack,
   pauseTrack,
@@ -80,6 +84,7 @@ const {
   playCoinChime,
   setAudioVolume,
   toggleMute,
+  toggleRepeat,
   seek,
 } = useJukeboxAudio()
 
@@ -90,6 +95,13 @@ const selectSong = (songId: string) => {
     playTrack(song)
   }
 }
+
+onMounted(() => {
+  const querySong = (route.query.song as string) || (route.hash ? route.hash.replace('#', '') : '')
+  if (querySong && songsWithCodes.value.some((s: any) => s.id === querySong)) {
+    selectSong(querySong)
+  }
+})
 
 const togglePlay = (songId?: string) => {
   if (songId && activeSongId.value !== songId) {
@@ -166,6 +178,44 @@ const formattedEmbedUrl = computed(() => {
 
   return url
 })
+
+const playerViewTab = ref<'equalizer' | 'lyrics'>('equalizer')
+const prompterContainer = ref<HTMLElement | null>(null)
+
+const needleAngle = computed(() => {
+  if (!isAudioPlaying.value) return 0
+  const maxDur = duration.value > 0 ? duration.value : (currentSong.value?.duration || 30)
+  const prog = Math.min(1, Math.max(0, currentTime.value / maxDur))
+  // Parked at 0deg on deck rest, drops clockwise to +12.5deg (outer vinyl lead-in rim), glides inward to +31deg (inner label)
+  return 12.5 + prog * 18.5
+})
+
+const lyricsLines = computed(() => {
+  if (!currentSong.value?.lyrics) return []
+  return currentSong.value.lyrics.split('\n')
+})
+
+const currentLyricIndex = computed(() => {
+  if (!lyricsLines.value.length) return 0
+  const maxDur = duration.value > 0 ? duration.value : (currentSong.value?.duration || 30)
+  const prog = Math.min(1, Math.max(0, currentTime.value / maxDur))
+  return Math.min(lyricsLines.value.length - 1, Math.floor(prog * lyricsLines.value.length))
+})
+
+// Auto-scroll the teleprompter smoothly as playback advances
+watch(
+  () => currentTime.value,
+  () => {
+    if (prompterContainer.value && isAudioPlaying.value && playerViewTab.value === 'lyrics') {
+      const maxDur = duration.value > 0 ? duration.value : (currentSong.value?.duration || 30)
+      const prog = Math.min(1, Math.max(0, currentTime.value / maxDur))
+      const maxScroll = prompterContainer.value.scrollHeight - prompterContainer.value.clientHeight
+      if (maxScroll > 0) {
+        prompterContainer.value.scrollTop = prog * maxScroll
+      }
+    }
+  },
+)
 
 const formatTime = (secs: number) => {
   if (isNaN(secs) || secs < 0) return '0:00'
@@ -269,60 +319,89 @@ const formatTime = (secs: number) => {
 
           <!-- VIEW A: VINTAGE VINYL TURNTABLE CONSOLE -->
           <div v-if="playerDisplayMode === 'vinyl'" class="grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-center relative z-10">
-            <!-- Left: Rotating Vinyl Record Player -->
-            <div class="flex items-center justify-center relative py-4">
+            <!-- Left: Rotating Vinyl Record Player Console Deck -->
+            <div class="flex items-center justify-center relative py-2">
               <!-- Vacuum Tubes Behind Record -->
-              <div class="absolute -top-2 left-6 flex items-center gap-3 opacity-90">
+              <div class="absolute -top-3 left-4 flex items-center gap-2.5 opacity-90 z-0">
                 <div
                   v-for="i in 3"
                   :key="i"
-                  class="w-4 h-10 rounded-t-full bg-gradient-to-t from-amber-600 via-amber-400 to-transparent border border-amber-400/40 transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.6)]"
+                  class="w-3.5 h-9 rounded-t-full bg-gradient-to-t from-amber-600 via-amber-400 to-transparent border border-amber-400/40 transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.6)]"
                   :class="isAudioPlaying ? 'animate-pulse' : 'opacity-40'"
                 />
               </div>
 
-              <!-- Turntable Platter Base -->
-              <div class="relative w-52 h-52 sm:w-64 sm:h-64 rounded-full bg-[#110d0a] border-4 border-primary/40 shadow-2xl flex items-center justify-center">
-                <!-- 45 RPM Vinyl Record -->
-                <div
-                  class="w-48 h-48 sm:w-60 sm:h-60 rounded-full bg-[#0a0a0a] border-2 border-neutral-700/60 shadow-xl flex items-center justify-center relative transition-transform"
-                  :class="isAudioPlaying ? 'animate-spin' : ''"
-                  :style="{ animationDuration: '3.5s' }"
-                >
-                  <!-- Vinyl Grooves Rings -->
-                  <div class="absolute inset-2 rounded-full border border-white/5 pointer-events-none" />
-                  <div class="absolute inset-5 rounded-full border border-white/10 pointer-events-none" />
-                  <div class="absolute inset-9 rounded-full border border-white/5 pointer-events-none" />
-                  <div class="absolute inset-14 rounded-full border border-white/10 pointer-events-none" />
+              <!-- Turntable Chassis / Plinth Deck -->
+              <div class="relative w-64 h-64 sm:w-80 sm:h-80 rounded-3xl bg-gradient-to-br from-[#1c140e] via-[#100b08] to-[#080503] border-2 border-primary/40 shadow-2xl p-3 flex items-center justify-center overflow-visible z-10">
+                <!-- Metallic edge inlay -->
+                <div class="absolute inset-1.5 rounded-2xl border border-primary/20 pointer-events-none" />
 
-                  <!-- Record Center Label -->
-                  <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-secondary via-primary to-secondary text-neutral p-1 shadow-md flex flex-col items-center justify-center text-center">
-                    <span class="text-[8px] font-mono font-bold tracking-tighter uppercase">DET 7:E GUNGET</span>
-                    <span class="text-[10px] font-heading font-black truncate max-w-[70px] leading-none my-0.5">
-                      {{ currentSong ? currentSong.title : '45 RPM' }}
-                    </span>
-                    <span class="text-[7px] font-mono font-bold text-neutral/80">
-                      {{ currentSong?.code || 'A1' }} • SIDE {{ currentSong?.side || 'A' }}
-                    </span>
-                    <div class="w-2.5 h-2.5 rounded-full bg-neutral mt-0.5" />
+                <!-- 45 RPM Vinyl Platter (offset to the left) -->
+                <div class="relative w-48 h-48 sm:w-60 sm:h-60 rounded-full bg-[#0d0907] border-4 border-stone-800/90 shadow-2xl flex items-center justify-center -translate-x-3 sm:-translate-x-4">
+                  <!-- 45 RPM Vinyl Record -->
+                  <div
+                    class="w-44 h-44 sm:w-56 sm:h-56 rounded-full bg-[#0a0a0a] border-2 border-neutral-700/60 shadow-xl flex items-center justify-center relative transition-transform"
+                    :class="isAudioPlaying ? 'animate-spin' : ''"
+                    :style="{ animationDuration: '3.5s' }"
+                  >
+                    <!-- Vinyl Grooves Rings -->
+                    <div class="absolute inset-2 rounded-full border border-white/5 pointer-events-none" />
+                    <div class="absolute inset-5 rounded-full border border-white/10 pointer-events-none" />
+                    <div class="absolute inset-8 rounded-full border border-white/5 pointer-events-none" />
+                    <div class="absolute inset-12 rounded-full border border-white/10 pointer-events-none" />
+
+                    <!-- Record Center Label (Perfect Circle) -->
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 aspect-square flex-shrink-0 rounded-full bg-gradient-to-tr from-secondary via-primary to-secondary text-neutral p-1.5 shadow-md flex flex-col items-center justify-center text-center">
+                      <span class="text-[7px] sm:text-[8px] font-mono font-bold tracking-tighter uppercase">DET 7:E GUNGET</span>
+                      <span class="text-[9px] sm:text-[10px] font-heading font-black truncate max-w-[65px] leading-none my-0.5">
+                        {{ currentSong ? currentSong.title : '45 RPM' }}
+                      </span>
+                      <span class="text-[6px] sm:text-[7px] font-mono font-bold text-neutral/80">
+                        {{ currentSong?.code || 'A1' }} • SIDE {{ currentSong?.side || 'A' }}
+                      </span>
+                      <div class="w-2.5 h-2.5 rounded-full bg-neutral mt-0.5" />
+                    </div>
                   </div>
                 </div>
 
-                <!-- Tone-Arm Mechanism -->
-                <div
-                  class="absolute top-2 right-2 w-12 sm:w-16 h-28 sm:h-36 origin-top-right transition-transform duration-700 pointer-events-none z-20"
-                  :style="{ transform: isAudioPlaying ? 'rotate(28deg)' : 'rotate(0deg)' }"
-                >
-                  <div class="w-1.5 h-full bg-gradient-to-b from-stone-300 via-stone-400 to-stone-500 rounded shadow-md" />
-                  <div class="w-4 h-6 bg-primary rounded-sm -bottom-1 -left-1.5 absolute shadow-md border border-black/40" />
+                <!-- Tonearm Pivot Base & Arm Assembly (Outside Platter on Top-Right of Deck) -->
+                <div class="absolute top-4 right-4 sm:top-5 sm:right-5 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center z-30 pointer-events-none">
+                  <!-- Round Metal Base Gimbal -->
+                  <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-stone-300 via-stone-600 to-stone-900 border-2 border-amber-500/50 shadow-xl flex items-center justify-center relative">
+                    <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-stone-900 border border-amber-400/50 shadow-inner" />
+
+                    <!-- Tone-Arm pivoting precisely from center of this round base -->
+                    <div
+                      class="absolute top-1/2 left-1/2 -translate-x-1/2 origin-top w-2 h-36 sm:h-44 transition-transform z-20"
+                      :style="{
+                        transform: `translateX(-50%) rotate(${needleAngle}deg)`,
+                        transitionDuration: isAudioPlaying ? '400ms' : '800ms',
+                        transitionTimingFunction: 'cubic-bezier(0.25, 1, 0.5, 1)'
+                      }"
+                    >
+                      <!-- Counterweight behind pivot -->
+                      <div class="w-4 h-5 -top-4 -left-1 absolute bg-gradient-to-b from-stone-400 via-stone-600 to-stone-800 rounded-sm shadow border border-stone-500/40" />
+
+                      <!-- Tone-arm metal shaft -->
+                      <div class="w-1.5 h-full mx-auto bg-gradient-to-b from-stone-100 via-stone-400 to-stone-600 rounded-full shadow-lg" />
+
+                      <!-- Cartridge & Stylus head -->
+                      <div class="w-4 h-6 bg-gradient-to-b from-primary to-amber-700 rounded-sm -bottom-2 -left-1 absolute shadow-lg border border-black/60 flex items-center justify-center">
+                        <div class="w-1 h-1 rounded-full bg-amber-200 animate-ping opacity-60" v-if="isAudioPlaying" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                <!-- Tonearm Rest Clip on Deck (under parked needle at 0deg) -->
+                <div class="absolute bottom-10 right-7 sm:bottom-12 sm:right-8 w-3 h-5 border-l-2 border-r-2 border-t-2 border-stone-400/50 rounded-t pointer-events-none opacity-60 z-10" />
               </div>
             </div>
 
-            <!-- Right: Digital / Analog Track Status & Equalizer Display -->
-            <div class="space-y-5 bg-base-200/90 dark:bg-neutral/80 p-5 sm:p-7 pb-7 rounded-2xl border border-primary/30 shadow-xl">
+            <!-- Right: Digital / Analog Track Status & Equalizer / Lyrics Prompter Display -->
+            <div class="space-y-4 bg-base-200/90 dark:bg-neutral/80 p-5 sm:p-7 pb-6 rounded-2xl border border-primary/30 shadow-xl">
               <!-- Digital Track Code Screen -->
-              <div class="bg-base-300/90 dark:bg-black/90 p-4 rounded-xl border border-primary/40 font-mono text-center space-y-1 shadow-inner">
+              <div class="bg-base-300/90 dark:bg-black/90 p-4 rounded-xl border border-primary/40 font-mono text-center space-y-1 shadow-inner relative">
                 <div class="flex items-center justify-between text-[11px] text-secondary font-bold">
                   <span>{{ isAudioPlaying ? '● ' + t('music.now_playing') : '○ STANDBY' }}</span>
                   <span class="text-accent font-black text-sm">{{ currentSong?.code || 'A1' }}</span>
@@ -332,6 +411,82 @@ const formatTime = (secs: number) => {
                 </div>
                 <div class="text-xs text-base-content/60 truncate">
                   {{ currentSong?.isOriginal ? `Det 7:e Gunget (${t('music.original_track')})` : `${t('music.cover_of')} ${currentSong?.originalArtist}` }}
+                </div>
+              </div>
+
+              <!-- Switcher: Equalizer vs Rolling Lyrics (if lyrics exist) -->
+              <div v-if="currentSong?.lyrics" class="flex items-center justify-center gap-2 pt-0.5">
+                <button
+                  type="button"
+                  class="px-3 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer"
+                  :class="playerViewTab === 'equalizer' ? 'bg-primary text-neutral font-black shadow' : 'bg-base-300/80 text-base-content/70 hover:text-primary'"
+                  @click="playerViewTab = 'equalizer'"
+                >
+                  📊 Ljudvågor
+                </button>
+                <button
+                  type="button"
+                  class="px-3 py-1 rounded-full text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1"
+                  :class="playerViewTab === 'lyrics' ? 'bg-secondary text-secondary-content font-black shadow' : 'bg-base-300/80 text-base-content/70 hover:text-secondary'"
+                  @click="playerViewTab = 'lyrics'"
+                >
+                  <span>📜 Rullande text</span>
+                  <span v-if="isAudioPlaying" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                </button>
+                <NuxtLink
+                  :to="localePath('/lyrics#' + currentSong.id)"
+                  class="text-[11px] font-mono text-primary hover:underline ml-1"
+                  title="Öppna i låttextboken"
+                >
+                  Bok ↗
+                </NuxtLink>
+              </div>
+
+              <!-- TAB 1: Animated Equalizer Bars -->
+              <div v-if="playerViewTab === 'equalizer'" class="flex items-end justify-center gap-1.5 h-12 px-2 bg-base-300/40 dark:bg-black/40 rounded-xl py-2 border border-primary/10">
+                <div
+                  v-for="bar in 16"
+                  :key="bar"
+                  class="w-2 rounded-t transition-all duration-150"
+                  :class="isAudioPlaying ? 'bg-gradient-to-t from-emerald-500 via-yellow-400 to-red-500' : 'bg-primary/20 h-1.5'"
+                  :style="{
+                    height: isAudioPlaying ? `${Math.max(15, (bar * 17) % 95 + 10)}%` : '6px',
+                    animation: isAudioPlaying ? `pulse ${(bar % 4) * 0.2 + 0.3}s infinite alternate` : 'none',
+                  }"
+                />
+              </div>
+
+              <!-- TAB 2: Vintage Rolling Lyrics Teleprompter Screen -->
+              <div
+                v-else-if="playerViewTab === 'lyrics' && currentSong?.lyrics"
+                ref="prompterContainer"
+                class="h-32 bg-[#0c120a] text-[#4ade80] p-3 rounded-xl border-2 border-emerald-500/40 font-mono text-xs overflow-y-auto space-y-1.5 shadow-[inset_0_0_20px_rgba(16,185,129,0.25)] scroll-smooth select-none relative"
+              >
+                <div class="sticky top-0 bg-[#0c120a]/95 backdrop-blur-sm text-[9px] uppercase tracking-widest text-emerald-400/80 border-b border-emerald-500/20 pb-1 flex justify-between z-10">
+                  <span class="font-bold text-emerald-300">TELEPROMPTER • {{ currentSong.title }}</span>
+                  <span v-if="isAudioPlaying" class="flex items-center gap-1 text-amber-300 font-bold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    RULLAR LIVE
+                  </span>
+                  <span v-else class="text-base-content/40">PAUSAD</span>
+                </div>
+
+                <div
+                  v-for="(line, idx) in lyricsLines"
+                  :key="idx"
+                  class="transition-all duration-300 px-1.5 py-0.5 rounded"
+                  :class="
+                    line.trim().startsWith('[')
+                      ? 'text-amber-400 font-bold text-[10px] mt-1.5 tracking-wider uppercase bg-amber-950/30'
+                      : idx === currentLyricIndex && isAudioPlaying
+                        ? 'text-amber-200 font-bold bg-emerald-900/60 shadow-[0_0_10px_rgba(74,222,128,0.4)] translate-x-1 scale-[1.01]'
+                        : Math.abs(idx - currentLyricIndex) <= 2
+                          ? 'text-[#86efac] opacity-90'
+                          : 'text-[#4ade80]/60'
+                  "
+                >
+                  <span v-if="idx === currentLyricIndex && isAudioPlaying && !line.trim().startsWith('[')" class="text-amber-300 mr-1 animate-pulse">▶</span>
+                  <span>{{ line }}</span>
                 </div>
               </div>
 
@@ -355,22 +510,8 @@ const formatTime = (secs: number) => {
                 />
               </div>
 
-              <!-- Animated Equalizer Bars -->
-              <div class="flex items-end justify-center gap-1.5 h-7 px-2">
-                <div
-                  v-for="bar in 16"
-                  :key="bar"
-                  class="w-2 rounded-t transition-all duration-150"
-                  :class="isAudioPlaying ? 'bg-gradient-to-t from-emerald-500 via-yellow-400 to-red-500' : 'bg-primary/20 h-1.5'"
-                  :style="{
-                    height: isAudioPlaying ? `${Math.max(15, (bar * 17) % 95 + 10)}%` : '6px',
-                    animation: isAudioPlaying ? `pulse ${(bar % 4) * 0.2 + 0.3}s infinite alternate` : 'none',
-                  }"
-                />
-              </div>
-
               <!-- Jukebox Transport Controls (Play / Pause / Next / Prev) -->
-              <div class="flex items-center justify-between pt-2 px-1 gap-2 sm:gap-4">
+              <div class="flex items-center justify-between pt-1 px-1 gap-2 sm:gap-4">
                 <!-- Volume & Mute Button -->
                 <div class="flex items-center gap-1 flex-shrink-0">
                   <button
@@ -393,7 +534,7 @@ const formatTime = (secs: number) => {
                 </div>
 
                 <!-- Center Playback Controls -->
-                <div class="flex items-center gap-3 sm:gap-3.5 mx-auto">
+                <div class="flex items-center gap-2 sm:gap-3 mx-auto">
                   <button
                     type="button"
                     class="btn btn-circle btn-sm btn-ghost border border-primary/40 text-primary hover:bg-primary/20 cursor-pointer"
@@ -419,6 +560,54 @@ const formatTime = (secs: number) => {
                     @click="nextTrack"
                   >
                     ⏭
+                  </button>
+
+                  <!-- Auto-Repeat Toggle Button with Tabler SVG Icons -->
+                  <button
+                    type="button"
+                    class="btn btn-circle btn-sm transition-all cursor-pointer"
+                    :class="
+                      isRepeatEnabled
+                        ? 'btn-primary font-bold text-neutral shadow-lg shadow-primary/30 ring-2 ring-primary/60 scale-105'
+                        : 'btn-ghost border border-primary/40 text-primary/70 hover:text-primary hover:bg-primary/20'
+                    "
+                    :title="isRepeatEnabled ? 'Auto-repetering: PÅ (klicka för att slå av)' : 'Auto-repetering: AV (klicka för att slå på)'"
+                    @click="toggleRepeat"
+                  >
+                    <!-- Tabler Repeat Icon (When Active) -->
+                    <svg
+                      v-if="isRepeatEnabled"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      stroke-width="2.2"
+                      stroke="currentColor"
+                      fill="none"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3" />
+                      <path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3" />
+                    </svg>
+
+                    <!-- Tabler Repeat-Off Icon (When Inactive) -->
+                    <svg
+                      v-else
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      stroke-width="2"
+                      stroke="currentColor"
+                      fill="none"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <path d="M4 12v-3c0 -1.336 .875 -2.47 2.087 -2.85m3.913 -.15h10m-3 -3l3 3l-3 3" />
+                      <path d="M20 12v3a3 3 0 0 1 -.133 .886m-1.99 1.984a3 3 0 0 1 -.877 .13h-13m3 3l-3 -3l3 -3" />
+                      <path d="M3 3l18 18" />
+                    </svg>
                   </button>
                 </div>
 
@@ -607,8 +796,18 @@ const formatTime = (secs: number) => {
                   </div>
                 </div>
 
-                <!-- Vintage Play Jewel Indicator -->
-                <div class="flex-shrink-0 flex items-center gap-1.5">
+                <!-- Vintage Play Jewel & Lyrics Indicator -->
+                <div class="flex-shrink-0 flex items-center gap-2">
+                  <NuxtLink
+                    v-if="song.isOriginal || song.lyrics"
+                    :to="localePath('/lyrics#' + song.id)"
+                    class="px-2 py-1 rounded font-mono text-[10px] font-bold text-[#801b1c] bg-[#ebd1be] hover:bg-primary hover:text-neutral transition-colors flex items-center gap-1"
+                    title="Läs låttext & ackord"
+                    @click.stop
+                  >
+                    <span>📜</span> Text
+                  </NuxtLink>
+
                   <span
                     class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow transition-transform border border-amber-900/30"
                     :class="
@@ -724,12 +923,14 @@ const formatTime = (secs: number) => {
                       <span class="font-heading font-bold text-sm sm:text-base text-[#1c150e] tracking-tight truncate">
                         {{ track.title }}
                       </span>
-                      <span
+                      <NuxtLink
                         v-if="track.isOriginal"
-                        class="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-[#ebd1be] text-[#801b1c] border border-[#a8484a]/40 flex-shrink-0"
+                        :to="localePath('/lyrics')"
+                        class="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-[#ebd1be] hover:bg-primary hover:text-neutral text-[#801b1c] border border-[#a8484a]/40 flex-shrink-0 transition-colors"
+                        title="Se låttext & ackord i låttextboken"
                       >
-                        Egen
-                      </span>
+                        📜 Egen text
+                      </NuxtLink>
                       <span
                         v-else-if="track.artist"
                         class="text-xs font-mono text-[#6e5946] truncate hidden sm:inline"

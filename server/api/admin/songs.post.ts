@@ -27,6 +27,9 @@ export default defineEventHandler(async (event) => {
         embedUrl: body.embedUrl,
         audioUrl: body.audioUrl || null,
         duration: body.duration ? parseInt(body.duration, 10) : null,
+        lyrics: body.lyrics || null,
+        lyricsEn: body.lyricsEn || null,
+        chords: body.chords || null,
         updatedAt: now,
       })
       .where(eq(songs.id, body.id))
@@ -40,6 +43,9 @@ export default defineEventHandler(async (event) => {
       embedUrl: body.embedUrl,
       audioUrl: body.audioUrl || null,
       duration: body.duration ? parseInt(body.duration, 10) : null,
+      lyrics: body.lyrics || null,
+      lyricsEn: body.lyricsEn || null,
+      chords: body.chords || null,
       createdAt: now,
       updatedAt: now,
     })

@@ -33,10 +33,15 @@ async function runMigration() {
       status text DEFAULT 'upcoming',
       notes_sv text,
       notes_en text,
+      setlist text,
       created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
       updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
     )
   `)
+
+  try {
+    await remoteClient.execute('ALTER TABLE gigs ADD COLUMN setlist text')
+  } catch {}
 
   // 2. Band members table
   await remoteClient.execute(`
@@ -87,6 +92,9 @@ async function runMigration() {
       embed_url text NOT NULL,
       audio_url text,
       duration integer,
+      lyrics text,
+      lyrics_en text,
+      chords text,
       sort_order integer DEFAULT 0 NOT NULL,
       created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
       updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
@@ -99,6 +107,15 @@ async function runMigration() {
   } catch {}
   try {
     await remoteClient.execute('ALTER TABLE songs ADD COLUMN duration integer')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE songs ADD COLUMN lyrics text')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE songs ADD COLUMN lyrics_en text')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE songs ADD COLUMN chords text')
   } catch {}
 
   // 5. Admins table
@@ -163,11 +180,33 @@ async function runMigration() {
       id text PRIMARY KEY NOT NULL,
       name text NOT NULL,
       email text NOT NULL,
+      phone text,
+      event_type text,
+      event_date text,
+      location text,
       body text NOT NULL,
+      status text DEFAULT 'unread' NOT NULL,
       created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
       read_at integer
     )
   `)
+
+  // Auto-migrate missing columns on messages if table already existed
+  try {
+    await remoteClient.execute('ALTER TABLE messages ADD COLUMN phone text')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE messages ADD COLUMN event_type text')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE messages ADD COLUMN event_date text')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE messages ADD COLUMN location text')
+  } catch {}
+  try {
+    await remoteClient.execute("ALTER TABLE messages ADD COLUMN status text DEFAULT 'unread' NOT NULL")
+  } catch {}
 
   // 8. Social Hashtags table
   await remoteClient.execute(`
@@ -197,6 +236,16 @@ async function runMigration() {
     )
   `)
 
+  // 10. Site Settings table
+  await remoteClient.execute(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key text PRIMARY KEY NOT NULL,
+      value text NOT NULL,
+      created_at integer NOT NULL DEFAULT (unixepoch() * 1000),
+      updated_at integer NOT NULL DEFAULT (unixepoch() * 1000)
+    )
+  `)
+
   console.log('✓ All database tables & columns successfully verified in Turso Cloud!')
 
   // Check if data should be synced from local SQLite
@@ -209,6 +258,7 @@ async function runMigration() {
     const localSongs = await localClient.execute('SELECT * FROM songs')
     const localHashtags = await localClient.execute('SELECT * FROM social_hashtags')
     const localSetlist = await localClient.execute('SELECT * FROM setlist_items')
+    const localSettings = await localClient.execute('SELECT * FROM site_settings')
 
     console.log(`\nSyncing data from local database:`)
     console.log(`- ${localAdmins.rows.length} admins`)
@@ -218,6 +268,7 @@ async function runMigration() {
     console.log(`- ${localSongs.rows.length} songs`)
     console.log(`- ${localHashtags.rows.length} social hashtags`)
     console.log(`- ${localSetlist.rows.length} setlist tracks`)
+    console.log(`- ${localSettings.rows.length} site settings`)
 
     // Clean remote tables before insert
     await remoteClient.batch([
@@ -229,6 +280,7 @@ async function runMigration() {
       { sql: 'DELETE FROM songs', args: [] },
       { sql: 'DELETE FROM social_hashtags', args: [] },
       { sql: 'DELETE FROM setlist_items', args: [] },
+      { sql: 'DELETE FROM site_settings', args: [] },
     ], 'write')
 
     // Batch insert into remote
@@ -238,8 +290,8 @@ async function runMigration() {
         args: [row.id, row.name, row.email, row.username, row.role, row.password_hash, row.salt, row.provider, row.avatar_url, row.created_at, row.updated_at],
       })),
       ...localGigs.rows.map((row) => ({
-        sql: `INSERT INTO gigs (id, date, venue, city, ticket_url, status, notes_sv, notes_en, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [row.id, row.date, row.venue, row.city, row.ticket_url, row.status, row.notes_sv, row.notes_en, row.created_at, row.updated_at],
+        sql: `INSERT INTO gigs (id, date, venue, city, ticket_url, status, notes_sv, notes_en, setlist, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.date, row.venue, row.city, row.ticket_url, row.status, row.notes_sv, row.notes_en, row.setlist || null, row.created_at, row.updated_at],
       })),
       ...localMembers.rows.map((row) => ({
         sql: `INSERT INTO band_members (id, name, role, bio_sv, bio_en, photo_url, gear_sv, gear_en, favorite_chord, weakness_sv, coffee_consumption, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -250,8 +302,8 @@ async function runMigration() {
         args: [row.id, row.category, row.media_url, row.frame_style, row.rotation, row.caption_sv, row.caption_en, row.alt_text_sv, row.alt_text_en, row.taken_at, row.created_at, row.updated_at],
       })),
       ...localSongs.rows.map((row) => ({
-        sql: `INSERT INTO songs (id, title, is_original, original_artist, embed_provider, embed_url, audio_url, duration, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [row.id, row.title, row.is_original, row.original_artist, row.embed_provider, row.embed_url, row.audio_url || null, row.duration || null, row.sort_order, row.created_at, row.updated_at],
+        sql: `INSERT INTO songs (id, title, is_original, original_artist, embed_provider, embed_url, audio_url, duration, lyrics, lyrics_en, chords, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.title, row.is_original, row.original_artist, row.embed_provider, row.embed_url, row.audio_url || null, row.duration || null, row.lyrics || null, row.lyrics_en || null, row.chords || null, row.sort_order, row.created_at, row.updated_at],
       })),
       ...localHashtags.rows.map((row) => ({
         sql: `INSERT INTO social_hashtags (id, tag, category, is_active, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -260,6 +312,10 @@ async function runMigration() {
       ...localSetlist.rows.map((row) => ({
         sql: `INSERT INTO setlist_items (id, title, artist, is_original, set_name, notes, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [row.id, row.title, row.artist, row.is_original, row.set_name, row.notes, row.sort_order, row.created_at, row.updated_at],
+      })),
+      ...localSettings.rows.map((row) => ({
+        sql: `INSERT INTO site_settings (key, value, created_at, updated_at) VALUES (?, ?, ?, ?)`,
+        args: [row.key, row.value, row.created_at, row.updated_at],
       })),
     ]
 

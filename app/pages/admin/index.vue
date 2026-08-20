@@ -45,12 +45,46 @@ const { data: hashtagsData, refresh: refreshHashtags } = await useFetch<any[]>('
   ignoreResponseError: true,
 })
 
+const { data: adminSettings, refresh: refreshSettings } = await useFetch<{ newsletterEnabled: boolean; settings: Record<string, string> }>('/api/admin/settings', {
+  default: () => ({ newsletterEnabled: false, settings: {} }),
+  ignoreResponseError: true,
+})
+
+const newsletterEnabledSetting = ref(false)
+watch(
+  () => adminSettings.value?.newsletterEnabled,
+  (val) => {
+    newsletterEnabledSetting.value = Boolean(val)
+  },
+  { immediate: true },
+)
+
+const isSavingSettings = ref(false)
+const toggleNewsletterSetting = async () => {
+  newsletterEnabledSetting.value = !newsletterEnabledSetting.value
+  isSavingSettings.value = true
+  try {
+    await $fetch('/api/admin/settings', {
+      method: 'POST',
+      body: { newsletterEnabled: newsletterEnabledSetting.value },
+    })
+    await refreshSettings()
+    showToast(newsletterEnabledSetting.value ? '✓ Nyhetsbrev och prenumerationer är nu AKTIVERADE på sajten!' : '✓ Nyhetsbrev och prenumerationer är nu PAUSADE på sajten.')
+  } catch (err: any) {
+    newsletterEnabledSetting.value = !newsletterEnabledSetting.value
+    showToast('⚠️ Fel vid sparande av inställning: ' + (err?.data?.message || err?.message || ''))
+  } finally {
+    isSavingSettings.value = false
+  }
+}
+
 const unreadMessagesCount = computed(() => {
-  return (messagesData.value || []).filter((m) => m.status === 'unread').length
+  return (Array.isArray(messagesData.value) ? messagesData.value : []).filter((m) => m?.status === 'unread').length
 })
 
 // ---------------- GIGS CRUD ----------------
 const editingGig = ref<any | null>(null)
+const activeGigSetTab = ref<'Set 1' | 'Set 2' | 'Set 3' | 'Extranummer'>('Set 1')
 const gigForm = reactive({
   id: '',
   venue: '',
@@ -62,7 +96,33 @@ const gigForm = reactive({
   notesSv: '',
   notesEn: '',
   postToSocials: false,
+  setlistTracks: [] as { title: string; artist?: string; isOriginal?: boolean; notes?: string; setName?: string }[],
 })
+
+const addGigSetlistTrack = (songOrTitle?: string | any, targetSet?: string) => {
+  const sName = targetSet || activeGigSetTab.value || 'Set 1'
+  if (typeof songOrTitle === 'object' && songOrTitle?.title) {
+    gigForm.setlistTracks.push({
+      title: songOrTitle.title,
+      artist: songOrTitle.originalArtist || 'Det 7:e Gunget',
+      isOriginal: !!songOrTitle.isOriginal,
+      notes: '',
+      setName: sName,
+    })
+  } else {
+    gigForm.setlistTracks.push({
+      title: typeof songOrTitle === 'string' ? songOrTitle : '',
+      artist: '',
+      isOriginal: false,
+      notes: '',
+      setName: sName,
+    })
+  }
+}
+
+const removeGigSetlistTrack = (index: number) => {
+  gigForm.setlistTracks.splice(index, 1)
+}
 
 // ---------------- POST-LEVEL HASHTAG SELECTION ----------------
 const allHashtags = computed<any[]>(() => (Array.isArray(hashtagsData.value) ? hashtagsData.value : []))
@@ -111,6 +171,7 @@ const openAddGig = () => {
   gigForm.notesSv = ''
   gigForm.notesEn = ''
   gigForm.postToSocials = false
+  gigForm.setlistTracks = []
   selectedGigTags.value = availableGigTags.value.map((t) => t.tag)
   editingGig.value = 'new'
 }
@@ -127,6 +188,11 @@ const openEditGig = (gig: any) => {
   gigForm.notesSv = gig.notesSv || ''
   gigForm.notesEn = gig.notesEn || ''
   gigForm.postToSocials = false
+  try {
+    gigForm.setlistTracks = gig.setlist ? (typeof gig.setlist === 'string' ? JSON.parse(gig.setlist) : gig.setlist) : []
+  } catch {
+    gigForm.setlistTracks = []
+  }
   selectedGigTags.value = availableGigTags.value.map((t) => t.tag)
   editingGig.value = gig.id
 }
@@ -173,6 +239,7 @@ const saveGig = async () => {
       status: gigForm.status,
       notesSv: gigForm.notesSv,
       notesEn: gigForm.notesEn,
+      setlist: gigForm.setlistTracks.length > 0 ? JSON.stringify(gigForm.setlistTracks) : null,
       postToSocials: gigForm.postToSocials,
       hashtags: selectedGigTags.value,
     },
@@ -279,6 +346,9 @@ const songForm = reactive({
   embedUrl: '',
   audioUrl: '',
   duration: '',
+  lyrics: '',
+  lyricsEn: '',
+  chords: '',
   postToSocials: false,
 })
 
@@ -291,6 +361,9 @@ const openAddSong = () => {
   songForm.embedUrl = ''
   songForm.audioUrl = ''
   songForm.duration = ''
+  songForm.lyrics = ''
+  songForm.lyricsEn = ''
+  songForm.chords = ''
   songForm.postToSocials = false
   selectedSongTags.value = availableSongTags.value.map((t) => t.tag)
   editingSong.value = 'new'
@@ -305,6 +378,9 @@ const openEditSong = (s: any) => {
   songForm.embedUrl = s.embedUrl || ''
   songForm.audioUrl = s.audioUrl || ''
   songForm.duration = s.duration ? String(s.duration) : ''
+  songForm.lyrics = s.lyrics || ''
+  songForm.lyricsEn = s.lyricsEn || ''
+  songForm.chords = s.chords || ''
   songForm.postToSocials = false
   selectedSongTags.value = availableSongTags.value.map((t) => t.tag)
   editingSong.value = s.id
@@ -824,6 +900,124 @@ const deleteAdminUser = async (admin: any) => {
             <textarea v-model="gigForm.notesSv" rows="2" placeholder="Dörrarna öppnar 18:30..." class="textarea textarea-bordered w-full bg-base-200 text-sm" />
           </div>
 
+          <!-- Per-Gig Setlist / Song List Manager -->
+          <div class="sm:col-span-2 p-5 bg-base-200/90 rounded-2xl border border-primary/30 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-primary/20 pb-3">
+              <div>
+                <span class="text-xs font-bold text-primary flex items-center gap-1.5 font-heading text-base">
+                  <span>🎵</span> Låtlista för giget ({{ gigForm.setlistTracks.length }} låtar)
+                </span>
+                <p class="text-[11px] text-base-content/70">
+                  Bygg setlistan för denna spelning. Visas för fansen på spelkortet och i arkivet.
+                </p>
+              </div>
+
+              <!-- Quick Add From Existing Songs -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <select
+                  class="select select-bordered select-xs bg-base-300 font-mono text-xs"
+                  @change="(e: any) => {
+                    const targetId = e.target.value
+                    if (targetId) {
+                      const found = (songsData || []).find((s: any) => s.id === targetId)
+                      if (found) addGigSetlistTrack(found, activeGigSetTab)
+                      e.target.value = ''
+                    }
+                  }"
+                >
+                  <option value="">+ Välj från repertoar...</option>
+                  <option v-for="s in songsData || []" :key="s.id" :value="s.id">
+                    {{ s.title }} ({{ s.isOriginal ? 'Egen' : s.originalArtist || 'Cover' }})
+                  </option>
+                </select>
+
+                <button
+                  type="button"
+                  class="btn btn-xs btn-outline btn-primary rounded-full font-bold"
+                  @click="addGigSetlistTrack('', activeGigSetTab)"
+                >
+                  + Egen låt i {{ activeGigSetTab }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Set Selector Filter Tabs (Set 1, Set 2, Set 3, Extranummer) -->
+            <div class="flex items-center gap-2 border-b border-primary/10 pb-2">
+              <span class="text-[11px] font-bold text-secondary mr-1">Aktivt set:</span>
+              <button
+                v-for="sTab in ['Set 1', 'Set 2', 'Set 3', 'Extranummer'] as const"
+                :key="sTab"
+                type="button"
+                class="badge badge-sm font-mono cursor-pointer transition-all border"
+                :class="
+                  activeGigSetTab === sTab
+                    ? 'badge-primary font-bold shadow'
+                    : 'badge-ghost opacity-70 hover:opacity-100'
+                "
+                @click="activeGigSetTab = sTab"
+              >
+                {{ sTab }} ({{ gigForm.setlistTracks.filter(t => (t.setName || 'Set 1') === sTab).length }})
+              </button>
+            </div>
+
+            <!-- Setlist Track Items -->
+            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+              <div
+                v-for="(track, idx) in gigForm.setlistTracks"
+                :key="idx"
+                class="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-2.5 bg-base-300/80 rounded-xl border border-primary/15 text-xs font-mono"
+              >
+                <span class="font-bold text-primary w-5 text-center flex-shrink-0">{{ idx + 1 }}.</span>
+
+                <!-- Set selector dropdown per track -->
+                <select
+                  v-model="track.setName"
+                  class="select select-bordered select-xs bg-base-200 text-[11px] w-24 font-bold text-secondary flex-shrink-0"
+                >
+                  <option value="Set 1">Set 1</option>
+                  <option value="Set 2">Set 2</option>
+                  <option value="Set 3">Set 3</option>
+                  <option value="Extranummer">Extranummer</option>
+                </select>
+
+                <input
+                  v-model="track.title"
+                  type="text"
+                  placeholder="Låttitel *"
+                  class="input input-bordered input-xs flex-grow bg-base-200"
+                />
+                <input
+                  v-model="track.artist"
+                  type="text"
+                  placeholder="Artist / Kompositör"
+                  class="input input-bordered input-xs w-32 bg-base-200"
+                />
+                <input
+                  v-model="track.notes"
+                  type="text"
+                  placeholder="Mellansnack / Cue"
+                  class="input input-bordered input-xs w-32 bg-base-200"
+                />
+                <label class="flex items-center gap-1 cursor-pointer flex-shrink-0 text-[10px]">
+                  <input v-model="track.isOriginal" type="checkbox" class="checkbox checkbox-xs checkbox-primary" />
+                  <span>Egen text</span>
+                </label>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-xs text-error flex-shrink-0"
+                  title="Ta bort låt från setlistan"
+                  @click="removeGigSetlistTrack(idx)"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div v-if="gigForm.setlistTracks.length === 0" class="text-center py-4 text-xs text-base-content/50 italic bg-base-300/30 rounded-xl border border-dashed border-primary/10">
+                Inga låtar tillagda ännu. Välj från repertoaren ovan eller klicka "+ Egen låt"!
+              </div>
+            </div>
+          </div>
+
           <!-- Social Media Cross-Posting Switch -->
           <div class="sm:col-span-2 p-4 bg-base-200/80 rounded-2xl border border-primary/20 space-y-3">
             <div class="flex items-center justify-between gap-4">
@@ -1104,6 +1298,40 @@ const deleteAdminUser = async (admin: any) => {
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Längd (sekunder, valfritt)</label>
             <input v-model="songForm.duration" type="number" placeholder="215" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+          </div>
+
+          <!-- Låttext (Svenska) -->
+          <div class="sm:col-span-2">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-secondary">📜 Låttext (svenska)</label>
+              <span class="text-[10px] text-base-content/60 font-mono">Använd t.ex. [Vers 1], [Refräng], [Stick]</span>
+            </div>
+            <textarea
+              v-model="songForm.lyrics"
+              rows="6"
+              placeholder="[Vers 1]&#10;Klockan slår i natten...&#10;&#10;[Refräng]&#10;Det är det sjunde gunget..."
+              class="textarea textarea-bordered w-full bg-base-200 text-xs font-mono leading-relaxed"
+            />
+          </div>
+
+          <!-- Engelsk översättning & Ackord -->
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">🇬🇧 Engelsk låttext / översättning (valfritt)</label>
+            <textarea
+              v-model="songForm.lyricsEn"
+              rows="4"
+              placeholder="[Verse 1]&#10;Midnight strikes again...&#10;&#10;[Chorus]&#10;It's the seventh groove..."
+              class="textarea textarea-bordered w-full bg-base-200 text-xs font-mono leading-relaxed"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-secondary mb-1">🎸 Ackord & struktur / tonart (valfritt)</label>
+            <textarea
+              v-model="songForm.chords"
+              rows="4"
+              placeholder="Tonart: A-blues (12-takt)&#10;Vers: A7 | D7 | A7 | E7 - D7 - A7&#10;Solo: 24 takter bluesrock"
+              class="textarea textarea-bordered w-full bg-base-200 text-xs font-mono leading-relaxed"
+            />
           </div>
 
           <!-- Social Media Cross-Posting Switch -->
@@ -1714,18 +1942,55 @@ const deleteAdminUser = async (admin: any) => {
       </div>
     </div>
 
-    <!-- 7. NEWSLETTER SUBSCRIBERS -->
+    <!-- 7. NEWSLETTER SUBSCRIBERS & SETTING -->
     <div v-if="activeTab === 'subscribers'" class="space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 class="font-heading text-2xl text-primary font-bold">Nyhetsbrevsprenumeranter</h2>
-          <p class="text-xs text-base-content/70">Fans som anmält sig för att få nyheter och speldatum.</p>
+          <h2 class="font-heading text-2xl text-primary font-bold">Nyhetsbrev & Prenumerationer</h2>
+          <p class="text-xs text-base-content/70">Hantera prenumeranter och kontrollera om nyhetsbrevet ska visas för besökare.</p>
         </div>
         <div class="flex items-center gap-3">
           <button type="button" class="btn btn-outline btn-primary btn-sm rounded-full" @click="() => refreshSubscribers()">
             🔄 Uppdatera
           </button>
         </div>
+      </div>
+
+      <!-- MASTER SETTING: Enable/Pause Newsletter on Site -->
+      <div class="p-6 rounded-2xl border stage-card shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+        :class="newsletterEnabledSetting ? 'border-emerald-500/40 bg-emerald-950/20' : 'border-amber-500/40 bg-amber-950/20'"
+      >
+        <div class="space-y-1.5 max-w-2xl">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">{{ newsletterEnabledSetting ? '🟢' : '⏸️' }}</span>
+            <span class="font-heading text-lg font-bold text-primary">
+              {{ newsletterEnabledSetting ? 'Nyhetsbrev & prenumerationer: AKTIVERAD' : 'Nyhetsbrev & prenumerationer: PAUSAD' }}
+            </span>
+            <span
+              class="badge badge-xs font-mono font-bold uppercase"
+              :class="newsletterEnabledSetting ? 'badge-success' : 'badge-warning'"
+            >
+              {{ newsletterEnabledSetting ? 'Synlig på sajten' : 'Dold på sajten' }}
+            </span>
+          </div>
+          <p class="text-xs text-base-content/80 leading-relaxed">
+            {{
+              newsletterEnabledSetting
+                ? 'Prenumerationsformuläret är synligt i sidfoten och fans kan anmäla sin e-postadress.'
+                : 'Formuläret är dolt i sidfoten (visar istället bandets liveinfo och snabblänkar). Befintliga prenumeranter och all funktionalitet finns säkert sparad i systemet och kan aktiveras när som helst med ett klick.'
+            }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-sm rounded-full font-bold px-6 shadow-md transition-all flex items-center gap-2 cursor-pointer flex-shrink-0"
+          :class="newsletterEnabledSetting ? 'btn-warning' : 'btn-success'"
+          :disabled="isSavingSettings"
+          @click="toggleNewsletterSetting"
+        >
+          <span>{{ newsletterEnabledSetting ? '⏸ Pausa formulär på sajten' : '▶ Aktivera formulär på sajten' }}</span>
+        </button>
       </div>
 
       <!-- Subscribers Table -->

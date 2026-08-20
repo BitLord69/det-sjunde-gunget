@@ -8,15 +8,46 @@ export function useJukeboxAudio() {
   const isAudioPlaying = ref(false)
   const currentTime = ref(0)
   const duration = ref(30)
-  const volume = ref(0.8)
-  const isMuted = ref(false)
+
+  // Persisted state via Nuxt useState store & cookies
+  const repeatCookie = useCookie<boolean>('jukebox_repeat', {
+    default: () => false,
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: 'lax',
+  })
+  const isRepeatEnabled = useState<boolean>('jukebox_repeat_state', () => repeatCookie.value ?? false)
+  watch(isRepeatEnabled, (val) => {
+    repeatCookie.value = val
+  })
+
+  const volumeCookie = useCookie<number>('jukebox_volume', {
+    default: () => 0.8,
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: 'lax',
+  })
+  const volume = useState<number>('jukebox_volume_state', () => volumeCookie.value ?? 0.8)
+  watch(volume, (val) => {
+    volumeCookie.value = val
+  })
+
+  const muteCookie = useCookie<boolean>('jukebox_muted', {
+    default: () => false,
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: 'lax',
+  })
+  const isMuted = useState<boolean>('jukebox_muted_state', () => muteCookie.value ?? false)
+  watch(isMuted, (val) => {
+    muteCookie.value = val
+  })
+
   const audioSourceType = ref<'synth' | 'file'>('synth')
 
   let audioCtx: AudioContext | null = null
   let synthInterval: any = null
   let synthGainNode: GainNode | null = null
-  let vinylCrackleNode: AudioNode | null = null
+  let crackleAudio: HTMLAudioElement | null = null
   let htmlAudio: HTMLAudioElement | null = null
+  let crackleFadeTimeout: any = null
 
   // Ensure AudioContext is initialized on user interaction
   const getAudioContext = () => {
@@ -73,40 +104,65 @@ export function useJukeboxAudio() {
     })
   }
 
-  // 2. Vinyl Needle Drop Sound Effect
-  const playNeedleDrop = () => {
+  // Web Audio fallback for needle drop
+  const playSynthNeedleDrop = (durationSeconds = 1.5) => {
     const ctx = getAudioContext()
     if (!ctx) return
-
     const now = ctx.currentTime
-    const bufferSize = ctx.sampleRate * 0.4
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+    const sampleRate = ctx.sampleRate
+    const bufferSize = Math.floor(sampleRate * durationSeconds)
+    const buffer = ctx.createBuffer(1, bufferSize, sampleRate)
     const data = buffer.getChannelData(0)
-
+    let b0 = 0
     for (let i = 0; i < bufferSize; i++) {
-      // Crackles + thump
-      const t = i / ctx.sampleRate
-      const thump = Math.exp(-t * 25) * Math.sin(t * 80 * 2 * Math.PI) * 0.4
-      const crackle = Math.random() < 0.02 ? (Math.random() * 2 - 1) * 0.25 : 0
-      data[i] = thump + crackle
+      const t = i / sampleRate
+      const thump = Math.exp(-t * 30) * Math.sin(t * 55 * 2 * Math.PI) * 0.5
+      const white = Math.random() * 2 - 1
+      b0 = (b0 * 0.95) + (white * 0.05)
+      const pop = Math.random() < 0.0015 ? (Math.random() * 2 - 1) * 0.25 : 0
+      data[i] = thump + (b0 * 0.2 + pop)
     }
-
     const noise = ctx.createBufferSource()
     noise.buffer = buffer
-
     const filter = ctx.createBiquadFilter()
     filter.type = 'lowpass'
-    filter.frequency.setValueAtTime(1200, now)
-
+    filter.frequency.setValueAtTime(850, now)
     const gain = ctx.createGain()
-    gain.gain.setValueAtTime(0.25 * volume.value, now)
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4)
-
+    gain.gain.setValueAtTime(0.28 * volume.value, now)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + durationSeconds)
     noise.connect(filter)
     filter.connect(gain)
     gain.connect(ctx.destination)
-
     noise.start(now)
+  }
+
+  // 2. Authentic Real Vinyl Needle Drop & Continuous Background Groove Crackle
+  const playNeedleDrop = () => {
+    try {
+      if (crackleFadeTimeout) {
+        clearTimeout(crackleFadeTimeout)
+        crackleFadeTimeout = null
+      }
+      if (!crackleAudio) {
+        crackleAudio = new Audio('/audio/vinyl-crackle.mp3')
+        crackleAudio.loop = true
+      }
+      crackleAudio.currentTime = 0
+      // Start with prominent lead-in level
+      crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.75)
+      crackleAudio.play().catch(() => {
+        playSynthNeedleDrop()
+      })
+
+      // After 2 seconds of lead-in, smoothly reduce to warm background bed level
+      crackleFadeTimeout = setTimeout(() => {
+        if (crackleAudio && isAudioPlaying.value) {
+          crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
+        }
+      }, 2000)
+    } catch {
+      playSynthNeedleDrop()
+    }
   }
 
   // 3. Web Audio 12-Bar Blues Synthesizer Preview Riff
@@ -129,7 +185,7 @@ export function useJukeboxAudio() {
     if (!ctx) return
 
     audioSourceType.value = 'synth'
-    duration.value = 45
+    duration.value = 30
     currentTime.value = 0
 
     // Master synth gain node
@@ -155,6 +211,18 @@ export function useJukeboxAudio() {
 
     const playStep = () => {
       if (!isAudioPlaying.value || !synthGainNode || !audioCtx) return
+
+      // Handle non-repeating track ending
+      if (currentTime.value >= duration.value) {
+        if (isRepeatEnabled.value) {
+          currentTime.value = 0
+          step = 0
+        } else {
+          pauseTrack()
+          currentTime.value = 0
+          return
+        }
+      }
 
       const now = audioCtx.currentTime
       const bassNote = bassRiff[step % bassRiff.length] ?? baseFreq
@@ -216,7 +284,7 @@ export function useJukeboxAudio() {
       snareSource.start(now)
 
       step++
-      currentTime.value = (currentTime.value + tempoMs / 1000) % duration.value
+      currentTime.value = currentTime.value + tempoMs / 1000
     }
 
     playStep()
@@ -231,6 +299,7 @@ export function useJukeboxAudio() {
       htmlAudio = null
     }
 
+    // Play tactile needle drop & continuous vinyl rasp
     playNeedleDrop()
     isAudioPlaying.value = true
 
@@ -247,21 +316,31 @@ export function useJukeboxAudio() {
       })
 
       htmlAudio.addEventListener('ended', () => {
-        isAudioPlaying.value = false
-        currentTime.value = 0
+        if (isRepeatEnabled.value && htmlAudio) {
+          htmlAudio.currentTime = 0
+          htmlAudio.play()
+        } else {
+          pauseTrack()
+          currentTime.value = 0
+        }
       })
 
-      htmlAudio.play().catch((err) => {
-        console.warn('[JukeboxAudio] HTML5 audio error, falling back to blues synth:', err)
-        startBluesSynth(song.code || 'A1')
-      })
+      // Brief lead-in delay to let the needle drop and vinyl rasp play on the lead-in groove!
+      setTimeout(() => {
+        if (isAudioPlaying.value && htmlAudio) {
+          htmlAudio.play().catch((err) => {
+            console.warn('[JukeboxAudio] HTML5 audio error, falling back to blues synth:', err)
+            startBluesSynth(song.code || 'A1')
+          })
+        }
+      }, 1000)
     } else {
-      // Start synthesised blues groove
+      // Start synthesised blues groove after lead-in crackle
       setTimeout(() => {
         if (isAudioPlaying.value) {
           startBluesSynth(song.code || 'A1')
         }
-      }, 250)
+      }, 1000)
     }
   }
 
@@ -271,15 +350,30 @@ export function useJukeboxAudio() {
     if (htmlAudio) {
       htmlAudio.pause()
     }
+    if (crackleAudio) {
+      crackleAudio.pause()
+    }
+    if (crackleFadeTimeout) {
+      clearTimeout(crackleFadeTimeout)
+      crackleFadeTimeout = null
+    }
   }
 
   const resumeTrack = (song: { id: string; code?: string; title: string; audioUrl?: string | null }) => {
     if (htmlAudio && audioSourceType.value === 'file') {
       isAudioPlaying.value = true
       htmlAudio.play()
+      if (crackleAudio) {
+        crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
+        crackleAudio.play().catch(() => {})
+      }
     } else {
       isAudioPlaying.value = true
       startBluesSynth(song.code || 'A1')
+      if (crackleAudio) {
+        crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
+        crackleAudio.play().catch(() => {})
+      }
     }
   }
 
@@ -287,6 +381,9 @@ export function useJukeboxAudio() {
     volume.value = Math.max(0, Math.min(1, newVol))
     if (htmlAudio) {
       htmlAudio.volume = isMuted.value ? 0 : volume.value
+    }
+    if (crackleAudio) {
+      crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
     }
     if (synthGainNode && audioCtx) {
       synthGainNode.gain.setValueAtTime(isMuted.value ? 0 : volume.value * 0.22, audioCtx.currentTime)
@@ -296,6 +393,10 @@ export function useJukeboxAudio() {
   const toggleMute = () => {
     isMuted.value = !isMuted.value
     setAudioVolume(volume.value)
+  }
+
+  const toggleRepeat = () => {
+    isRepeatEnabled.value = !isRepeatEnabled.value
   }
 
   const seek = (seconds: number) => {
@@ -311,6 +412,14 @@ export function useJukeboxAudio() {
       htmlAudio.pause()
       htmlAudio = null
     }
+    if (crackleAudio) {
+      crackleAudio.pause()
+      crackleAudio = null
+    }
+    if (crackleFadeTimeout) {
+      clearTimeout(crackleFadeTimeout)
+      crackleFadeTimeout = null
+    }
   })
 
   return {
@@ -319,6 +428,7 @@ export function useJukeboxAudio() {
     duration,
     volume,
     isMuted,
+    isRepeatEnabled,
     audioSourceType,
     playTrack,
     pauseTrack,
@@ -327,6 +437,7 @@ export function useJukeboxAudio() {
     playNeedleDrop,
     setAudioVolume,
     toggleMute,
+    toggleRepeat,
     seek,
   }
 }

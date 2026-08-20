@@ -97,6 +97,7 @@ export const gigs = sqliteTable('gigs', {
   }).default('upcoming'),
   notesSv: text('notes_sv'),
   notesEn: text('notes_en'),
+  setlist: text('setlist'),
   ...timestamps,
 })
 
@@ -127,6 +128,9 @@ export const songs = sqliteTable('songs', {
   embedUrl: text('embed_url').notNull(),
   audioUrl: text('audio_url'),
   duration: integer('duration'),
+  lyrics: text('lyrics'),
+  lyricsEn: text('lyrics_en'),
+  chords: text('chords'),
   sortOrder: integer('sort_order').notNull().default(0),
   ...timestamps,
 })
@@ -213,6 +217,12 @@ export const setlistItems = sqliteTable('setlist_items', {
   setName: text('set_name').notNull().default('Set 1'),
   notes: text('notes'),
   sortOrder: integer('sort_order').notNull().default(0),
+  ...timestamps,
+})
+
+export const siteSettings = sqliteTable('site_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
   ...timestamps,
 })
 

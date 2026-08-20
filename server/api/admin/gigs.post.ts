@@ -17,6 +17,8 @@ export default defineEventHandler(async (event) => {
   const gigDate = new Date(body.date)
   const now = new Date()
 
+  const setlistJson = body.setlist ? (typeof body.setlist === 'string' ? body.setlist : JSON.stringify(body.setlist)) : null
+
   if (body.id) {
     // Update
     await db
@@ -29,6 +31,7 @@ export default defineEventHandler(async (event) => {
         status: body.status || 'upcoming',
         notesSv: body.notesSv || null,
         notesEn: body.notesEn || null,
+        setlist: setlistJson,
         updatedAt: now,
       })
       .where(eq(gigs.id, body.id))
@@ -43,6 +46,7 @@ export default defineEventHandler(async (event) => {
       status: body.status || 'upcoming',
       notesSv: body.notesSv || null,
       notesEn: body.notesEn || null,
+      setlist: setlistJson,
       createdAt: now,
       updatedAt: now,
     })

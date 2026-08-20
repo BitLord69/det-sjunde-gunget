@@ -16,6 +16,7 @@ interface Gig {
   status: 'upcoming' | 'sold_out' | 'free' | 'cancelled' | 'completed' | null
   notesSv: string | null
   notesEn: string | null
+  setlist: string | null
 }
 
 const { data: gigsData } = await useFetch<{ upcoming: Gig[]; past: Gig[]; all: Gig[] }>('/api/gigs')
@@ -24,6 +25,41 @@ const currentTab = ref<'upcoming' | 'past'>('upcoming')
 
 const upcomingGigs = computed(() => gigsData.value?.upcoming || [])
 const pastGigs = computed(() => gigsData.value?.past || [])
+
+const expandedSetlists = ref<Set<string>>(new Set())
+
+const toggleGigSetlist = (gigId: string) => {
+  if (expandedSetlists.value.has(gigId)) {
+    expandedSetlists.value.delete(gigId)
+  } else {
+    expandedSetlists.value.add(gigId)
+  }
+}
+
+const parseGigSetlist = (setlistRaw: any) => {
+  if (!setlistRaw) return []
+  if (Array.isArray(setlistRaw)) return setlistRaw
+  try {
+    const parsed = JSON.parse(setlistRaw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const groupGigSetlist = (setlistRaw: any) => {
+  const tracks = parseGigSetlist(setlistRaw)
+  if (!tracks.length) return {}
+  const groups: Record<string, any[]> = {}
+  for (const track of tracks) {
+    const setName = track.setName || 'Set 1'
+    if (!groups[setName]) {
+      groups[setName] = []
+    }
+    groups[setName].push(track)
+  }
+  return groups
+}
 
 const formatGigDate = (dateVal: number | string | Date) => {
   const loc = locale.value === 'en' ? 'en-US' : 'sv-SE'
@@ -89,7 +125,7 @@ const tearTicket = (gigId: string) => {
             <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.3em] text-secondary font-bold mb-1">
               ★ Det 7:e Gunget presenterar ★
             </div>
-            <h1 class="font-heading text-3xl sm:text-5xl lg:text-6xl text-primary text-gritty uppercase tracking-wider pb-2">
+            <h1 class="font-heading text-3xl sm:text-5xl lg:text-6xl text-primary text-gritty pb-2">
               {{ t('gigs.subtitle') }}
             </h1>
             <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] text-secondary/80 mt-1">
@@ -271,6 +307,21 @@ const tearTicket = (gigId: string) => {
 
                       <!-- Action Buttons -->
                       <div class="flex items-center gap-2 flex-wrap">
+                        <button
+                          v-if="parseGigSetlist(gig.setlist).length > 0"
+                          type="button"
+                          class="btn btn-sm rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                          :class="
+                            expandedSetlists.has(gig.id)
+                              ? 'bg-secondary text-secondary-content shadow'
+                              : 'btn-outline border-primary/30 hover:bg-primary/20 text-stone-800'
+                          "
+                          @click="toggleGigSetlist(gig.id)"
+                        >
+                          <span>🎵</span>
+                          <span>{{ expandedSetlists.has(gig.id) ? 'Dölj låtlista' : `Låtlista (${parseGigSetlist(gig.setlist).length})` }}</span>
+                        </button>
+
                         <a
                           v-if="gig.ticketUrl && gig.ticketUrl !== '#'"
                           :href="gig.ticketUrl"
@@ -306,6 +357,73 @@ const tearTicket = (gigId: string) => {
                         </a>
                       </div>
                     </div>
+
+                    <!-- EXPANDABLE GIG SETLIST DRAWER -->
+                    <Transition
+                      enter-active-class="transition duration-200 ease-out"
+                      enter-from-class="opacity-0 -translate-y-2"
+                      enter-to-class="opacity-100 translate-y-0"
+                      leave-active-class="transition duration-150 ease-in"
+                      leave-from-class="opacity-100 translate-y-0"
+                      leave-to-class="opacity-0 -translate-y-2"
+                    >
+                      <div
+                        v-if="expandedSetlists.has(gig.id) && parseGigSetlist(gig.setlist).length > 0"
+                        class="mt-4 p-5 rounded-2xl bg-[#faf6ed] border-2 border-[#dfd2be] shadow-inner space-y-4 select-text"
+                      >
+                        <div class="flex items-center justify-between border-b border-[#8c765c]/30 pb-2">
+                          <div class="font-mono text-xs font-black uppercase text-[#801b1c] flex items-center gap-1.5">
+                            <span>📋</span> Planerad Låtlista för {{ gig.venue }}
+                          </div>
+                          <span class="text-[10px] font-mono text-[#735e47] font-bold">Totalt {{ parseGigSetlist(gig.setlist).length }} låtar</span>
+                        </div>
+
+                        <!-- Multi-Set Sections (Set 1, Set 2, Set 3, Extranummer) -->
+                        <div class="space-y-4">
+                          <div
+                            v-for="(setTracks, sName) in groupGigSetlist(gig.setlist)"
+                            :key="sName"
+                            class="space-y-2"
+                          >
+                            <!-- Set Section Header -->
+                            <div class="flex items-center gap-2 border-b border-[#8c765c]/25 pb-1">
+                              <span class="font-mono text-xs font-black uppercase tracking-wider text-[#801b1c]">
+                                ▶ {{ sName }}
+                              </span>
+                              <span class="text-[10px] font-mono text-[#735e47]">({{ setTracks.length }} låtar)</span>
+                            </div>
+
+                            <div class="grid sm:grid-cols-2 gap-2 text-xs font-mono">
+                              <div
+                                v-for="(track, tIdx) in setTracks"
+                                :key="tIdx"
+                                class="flex items-center justify-between p-2 rounded-lg bg-[#f3ebd9]/75 hover:bg-[#ede0c8] transition-colors"
+                              >
+                                <div class="flex items-center gap-2 truncate">
+                                  <span class="text-[#8c765c] font-bold text-[10px] w-4 text-right">{{ tIdx + 1 }}.</span>
+                                  <span class="font-bold text-[#1c150e] truncate">{{ track.title }}</span>
+                                  <span v-if="track.artist" class="text-[10px] text-[#735e47] truncate">({{ track.artist }})</span>
+                                </div>
+
+                                <div class="flex items-center gap-1 flex-shrink-0">
+                                  <span v-if="track.notes" class="text-[10px] italic text-[#70563e] hidden md:inline truncate max-w-[110px]" :title="track.notes">
+                                    ✎ {{ track.notes }}
+                                  </span>
+                                  <NuxtLink
+                                    v-if="track.isOriginal"
+                                    :to="localePath('/lyrics')"
+                                    class="badge badge-xs bg-[#ebd1be] text-[#801b1c] border-none font-bold uppercase hover:bg-primary hover:text-neutral transition-colors"
+                                    title="Läs låttext & ackord"
+                                  >
+                                    📜 Text
+                                  </NuxtLink>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Transition>
                   </div>
                 </div>
               </div>
@@ -324,31 +442,83 @@ const tearTicket = (gigId: string) => {
           <!-- ======================= -->
           <!-- PAST GIGS ARCHIVE -->
           <!-- ======================= -->
-          <div v-else class="space-y-3">
-            <div v-if="pastGigs.length > 0">
+          <div v-else class="space-y-4">
+            <div v-if="pastGigs.length > 0" class="space-y-3">
               <div
                 v-for="gig in pastGigs"
                 :key="gig.id"
-                class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl border border-base-content/10 bg-base-200/50 hover:bg-base-200/80 transition-colors"
+                class="rounded-xl border border-base-content/10 bg-base-200/50 hover:bg-base-200/80 transition-colors p-4 space-y-3"
               >
-                <!-- Faded date stub -->
-                <div class="bg-base-300 text-base-content/70 text-center px-4 py-2 rounded-lg font-mono text-xs font-bold min-w-[90px] border border-base-content/10">
-                  <div class="text-lg font-heading font-black">{{ formatGigDate(gig.date).day }}</div>
-                  <div class="text-[10px] tracking-wider">{{ formatGigDate(gig.date).month }} {{ formatGigDate(gig.date).year }}</div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <!-- Faded date stub -->
+                  <div class="bg-base-300 text-base-content/70 text-center px-4 py-2 rounded-lg font-mono text-xs font-bold min-w-[90px] border border-base-content/10">
+                    <div class="text-lg font-heading font-black">{{ formatGigDate(gig.date).day }}</div>
+                    <div class="text-[10px] tracking-wider">{{ formatGigDate(gig.date).month }} {{ formatGigDate(gig.date).year }}</div>
+                  </div>
+
+                  <div class="flex-grow">
+                    <h3 class="font-heading text-lg text-primary font-bold">{{ gig.venue }}</h3>
+                    <span class="text-xs text-base-content/60">{{ gig.city }}</span>
+                  </div>
+
+                  <div class="text-xs text-base-content/60 italic sm:text-right max-w-xs">
+                    "{{ locale === 'en' && gig.notesEn ? gig.notesEn : gig.notesSv }}"
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <button
+                      v-if="parseGigSetlist(gig.setlist).length > 0"
+                      type="button"
+                      class="btn btn-xs btn-outline btn-secondary rounded-full font-bold"
+                      @click="toggleGigSetlist(gig.id)"
+                    >
+                      🎵 {{ expandedSetlists.has(gig.id) ? 'Dölj setlista' : `Setlista (${parseGigSetlist(gig.setlist).length})` }}
+                    </button>
+
+                    <!-- "Played" stamp -->
+                    <div class="font-mono font-black text-[10px] uppercase text-base-content/40 border-2 border-base-content/20 px-3 py-1 rounded-full transform -rotate-6">
+                      ✓ {{ t('gigs.played') }}
+                    </div>
+                  </div>
                 </div>
 
-                <div class="flex-grow">
-                  <h3 class="font-heading text-lg text-primary font-bold">{{ gig.venue }}</h3>
-                  <span class="text-xs text-base-content/60">{{ gig.city }}</span>
-                </div>
+                <!-- Expandable Past Gig Setlist -->
+                <div
+                  v-if="expandedSetlists.has(gig.id) && parseGigSetlist(gig.setlist).length > 0"
+                  class="p-4 rounded-xl bg-base-300/60 border border-primary/20 space-y-3 select-text"
+                >
+                  <div class="text-xs font-mono font-bold text-secondary uppercase flex items-center justify-between">
+                    <span>📋 Spelad Setlista på {{ gig.venue }}</span>
+                    <span>{{ parseGigSetlist(gig.setlist).length }} låtar</span>
+                  </div>
 
-                <div class="text-xs text-base-content/60 italic sm:text-right max-w-xs">
-                  "{{ locale === 'en' && gig.notesEn ? gig.notesEn : gig.notesSv }}"
-                </div>
-
-                <!-- "Played" stamp -->
-                <div class="font-mono font-black text-[10px] uppercase text-base-content/30 border-2 border-base-content/20 px-3 py-1 rounded-full transform -rotate-6">
-                  ✓ {{ t('gigs.played') }}
+                  <div class="space-y-3">
+                    <div
+                      v-for="(setTracks, sName) in groupGigSetlist(gig.setlist)"
+                      :key="sName"
+                      class="space-y-1.5"
+                    >
+                      <div class="text-[11px] font-mono font-bold text-primary border-b border-primary/15 pb-0.5">
+                        ▶ {{ sName }} ({{ setTracks.length }} låtar)
+                      </div>
+                      <div class="grid sm:grid-cols-2 gap-2 text-xs font-mono">
+                        <div
+                          v-for="(track, tIdx) in setTracks"
+                          :key="tIdx"
+                          class="flex items-center justify-between p-1.5 rounded bg-base-100/70"
+                        >
+                          <span class="truncate">{{ tIdx + 1 }}. {{ track.title }}</span>
+                          <NuxtLink
+                            v-if="track.isOriginal"
+                            :to="localePath('/lyrics')"
+                            class="badge badge-xs badge-primary font-bold"
+                          >
+                            Text
+                          </NuxtLink>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

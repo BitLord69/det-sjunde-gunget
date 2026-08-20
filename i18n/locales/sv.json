@@ -3,6 +3,7 @@
     "home": "Hem",
     "gigs": "Gig",
     "music": "Musik",
+    "lyrics": "Låttexter",
     "band": "Bandet",
     "gallery": "Galleri",
     "fan_central": "Fan Central",
@@ -11,6 +12,7 @@
     "hints": {
       "gigs": "Kommande spelningar, turnédatum & biljetter",
       "music": "Lyssna i vår klassiska jukebox & se alla låtar",
+      "lyrics": "Låttexter, verser och ackordskisser till bandets låtar",
       "band": "Möt bandmedlemmarna & se deras utrustning",
       "gallery": "Scenbilder, replokalsfoton & ögonblick",
       "fan_central": "Bordsfläktar, publikbilder & Gunget-fans",

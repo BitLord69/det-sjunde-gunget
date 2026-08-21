@@ -78,8 +78,8 @@ const activePalette = computed(() => {
   if (props.color === 'random' || !props.color) {
     const colors: Array<keyof typeof pinPalettes> = ['red', 'gold', 'amber', 'blue', 'green']
     const hash = Math.abs((props.seed || 'pin').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0))
-    const picked = colors[hash % colors.length]
-    return pinPalettes[picked]
+    const picked = colors[hash % colors.length] ?? 'gold'
+    return pinPalettes[picked] || pinPalettes.gold
   }
   const chosen = (props.color as keyof typeof pinPalettes) || 'gold'
   return pinPalettes[chosen] || pinPalettes.gold

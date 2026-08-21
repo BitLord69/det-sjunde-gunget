@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { locale } = useI18n()
+const { getGoogleCalendarUrl, downloadIcsFile } = useCalendarExport()
 
 interface Gig {
   id: string
@@ -74,22 +75,61 @@ const formatGigDate = (dateVal: number | string | Date) => {
     </div>
 
     <!-- Actions -->
-    <div class="pt-4 border-t border-white/5 flex items-center justify-between">
-      <a
-        v-if="gig.ticketUrl && gig.ticketUrl !== '#'"
-        :href="gig.ticketUrl"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="btn btn-primary btn-sm rounded-full font-bold px-5"
-      >
-        {{ locale === 'en' ? 'Buy Tickets →' : 'Köp biljett →' }}
-      </a>
-      <span v-else-if="gig.status === 'free'" class="text-xs font-bold text-accent">
-        {{ locale === 'en' ? 'No reservation needed' : 'Ingen förbokning krävs' }}
-      </span>
-      <span v-else class="text-xs font-medium text-base-content/60">
-        {{ locale === 'en' ? 'Tickets at door' : 'Biljetter i dörren' }}
-      </span>
+    <div class="pt-4 border-t border-white/5 flex items-center justify-between flex-wrap gap-2">
+      <div class="flex items-center gap-2">
+        <a
+          v-if="gig.ticketUrl && gig.ticketUrl !== '#'"
+          :href="gig.ticketUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary btn-sm rounded-full font-bold px-4 text-xs"
+        >
+          {{ locale === 'en' ? 'Buy Tickets →' : 'Köp biljett →' }}
+        </a>
+        <span v-else-if="gig.status === 'free'" class="text-xs font-bold text-accent">
+          {{ locale === 'en' ? 'Free entry' : 'Fri entré' }}
+        </span>
+        <span v-else class="text-xs font-medium text-base-content/60">
+          {{ locale === 'en' ? 'Door' : 'I dörren' }}
+        </span>
+
+        <!-- Calendar Dropdown -->
+        <div class="dropdown dropdown-top sm:dropdown-end">
+          <button
+            tabindex="0"
+            role="button"
+            type="button"
+            class="btn btn-ghost btn-xs rounded-full font-mono text-[11px] font-bold border border-primary/20 hover:bg-primary/20 flex items-center gap-1 cursor-pointer"
+            title="Spara i kalender"
+          >
+            <span>📅</span>
+            <span class="hidden sm:inline">{{ locale === 'en' ? 'Calendar' : 'Kalender' }}</span>
+          </button>
+          <ul tabindex="0" class="dropdown-content z-[20] menu p-2 shadow-2xl bg-base-200 rounded-box w-48 text-xs border border-primary/30 mb-1 space-y-1">
+            <li>
+              <a
+                :href="getGoogleCalendarUrl(gig)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-bold flex items-center gap-2"
+              >
+                <span>📅</span>
+                <span>Google Kalender ↗</span>
+              </a>
+            </li>
+            <li>
+              <button
+                type="button"
+                class="font-bold flex items-center gap-2 cursor-pointer"
+                @click="downloadIcsFile(gig)"
+              >
+                <span>📲</span>
+                <span>iCal / Outlook (.ics)</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
 
       <a href="#contact" class="text-xs font-bold text-secondary hover:text-primary transition-colors underline decoration-secondary/30">
         {{ locale === 'en' ? 'Questions?' : 'Frågor om giget?' }}

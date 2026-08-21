@@ -1,6 +1,17 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const localePath = useLocalePath()
+
+const { isPlayingHarp, playBluesHarpLick } = useBluesHarp()
+const showHarpFeedback = ref(false)
+
+const handleLogoClick = () => {
+  playBluesHarpLick()
+  showHarpFeedback.value = true
+  setTimeout(() => {
+    showHarpFeedback.value = false
+  }, 2300)
+}
 </script>
 
 <template>
@@ -55,19 +66,45 @@ const localePath = useLocalePath()
         </div>
       </div>
 
-      <!-- Right: Vintage Badge Logo Showcase -->
+      <!-- Right: Vintage Badge Logo Showcase with Interactive Blues Harp Riff Easter Egg -->
       <div class="flex justify-center items-center relative">
-        <div class="absolute -inset-4 rounded-full bg-gradient-to-tr from-secondary/20 to-primary/20 blur-2xl opacity-60" />
-        <div class="relative group">
+        <div class="absolute -inset-4 rounded-full bg-gradient-to-tr from-secondary/20 to-primary/20 blur-2xl opacity-60 pointer-events-none" />
+        
+        <div
+          class="relative group cursor-pointer select-none transition-transform duration-300 active:scale-95"
+          :class="isPlayingHarp ? 'scale-105 animate-[pulse_0.4s_ease-in-out_infinite]' : 'hover:scale-102'"
+          title="Klicka på munspelet i logon för ett äkta bluesriff!"
+          @click="handleLogoClick"
+        >
           <div class="absolute inset-4 rounded-full bg-[#181310] -z-10 shadow-2xl dark:hidden" />
+          
           <NuxtImg
             src="/media/brand/Logotyp.webp"
-            alt="Det 7:e Gunget emblem logotyp"
-            class="w-[320px] sm:w-[420px] lg:w-[460px] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-102 group-hover:rotate-1"
+            alt="Det 7:e Gunget emblem logotyp — klicka för munspelsriff"
+            class="w-[320px] sm:w-[420px] lg:w-[460px] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:rotate-1"
+            :class="isPlayingHarp ? 'filter drop-shadow-[0_0_25px_rgba(200,121,63,0.85)]' : ''"
             priority
           />
-          <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-base-200/95 border border-primary/40 px-4 py-1.5 rounded-full text-xs font-mono text-primary shadow-lg tracking-wider whitespace-nowrap">
-            {{ t('hero.badge_tag') }}
+
+          <!-- Floating Musical Notes Animation when Harp Plays -->
+          <div v-if="showHarpFeedback" class="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible">
+            <span class="absolute text-3xl text-amber-400 animate-bounce -top-6 -left-2 drop-shadow-lg">🪗</span>
+            <span class="absolute text-2xl text-secondary animate-[ping_1.2s_cubic-bezier(0,0,0.2,1)_infinite] -top-8 right-6">🎶</span>
+            <span class="absolute text-3xl text-primary animate-[bounce_0.8s_infinite] -bottom-4 left-6">🎵</span>
+            <span class="absolute text-xl text-amber-300 animate-pulse top-1/2 -right-6">✨</span>
+          </div>
+
+          <!-- Interactive Badge & Harmonica Hint -->
+          <div
+            class="absolute bottom-2 left-1/2 -translate-x-1/2 border px-4 py-1.5 rounded-full text-xs font-mono shadow-lg tracking-wider whitespace-nowrap transition-all duration-300 flex items-center gap-1.5"
+            :class="
+              isPlayingHarp
+                ? 'bg-primary text-neutral border-amber-300 font-black ring-4 ring-primary/40 scale-110 shadow-primary/50'
+                : 'bg-base-200/95 text-primary border-primary/40 group-hover:border-primary group-hover:bg-base-300'
+            "
+          >
+            <span>{{ isPlayingHarp ? '🪗' : '🎵' }}</span>
+            <span>{{ isPlayingHarp ? '★ BLUES HARP RIFF! ★' : t('hero.badge_tag') }}</span>
           </div>
         </div>
       </div>

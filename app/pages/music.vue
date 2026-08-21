@@ -34,19 +34,31 @@ const groupedSetlist = computed(() => {
 const songFilter = ref<'all' | 'original' | 'cover'>('all')
 const playerDisplayMode = ref<'vinyl' | 'embed'>('vinyl')
 
-// Assign letter-number jukebox codes (A1, A2, A3... for originals, B1, B2... for covers)
+// Assign classic Jukebox record pair codes:
+// A1 (left), A2 (right)
+// B1 (left), B2 (right)
+// C1 (left), C2 (right)
+// D1 (left), D2 (right)...
 const songsWithCodes = computed(() => {
-  const list = songsData.value || []
-  let originalIndex = 1
-  let coverIndex = 1
+  const list = [...(songsData.value || [])]
 
-  return list.map((song: any) => {
-    if (song.isOriginal) {
-      const code = `A${originalIndex++}`
-      return { ...song, code, side: 'A' }
-    } else {
-      const code = `B${coverIndex++}`
-      return { ...song, code, side: 'B' }
+  // Sort originals first, then covers (with sortOrder)
+  const sorted = list.sort((a: any, b: any) => {
+    if (a.isOriginal !== b.isOriginal) {
+      return a.isOriginal ? -1 : 1
+    }
+    return (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+  })
+
+  return sorted.map((song: any, index: number) => {
+    const letter = String.fromCharCode(65 + Math.floor(index / 2)) // A, B, C, D, E, F...
+    const num = (index % 2) + 1 // 1 on left, 2 on right
+    const code = `${letter}${num}`
+    const side = num === 1 ? 'A' : 'B'
+    return {
+      ...song,
+      code,
+      side,
     }
   })
 })
@@ -57,6 +69,65 @@ const filteredSongs = computed(() => {
   if (songFilter.value === 'cover') return list.filter((s: any) => !s.isOriginal)
   return list
 })
+
+const exportSetlistAsTxt = () => {
+  if (import.meta.server) return
+
+  const dateStr = new Date().toLocaleDateString('sv-SE', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+
+  let output = '============================================================\r\n'
+  output += 'DET 7:E GUNGET — AKTUELL SCENSETLISTA\r\n'
+  output += `Genererad: ${dateStr}\r\n`
+  output += 'Webb: https://www.det7egunget.se\r\n'
+  output += '============================================================\r\n\r\n'
+
+  const groups = groupedSetlist.value
+  const setNames = Object.keys(groups)
+
+  if (!setNames.length) {
+    output += 'Inga låtar i setlistan just nu.\r\n'
+  } else {
+    for (const setName of setNames) {
+      const tracks = groups[setName] || []
+      output += `------------------------------------------------------------\r\n`
+      output += `[${setName.toUpperCase()}] (${tracks.length} låtar)\r\n`
+      output += `------------------------------------------------------------\r\n`
+
+      tracks.forEach((track, idx) => {
+        const num = String(idx + 1).padStart(2, '0')
+        const originalTag = track.isOriginal ? ' [Egen låt]' : (track.artist ? ` (${track.artist})` : '')
+        output += `${num}. ${track.title}${originalTag}\r\n`
+        if (track.notes) {
+          output += `    * Notering: ${track.notes}\r\n`
+        }
+      })
+      output += '\r\n'
+    }
+  }
+
+  output += '============================================================\r\n'
+  output += 'Det 7:e Gunget • Blues & rock med glimt i ögat\r\n'
+  output += '============================================================\r\n'
+
+  const blob = new Blob([output], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `det-7e-gunget-setlista-${dateStr}.txt`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const printSetlist = () => {
+  if (import.meta.server) return
+  window.print()
+}
 
 const route = useRoute()
 
@@ -478,14 +549,14 @@ const formatTime = (secs: number) => {
                   :class="
                     line.trim().startsWith('[')
                       ? 'text-amber-400 font-bold text-[10px] mt-1.5 tracking-wider uppercase bg-amber-950/30'
-                      : idx === currentLyricIndex && isAudioPlaying
+                      : Number(idx) === currentLyricIndex && isAudioPlaying
                         ? 'text-amber-200 font-bold bg-emerald-900/60 shadow-[0_0_10px_rgba(74,222,128,0.4)] translate-x-1 scale-[1.01]'
-                        : Math.abs(idx - currentLyricIndex) <= 2
+                        : Math.abs(Number(idx) - currentLyricIndex) <= 2
                           ? 'text-[#86efac] opacity-90'
                           : 'text-[#4ade80]/60'
                   "
                 >
-                  <span v-if="idx === currentLyricIndex && isAudioPlaying && !line.trim().startsWith('[')" class="text-amber-300 mr-1 animate-pulse">▶</span>
+                  <span v-if="Number(idx) === currentLyricIndex && isAudioPlaying && !line.trim().startsWith('[')" class="text-amber-300 mr-1 animate-pulse">▶</span>
                   <span>{{ line }}</span>
                 </div>
               </div>
@@ -746,7 +817,7 @@ const formatTime = (secs: number) => {
             </div>
           </div>
 
-          <!-- Authentic Retro Jukebox Title Strips Grid -->
+          <!-- Authentic Retro Jukebox Title Strips Grid (Clean single 2-column list, sorted A1..An, B1..Bn) -->
           <div class="grid sm:grid-cols-2 gap-4">
             <div
               v-for="song in filteredSongs"
@@ -778,7 +849,7 @@ const formatTime = (secs: number) => {
 
               <!-- Strip Content with Letterpress Paper Look -->
               <div class="pt-2.5 pb-1.5 px-2 flex items-center justify-between gap-3 text-neutral">
-                <!-- Stamped Code Badge (A1, B1...) -->
+                <!-- Stamped Code Badge (A1, A2, B1, B2...) -->
                 <div
                   class="w-8 h-8 rounded font-mono font-black text-sm flex items-center justify-center shadow-inner flex-shrink-0 border"
                   :class="song.isOriginal ? 'stamp-badge-a' : 'stamp-badge-b'"
@@ -833,16 +904,41 @@ const formatTime = (secs: number) => {
 
       <!-- AUTHENTIC GAFFER-TAPED STAGE SETLIST & REPERTOIRE -->
       <div class="space-y-6 max-w-4xl mx-auto">
-        <div class="text-center sm:text-left space-y-2">
-          <span class="text-xs font-bold uppercase tracking-widest text-secondary flex items-center justify-center sm:justify-start gap-2">
-            <span>📋</span> {{ t('music.repertoire_tag') }}
-          </span>
-          <h2 class="font-heading text-3xl sm:text-4xl text-primary font-bold">
-            {{ t('music.repertoire_title') }}
-          </h2>
-          <p class="text-sm text-base-content/80 max-w-2xl">
-            {{ t('music.repertoire_desc') }}
-          </p>
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div class="text-center sm:text-left space-y-2">
+            <span class="text-xs font-bold uppercase tracking-widest text-secondary flex items-center justify-center sm:justify-start gap-2">
+              <span>📋</span> {{ t('music.repertoire_tag') }}
+            </span>
+            <h2 class="font-heading text-3xl sm:text-4xl text-primary font-bold">
+              {{ t('music.repertoire_title') }}
+            </h2>
+            <p class="text-sm text-base-content/80 max-w-2xl">
+              {{ t('music.repertoire_desc') }}
+            </p>
+          </div>
+
+          <!-- Setlist Action Toolbar: Text File Export & Print -->
+          <div class="flex items-center justify-center sm:justify-end gap-2 flex-wrap no-print">
+            <button
+              type="button"
+              class="btn btn-outline btn-primary btn-sm rounded-full font-mono text-xs font-bold flex items-center gap-1.5 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+              title="Ladda ner setlistan som ren textfil för import eller redigering"
+              @click="exportSetlistAsTxt"
+            >
+              <span>📄</span>
+              <span>Spara som .txt</span>
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm rounded-full font-mono text-xs font-bold flex items-center gap-1.5 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+              title="Skriv ut eller spara som PDF för scengolvet"
+              @click="printSetlist"
+            >
+              <span>🖨️</span>
+              <span>Skriv ut</span>
+            </button>
+          </div>
         </div>
 
         <!-- Stage Floor / Monitor Surface with Gaffer-Taped Paper Sheet -->
@@ -899,7 +995,7 @@ const formatTime = (secs: number) => {
               <div
                 v-for="(tracks, setName) in groupedSetlist"
                 :key="setName"
-                class="space-y-2.5"
+                class="space-y-2.5 setlist-group"
               >
                 <!-- Set Name Header with Sharpie underline -->
                 <div class="flex items-center gap-2 border-b border-[#a8957e]/50 pb-1 pt-1">
@@ -926,7 +1022,7 @@ const formatTime = (secs: number) => {
                       <NuxtLink
                         v-if="track.isOriginal"
                         :to="localePath('/lyrics')"
-                        class="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-[#ebd1be] hover:bg-primary hover:text-neutral text-[#801b1c] border border-[#a8484a]/40 flex-shrink-0 transition-colors"
+                        class="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-[#ebd1be] hover:bg-primary hover:text-neutral text-[#801b1c] border border-[#a8484a]/40 flex-shrink-0 transition-colors no-print"
                         title="Se låttext & ackord i låttextboken"
                       >
                         📜 Egen text
@@ -1136,5 +1232,50 @@ const formatTime = (secs: number) => {
   bottom: 20px;
   left: 15px;
   transform: rotate(25deg);
+}
+
+/* High-contrast Clean Print Styles for Stage Floor Board Tape-up */
+@media print {
+  :global(header),
+  :global(footer),
+  :global(nav),
+  .no-print,
+  .ambient-bg {
+    display: none !important;
+  }
+
+  :global(body),
+  :global(html) {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .stage-floor-board {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .stage-setlist-sheet {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    padding: 1.5cm !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .gaffer-tape,
+  .coffee-stain {
+    display: none !important;
+  }
+
+  .setlist-group {
+    break-inside: avoid;
+  }
 }
 </style>

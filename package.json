@@ -21,6 +21,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.29.1",
   "dependencies": {
+    "@google/genai": "^2.18.0",
     "@libsql/client": "^0.17.4",
     "@nuxt/fonts": "^0.14.0",
     "@nuxt/image": "^2.1.0",
@@ -34,6 +35,7 @@
     "drizzle-orm": "^0.45.2",
     "nanoid": "^6.0.1",
     "nuxt": "^4.5.2",
+    "sharp": "^0.35.3",
     "vue": "^3.5.41",
     "vue-router": "^5.2.0",
     "zod": "^4.4.3"

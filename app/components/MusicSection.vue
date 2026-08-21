@@ -10,22 +10,61 @@ const { data: settingsData, refresh: refreshSettings } = await useFetch<{ newsle
   default: () => ({ newsletterEnabled: false, landingSongCount: 4 }),
 })
 
+const songFilter = ref<'all' | 'original' | 'cover'>('all')
+const randomizedSongs = ref<any[]>([])
+
+const shuffleArray = <T>(arr: T[]): T[] => {
+  const copy = [...arr]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const temp = copy[i]!
+    copy[i] = copy[j]!
+    copy[j] = temp
+  }
+  return copy
+}
+
+const recomputeRandomizedSongs = () => {
+  if (songsData.value && songsData.value.length > 0) {
+    randomizedSongs.value = shuffleArray(songsData.value)
+  }
+}
+
+watch(
+  () => songsData.value,
+  () => {
+    recomputeRandomizedSongs()
+  },
+  { immediate: true, deep: true }
+)
+
 onMounted(() => {
   refreshSettings()
-  refreshSongs()
+  refreshSongs().then(() => {
+    recomputeRandomizedSongs()
+  })
 })
-
-const songFilter = ref<'all' | 'original' | 'cover'>('all')
 
 const maxLandingSongs = computed(() => {
   return Number(settingsData.value?.landingSongCount) || 4
 })
 
 const filteredSongs = computed(() => {
-  const songs = songsData.value || []
-  let matching = songs
-  if (songFilter.value === 'original') matching = songs.filter((s) => s.isOriginal)
-  else if (songFilter.value === 'cover') matching = songs.filter((s) => !s.isOriginal)
+  const songs = randomizedSongs.value.length > 0 ? randomizedSongs.value : (songsData.value || [])
+  
+  // Strict deduplication by unique ID
+  const seenIds = new Set<string>()
+  const uniqueSongs: any[] = []
+  for (const s of songs) {
+    if (s && s.id && !seenIds.has(s.id)) {
+      seenIds.add(s.id)
+      uniqueSongs.push(s)
+    }
+  }
+
+  let matching = uniqueSongs
+  if (songFilter.value === 'original') matching = uniqueSongs.filter((s) => s.isOriginal)
+  else if (songFilter.value === 'cover') matching = uniqueSongs.filter((s) => !s.isOriginal)
   return matching.slice(0, maxLandingSongs.value)
 })
 

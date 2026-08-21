@@ -27,7 +27,8 @@ const emit = defineEmits<{
 }>()
 
 const getSongCover = (song: Song) => {
-  if (song.coverImage) return song.coverImage
+  if (song.coverImage === 'NONE') return null
+  if (song.coverImage && song.coverImage.trim()) return song.coverImage
   const slug = (song.title || '').toLowerCase()
   if (slug.includes('sjunde') || slug.includes('7:e')) return '/images/records/det-sjunde-gunget.jpg'
   if (slug.includes('sväng') || slug.includes('källaren')) return '/images/records/svang-i-kallaren.jpg'
@@ -35,7 +36,10 @@ const getSongCover = (song: Song) => {
   if (slug.includes('bad sign') || slug.includes('born')) return '/images/records/born-under-a-bad-sign.jpg'
   if (slug.includes('thrill') || slug.includes('gone')) return '/images/records/the-thrill-is-gone.jpg'
   if (slug.includes('chicago') || slug.includes('sweet')) return '/images/records/sweet-home-chicago.jpg'
-  return song.isOriginal ? '/images/records/det-sjunde-gunget.jpg' : '/images/records/hoochie-coochie-man.jpg'
+  if (slug.includes('pride') || slug.includes('joy')) return '/images/records/pride-and-joy.jpg'
+  if (slug.includes('kaffe') || slug.includes('rör')) return '/images/records/kaffe-och-ror.jpg'
+  if (slug.includes('himlen') || slug.includes('gråter')) return '/images/records/himlen-grater.jpg'
+  return null
 }
 </script>
 

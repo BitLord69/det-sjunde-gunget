@@ -104,6 +104,11 @@ Primary language is **Swedish** (the band is Swedish, name is Swedish), with **E
 ## 10. Resolved Decisions (for reference)
 
 - **Newsletter form**: standalone, not bundled into Contact. Footer placement site-wide, plus contextual blurbs on relevant pages (Music, possibly Gigs). Unsubscribe handled via Brevo's built-in link, synced back to the local subscriber record.
+- **Social Media Workflow**: Built via Social Hashtags Manager with category tagging, active toggles, post-level chip selectors and 1-click clipboard post copy.
+- **Jukebox & Title Strips Ordering**: Authentically sequenced A-side (A1..An originals) and B-side (B1..Bn covers) with 1's strictly on left and 2's on right in 2-column grid and sequential keypad.
+- **Setlist Export & Print**: 1-click plain text file (.txt) download for band setlists (both site-wide and per-gig) and high-contrast `@media print` stage print layout.
+- **Calendar Integration**: 1-click Google Calendar event generation and standard iCalendar (.ics) download on gig cards and ticket stubs.
+- **Blues Harp Easter Egg**: Interactive Chicago blues harmonica bend lick & visual animation on landing page logo click using Web Audio API synthesis.
 - **OAuth credentials**: you already have provider accounts; new OAuth apps will be registered per-provider when we reach the auth implementation step. Not a blocker.
 - **Deployment**: reusing existing Vercel auto-deploy setup from another project — no new CI/CD to configure.
 - **Testing**: no automated test suite for v1 — site has limited end-user functionality (mainly content display + two forms), so manual testing is sufficient for now. Revisit if/when the forum ships.
@@ -111,20 +116,15 @@ Primary language is **Swedish** (the band is Swedish, name is Swedish), with **E
 - **Music/video licensing**: Music page uses embedded Spotify/Bandcamp/YouTube players rather than self-hosted audio, avoiding mechanical licensing questions around cover songs. Standard (non-privacy-enhanced) YouTube embeds are used **deliberately** — chosen over `youtube-nocookie.com` specifically to retain YouTube-side view/engagement analytics on the band's videos — which necessitates a cookie consent banner site-wide (see §7). This is a considered tradeoff, not an oversight.
 - **Default theme**: matches visitor's system preference (`prefers-color-scheme`) on first visit; manual toggle overrides and persists via cookie.
 
-## 11. Future Considerations (not v1)
+## 11. Future Considerations & Ideas Backlog
 
+- **Fan Photo Submission (Fan Central)**: A fan submission form to upload concert or electric fan photos directly into an admin review/approval queue (on hold for band discussion regarding moderation workload).
+- **Stage Rider / Press Kit (EPK)**: Dedicated downloadable or viewable page for venue arrangers/promoters with channel list (4 musicians, drums, bass, guitars, harmonica mic, DI boxes) and high-res press photos (stage map not needed).
 - **Fan accounts/login**: not needed now, but auth is being set up (BetterAuth + social providers) in a way that supports adding fan-facing accounts later without a rework
 - **Forum**: a fan/community forum is a planned future feature — not built in v1, but worth a small "coming soon" teaser somewhere on the site (e.g. Fan Central or Contact) to gauge interest. No schema or architecture work needed yet; revisit once the core site ships.
 
 ## 12. Content Status
 
-- **Ready:** (fill in — e.g., some bio text, some photos)
-- **Placeholder needed:** (fill in — e.g., music files, final photos)
+- **Ready:** Bio text, photoshoot band images, setlist repertoire, lyrics & chords, Spreadshirt shop link, social links.
+- **Placeholder needed:** Production domain DNS setup.
 
-## 13. Next Steps
-
-1. Resolve remaining open decisions in §9
-2. I scaffold the Nuxt project structure page by page
-3. Build shared layout (nav, footer, DaisyUI theme) first
-4. Build each page/component against placeholder content
-5. Wire up CMS once content model is finalized

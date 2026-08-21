@@ -41,3 +41,7 @@ Thumbs.db
 
 # Vercel
 .vercel
+
+# Scratch & test exploration files
+scripts/test-*
+public/images/records/test-*

@@ -42,6 +42,14 @@ export default defineEventHandler(async (event) => {
     tasks.push(upsertSetting('landing_merch_count', merchCountVal))
   }
 
+  if (body.geminiApiKey !== undefined) {
+    tasks.push(upsertSetting('gemini_api_key', body.geminiApiKey.trim()))
+  }
+
+  if (body.customCoverPrompt !== undefined) {
+    tasks.push(upsertSetting('custom_cover_prompt', body.customCoverPrompt.trim()))
+  }
+
   if (tasks.length > 0) {
     await Promise.all(tasks)
   }

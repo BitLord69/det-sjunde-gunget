@@ -74,15 +74,61 @@ const formatGigDate = (dateVal: number | string | Date) => {
   }
 }
 
-const getGoogleCalendarUrl = (gig: any) => {
-  const d = new Date(gig.date)
-  const startTime = d.toISOString().replace(/-|:|\.\d\d\d/g, '')
-  const endDate = new Date(d.getTime() + 3 * 60 * 60 * 1000)
-  const endTime = endDate.toISOString().replace(/-|:|\.\d\d\d/g, '')
-  const title = encodeURIComponent(`Det 7:e Gunget live @ ${gig.venue}`)
-  const details = encodeURIComponent(`${gig.notesSv || gig.notesEn || ''}\nBiljetter: ${gig.ticketUrl || t('gigs.door')}`)
-  const location = encodeURIComponent(`${gig.venue}, ${gig.city}`)
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startTime}/${endTime}&details=${details}&location=${location}`
+const { getGoogleCalendarUrl, downloadIcsFile } = useCalendarExport()
+
+const exportGigSetlistAsTxt = (gig: Gig) => {
+  if (import.meta.server) return
+
+  const dateStr = new Date(gig.date).toLocaleDateString('sv-SE', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+
+  let output = '============================================================\r\n'
+  output += `DET 7:E GUNGET — SETLISTA @ ${gig.venue.toUpperCase()} (${gig.city.toUpperCase()})\r\n`
+  output += `Speldatum: ${dateStr}\r\n`
+  output += 'Webb: https://www.det7egunget.se\r\n'
+  output += '============================================================\r\n\r\n'
+
+  const groups = groupGigSetlist(gig.setlist)
+  const setNames = Object.keys(groups)
+
+  if (!setNames.length) {
+    output += 'Inga låtar i låtlistan för denna spelning.\r\n'
+  } else {
+    for (const sName of setNames) {
+      const tracks = groups[sName] || []
+      output += `------------------------------------------------------------\r\n`
+      output += `[${sName.toUpperCase()}] (${tracks.length} låtar)\r\n`
+      output += `------------------------------------------------------------\r\n`
+
+      tracks.forEach((track: any, idx: number) => {
+        const num = String(idx + 1).padStart(2, '0')
+        const originalTag = track.isOriginal ? ' [Egen låt]' : (track.artist ? ` (${track.artist})` : '')
+        output += `${num}. ${track.title}${originalTag}\r\n`
+        if (track.notes) {
+          output += `    * Notering: ${track.notes}\r\n`
+        }
+      })
+      output += '\r\n'
+    }
+  }
+
+  output += '============================================================\r\n'
+  output += 'Det 7:e Gunget • Blues & rock med glimt i ögat\r\n'
+  output += '============================================================\r\n'
+
+  const blob = new Blob([output], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  const cleanVenue = gig.venue.toLowerCase().replace(/[^a-z0-9]/g, '-')
+  link.download = `det-7e-gunget-setlista-${cleanVenue}-${dateStr}.txt`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 // Ticket stub serial number generator
@@ -335,16 +381,44 @@ const tearTicket = (gigId: string) => {
                           ✓ {{ t('gigs.free_entry') }}
                         </span>
 
-                        <a
-                          :href="getGoogleCalendarUrl(gig)"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="btn btn-ghost btn-sm rounded-full text-xs font-bold border border-primary/20 hover:bg-primary/10"
-                          :class="tornTickets.has(gig.id) ? 'text-primary' : 'text-stone-700'"
-                          @click="tearTicket(gig.id)"
-                        >
-                          📅 {{ t('gigs.save_date') }}
-                        </a>
+                        <!-- Calendar Save Dropdown -->
+                        <div class="dropdown dropdown-end">
+                          <button
+                            tabindex="0"
+                            role="button"
+                            type="button"
+                            class="btn btn-ghost btn-sm rounded-full text-xs font-bold border border-primary/20 hover:bg-primary/10 flex items-center gap-1 cursor-pointer"
+                            :class="tornTickets.has(gig.id) ? 'text-primary' : 'text-stone-700'"
+                          >
+                            <span>📅</span>
+                            <span>{{ t('gigs.save_date') }}</span>
+                            <span class="text-[9px] opacity-70">▼</span>
+                          </button>
+                          <ul tabindex="0" class="dropdown-content z-[20] menu p-2 shadow-2xl bg-base-100 rounded-box w-52 text-xs border border-primary/30 mt-1 space-y-1">
+                            <li>
+                              <a
+                                :href="getGoogleCalendarUrl(gig)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="font-bold flex items-center gap-2"
+                                @click="tearTicket(gig.id)"
+                              >
+                                <span class="text-base">📅</span>
+                                <span>Google Kalender ↗</span>
+                              </a>
+                            </li>
+                            <li>
+                              <button
+                                type="button"
+                                class="font-bold flex items-center gap-2 cursor-pointer"
+                                @click="downloadIcsFile(gig); tearTicket(gig.id)"
+                              >
+                                <span class="text-base">📲</span>
+                                <span>Apple / Outlook (.ics)</span>
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
 
                         <a
                           :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gig.venue + ' ' + gig.city)}`"
@@ -371,11 +445,23 @@ const tearTicket = (gigId: string) => {
                         v-if="expandedSetlists.has(gig.id) && parseGigSetlist(gig.setlist).length > 0"
                         class="mt-4 p-5 rounded-2xl bg-[#faf6ed] border-2 border-[#dfd2be] shadow-inner space-y-4 select-text"
                       >
-                        <div class="flex items-center justify-between border-b border-[#8c765c]/30 pb-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#8c765c]/30 pb-2 gap-2">
                           <div class="font-mono text-xs font-black uppercase text-[#801b1c] flex items-center gap-1.5">
                             <span>📋</span> Planerad Låtlista för {{ gig.venue }}
                           </div>
-                          <span class="text-[10px] font-mono text-[#735e47] font-bold">Totalt {{ parseGigSetlist(gig.setlist).length }} låtar</span>
+                          
+                          <div class="flex items-center gap-3">
+                            <span class="text-[10px] font-mono text-[#735e47] font-bold">Totalt {{ parseGigSetlist(gig.setlist).length }} låtar</span>
+                            <button
+                              type="button"
+                              class="btn btn-xs rounded-full bg-[#ede0c8] hover:bg-primary hover:text-neutral text-[#735e47] border border-[#a8957e]/40 font-mono text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                              title="Ladda ner låtlistan som ren textfil"
+                              @click="exportGigSetlistAsTxt(gig)"
+                            >
+                              <span>📄</span>
+                              <span>Spara som .txt</span>
+                            </button>
+                          </div>
                         </div>
 
                         <!-- Multi-Set Sections (Set 1, Set 2, Set 3, Extranummer) -->

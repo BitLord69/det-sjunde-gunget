@@ -15,6 +15,8 @@ export default defineEventHandler(async (event) => {
     landingSongCount: map.landing_song_count ? Math.max(2, Math.min(10, parseInt(map.landing_song_count, 10))) : 4,
     landingMerchCount: map.landing_merch_count ? Math.max(2, Math.min(8, parseInt(map.landing_merch_count, 10))) : 4,
     lastMerchSync: map.last_merch_sync ? parseInt(map.last_merch_sync, 10) : null,
+    geminiApiKey: map.gemini_api_key || process.env.GEMINI_API_KEY || '',
+    customCoverPrompt: map.custom_cover_prompt || '',
     settings: map,
   }
 })

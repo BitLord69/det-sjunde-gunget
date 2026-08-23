@@ -50,6 +50,26 @@ export default defineEventHandler(async (event) => {
     tasks.push(upsertSetting('custom_cover_prompt', body.customCoverPrompt.trim()))
   }
 
+  if (body.discordWebhookUrl !== undefined) {
+    tasks.push(upsertSetting('discord_webhook_url', body.discordWebhookUrl.trim()))
+  }
+
+  if (body.discordNotifyBookings !== undefined) {
+    tasks.push(upsertSetting('discord_notify_bookings', body.discordNotifyBookings ? 'true' : 'false'))
+  }
+
+  if (body.discordNotifyFanPhotos !== undefined) {
+    tasks.push(upsertSetting('discord_notify_fan_photos', body.discordNotifyFanPhotos ? 'true' : 'false'))
+  }
+
+  if (body.discordNotifyGuestbook !== undefined) {
+    tasks.push(upsertSetting('discord_notify_guestbook', body.discordNotifyGuestbook ? 'true' : 'false'))
+  }
+
+  if (body.notificationEmail !== undefined) {
+    tasks.push(upsertSetting('notification_email', body.notificationEmail.trim()))
+  }
+
   if (tasks.length > 0) {
     await Promise.all(tasks)
   }

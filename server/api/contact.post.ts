@@ -1,8 +1,9 @@
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { db } from '../db/client'
-import { messages } from '../db/schema'
+import { messages, siteSettings } from '../db/schema'
 import { sendTransactionalEmail } from '../utils/brevo'
+import { sendDiscordBookingAlert } from '../utils/discord'
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Namn måste vara minst 2 tecken'),
@@ -60,9 +61,49 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 2. Send notification email to the band
-  const bandEmail = process.env.BREVO_CONTACT_EMAIL || 'kontakt@det7egunget.se'
-  
+  // Fetch site settings for notifications
+  const settingsList = await db.select().from(siteSettings).catch(() => [])
+  const settingsMap: Record<string, string> = {}
+  for (const s of settingsList) {
+    settingsMap[s.key] = s.value
+  }
+
+  const rawBandEmails = settingsMap.notification_email || process.env.BREVO_CONTACT_EMAIL || 'kontakt@det7egunget.se'
+  const recipientEmails = rawBandEmails
+    .split(/[,;\s]+/)
+    .map((e) => e.trim())
+    .filter((e) => e.length > 0 && e.includes('@'))
+
+  const bandRecipients = recipientEmails.length > 0
+    ? recipientEmails.map((email) => ({ email, name: 'Det 7:e Gunget' }))
+    : [{ email: 'kontakt@det7egunget.se', name: 'Det 7:e Gunget' }]
+
+  const discordWebhookUrl = settingsMap.discord_webhook_url || process.env.DISCORD_WEBHOOK_URL || ''
+  const discordNotifyBookings = settingsMap.discord_notify_bookings !== 'false'
+
+  // 2. Dispatch Discord Webhook Alert (if configured)
+  if (discordWebhookUrl && discordNotifyBookings) {
+    try {
+      await sendDiscordBookingAlert(
+        discordWebhookUrl,
+        {
+          id,
+          name,
+          email,
+          phone,
+          eventType,
+          eventDate: date,
+          location,
+          message,
+        },
+        `https://det7egunget.se/admin/messages/${id}`,
+      )
+    } catch (discordErr) {
+      console.error('[Contact] Discord alert error:', discordErr)
+    }
+  }
+
+  // 3. Send notification email to the band
   const bandNotificationHtml = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #17120e; color: #f5eedc; border-radius: 12px; border: 1px solid #c87f3f;">
       <h2 style="color: #e2bd72; margin-top: 0; font-size: 22px;">🎸 Ny bokningsförfrågan mottagen!</h2>
@@ -84,18 +125,28 @@ export default defineEventHandler(async (event) => {
         <p style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #ffffff; margin-bottom: 0;">${escapeHtml(message)}</p>
       </div>
 
-      <p style="font-size: 12px; color: #8c8275; margin-top: 24px; border-top: 1px solid #3d2f25; padding-top: 12px;">
+      <div style="margin: 24px 0 16px; text-align: center;">
+        <a href="https://det7egunget.se/admin/messages/${id}" style="background-color: #e2bd72; color: #17120e; padding: 12px 28px; border-radius: 9999px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(226, 189, 114, 0.35);">
+          👉 Hantera förfrågan i Admin Panel
+        </a>
+      </div>
+
+      <p style="font-size: 12px; color: #8c8275; margin-top: 20px; border-top: 1px solid #3d2f25; padding-top: 12px; text-align: center;">
         Detta meddelande skickades automatiskt från webbplatsen Det 7:e Gunget (ID: ${id}).
       </p>
     </div>
   `
 
-  await sendTransactionalEmail({
-    to: [{ email: bandEmail, name: 'Det 7:e Gunget' }],
-    replyTo: { email, name },
-    subject: `🎸 Ny bokningsförfrågan från ${name} (${eventType || 'Spelning'})`,
-    htmlContent: bandNotificationHtml,
-  })
+  try {
+    await sendTransactionalEmail({
+      to: bandRecipients,
+      replyTo: { email, name },
+      subject: `🎸 Ny bokningsförfrågan från ${name} (${eventType || 'Spelning'})`,
+      htmlContent: bandNotificationHtml,
+    })
+  } catch (emailErr) {
+    console.error('[Contact] Failed to send band notification email:', emailErr)
+  }
 
   // 3. Send confirmation email to the sender
   const confirmationHtml = `

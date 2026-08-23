@@ -17,6 +17,11 @@ export default defineEventHandler(async (event) => {
     lastMerchSync: map.last_merch_sync ? parseInt(map.last_merch_sync, 10) : null,
     geminiApiKey: map.gemini_api_key || process.env.GEMINI_API_KEY || '',
     customCoverPrompt: map.custom_cover_prompt || '',
+    discordWebhookUrl: map.discord_webhook_url || '',
+    discordNotifyBookings: map.discord_notify_bookings !== 'false',
+    discordNotifyFanPhotos: map.discord_notify_fan_photos === 'true',
+    discordNotifyGuestbook: map.discord_notify_guestbook === 'true',
+    notificationEmail: map.notification_email || process.env.BREVO_CONTACT_EMAIL || 'kontakt@det7egunget.se',
     settings: map,
   }
 })

@@ -74,9 +74,10 @@ export default defineEventHandler(async (event) => {
     .map((e) => e.trim())
     .filter((e) => e.length > 0 && e.includes('@'))
 
+  const bandEmail = recipientEmails[0] || 'kontakt@det7egunget.se'
   const bandRecipients = recipientEmails.length > 0
     ? recipientEmails.map((email) => ({ email, name: 'Det 7:e Gunget' }))
-    : [{ email: 'kontakt@det7egunget.se', name: 'Det 7:e Gunget' }]
+    : [{ email: bandEmail, name: 'Det 7:e Gunget' }]
 
   const discordWebhookUrl = settingsMap.discord_webhook_url || process.env.DISCORD_WEBHOOK_URL || ''
   const discordNotifyBookings = settingsMap.discord_notify_bookings !== 'false'

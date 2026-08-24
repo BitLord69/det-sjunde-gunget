@@ -244,6 +244,24 @@ await client.execute(`
   )
 `)
 
+await client.execute(`
+  CREATE TABLE IF NOT EXISTS voice_memos (
+    id text PRIMARY KEY NOT NULL,
+    title text NOT NULL,
+    audio_url text NOT NULL,
+    duration integer DEFAULT 0 NOT NULL,
+    key text,
+    bpm integer,
+    tags text,
+    notes text,
+    recorded_by text,
+    linked_song_id text,
+    created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    FOREIGN KEY (linked_song_id) REFERENCES songs(id) ON DELETE SET NULL
+  )
+`)
+
 // Clean up existing data to prevent unique constraint conflicts
 try {
   await client.execute('DELETE FROM admin_sessions')

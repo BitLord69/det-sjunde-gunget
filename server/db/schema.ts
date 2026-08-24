@@ -263,6 +263,20 @@ export const gigSetlistItems = sqliteTable('gig_setlist_items', {
   ...timestamps,
 })
 
+export const voiceMemos = sqliteTable('voice_memos', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  audioUrl: text('audio_url').notNull(),
+  duration: integer('duration').notNull().default(0),
+  key: text('key'),
+  bpm: integer('bpm'),
+  tags: text('tags'),
+  notes: text('notes'),
+  recordedBy: text('recorded_by'),
+  linkedSongId: text('linked_song_id').references(() => songs.id, { onDelete: 'set null' }),
+  ...timestamps,
+})
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -297,6 +311,14 @@ export const gigSetlistItemsRelations = relations(gigSetlistItems, ({ one }) => 
   }),
 }))
 
+export const voiceMemosRelations = relations(voiceMemos, ({ one }) => ({
+  linkedSong: one(songs, {
+    fields: [voiceMemos.linkedSongId],
+    references: [songs.id],
+  }),
+}))
+
 export const songsRelations = relations(songs, ({ many }) => ({
   gigSetlistItems: many(gigSetlistItems),
+  voiceMemos: many(voiceMemos),
 }))

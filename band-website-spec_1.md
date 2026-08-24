@@ -58,7 +58,7 @@ All four band members need to add/edit content (gigs, photos, bio, news) **witho
 - **ORM:** Drizzle ORM defines the schema (`drizzle-orm/libsql`), handles migrations (`drizzle-kit`), and gives type-safe queries throughout the server routes
 - **API layer:** Nuxt server routes (`server/api/*`) handle CRUD operations against Turso via Drizzle
 - **Admin UI:** A simple `/admin` section (Nuxt pages, DaisyUI forms/tables) behind authentication, where any of the 4 members can log in and add/edit/delete content
-- **Social Media Cross-Posting Switch:** When creating or editing gigs, news posts, songs, or gallery items in the admin dashboard, provide a **Yes/No switch** ("Posta automatiskt till Facebook & Instagram"). When enabled, the publish action prepares and dispatches the post to the band's connected Facebook Page and Instagram accounts.
+- **Social Media Cross-Posting Switch:** When creating or editing gigs, news posts, songs, or gallery items in the admin dashboard, provide a **Yes/No switch** ("Post automatically to Facebook & Instagram"). When enabled, the publish action prepares and dispatches the post to the band's connected Facebook Page and Instagram accounts.
 - **Auth:** BetterAuth (using its Drizzle adapter against the same Turso DB) — handles login/session for the 4 band members via **email/password**. Social login providers (Google, GitHub, Facebook) configured as well for admin convenience, and to lay groundwork for potential future fan-facing accounts. Fan login/accounts are **not** in scope for v1, but the schema and auth setup should not preclude adding it later.
 - **Image storage:** Vercel Blob holds actual photo/video files, referenced by URL in the DB
 
@@ -107,6 +107,7 @@ Primary language is **Swedish** (the band is Swedish, name is Swedish), with **E
 - **Social Media Workflow**: Built via Social Hashtags Manager with category tagging, active toggles, post-level chip selectors and 1-click clipboard post copy.
 - **Jukebox & Title Strips Ordering**: Authentically sequenced A-side (A1..An originals) and B-side (B1..Bn covers) with 1's strictly on left and 2's on right in 2-column grid and sequential keypad.
 - **Setlist Export & Stage Sheet Print**: 1-click plain text file (.txt) download for band setlists (both site-wide and per-gig) and high-contrast vintage `@media print` stage print layout (A4 format with Det 7:e Gunget logo and large clear song titles ready to print and tape to stage monitors).
+- **Rehearsal Room Archive & Voice Memo Recorder ("Riff & Idea Bank")**: Mobile-first audio memo recorder in `/admin/ideas` equipped with Web Audio API live VU-meter / frequency canvas visualizer, 30s target timer, tap-tempo calculator, musical key selector, playback speed modulation (0.75x slow-down for learning riffs), song linkage, and Turso DB backing.
 - **Calendar Integration**: 1-click Google Calendar event generation and standard iCalendar (.ics) download on gig cards and ticket stubs.
 - **Blues Harp Easter Egg**: Interactive Chicago blues harmonica bend lick & visual animation on landing page logo click using Web Audio API synthesis.
 - **OAuth credentials**: you already have provider accounts; new OAuth apps will be registered per-provider when we reach the auth implementation step. Not a blocker.
@@ -118,17 +119,24 @@ Primary language is **Swedish** (the band is Swedish, name is Swedish), with **E
 
 ## 11. Future Considerations & Ideas Backlog
 
-- **Discord & Multi-Channel Instant Alerts**: Real-time Discord server/channel notifications (via configurable Webhook URL in Admin Settings) alongside Brevo emails for new booking requests, contact messages, fan photo submissions, and guestbook entries. Includes test button and per-event toggle switches.
-- **Fan Song Request Box ("Önska en låt till nästa gig")**: (Planerad för senare fas) Publik funktion på `/music` eller `/gigs` där fans kan önska/rösta på låtar ur repertoaren inför kommande spelningar. Visar "Fansen önskar!"-indikator i admin när låtlistan byggs.
-- **Replokals-arkiv & Röstmemo-inspelare ("Riff- & Idébank")**: (Framtida verktyg) Enkel mobil inspelningsfunktion i admin för att snabbt spela in och spara 30-sekunders riff-, munspels- och sångidéer direkt från replokalen kopplat till låtutkast.
+- **Fan Song Request Box ("Request a Song for the Next Gig")**: (Planned for later phase) Public feature on `/music` or `/gigs` where fans can request or vote on songs from the repertoire ahead of upcoming gigs. Displays a "Fan Favorite Request!" indicator in admin when constructing the setlist.
 - **Fan Photo Submission (Fan Central)**: A fan submission form to upload concert or electric fan photos directly into an admin review/approval queue (on hold for band discussion regarding moderation workload).
-- **Fan Community / Guestbook ("Gästbok / Blues Log")**: Lightweight guestbook where fans can leave messages or gig reviews with moderation support.
+- **Fan Community / Guestbook ("Guestbook / Blues Log")**: Lightweight guestbook where fans can leave messages or gig reviews with moderation support.
 - **Stage Rider / Press Kit (EPK)**: Dedicated downloadable or viewable page for venue arrangers/promoters with channel list (4 musicians, drums, bass, guitars, harmonica mic, DI boxes) and high-res press photos.
-- **Interactive Retro Blues Soundboard**: Retro stompbox widget (footer or Fan Central) triggering blues riffs, harmonica licks, and band catchphrases.
-- **Interactive Sweden Gig Tour Map ("Sverigeturnén")**: Visual map with pins for past/upcoming gigs, venue info, and mileage counter.
+- **Interactive Retro Blues Soundboard ("Stompbox / Groove-o-Meter")**: Interactive vintage blues stompbox pedal (styled after a road-worn *Blues Driver* / *Tube Screamer* metal box with patina, chrome footswitch, and glowing jewel LED).
+  - **Audio & Features:** Triggers short harmonica bends/licks, slide guitar riffs, classic rehearsal oneliners (*"One, two... wait, what key are we in again?"*) and crowd cheers via the Web Audio API. Interactive knobs (*"Mojo"*, *"Old-timer Factor 0–100"*, *"Reverb/Basement"*) to modulate tone and drive in real time.
+  - **Placement & Layout:** Can be implemented either as a fully visible interactive widget on *Fan Central* or in the site footer, or as an interactive discovery easter egg sliding into view when visitors click a subtle guitar jack cable or vintage amplifier graphic.
+- **Interactive Sweden Gig Tour Map ("Sweden Tour Map")**: Visual map with pins for past/upcoming gigs, venue info, and mileage counter.
 - **Spotify / Apple Music Setlist Playlist Sync**: 1-click link to listen to the band's live setlist directly on streaming platforms.
 - **Gig Countdown & Ticket Reminder**: Dynamic countdown banner for the next upcoming show.
 - **Sharable / Printable Vintage Gig Posters**: Auto-generated gig poster creator in admin for social sharing & print.
+- **Native Mobile Admin App (iOS & Android via Capacitor / PWA)**: Packaging the Nuxt 4 `/admin` suite into a native mobile app for band members.
+  - **Key Features:** Lock-screen push notifications for incoming booking inquiries (APNs & FCM), Face ID / Touch ID biometric authentication, native background audio capture for Riff & Idea Bank, haptic feedback, and home-screen app icon.
+  - **Licensing & Costs:** Capacitor is 100% free and open-source (MIT license).
+  - **Deployment Paths:**
+    - *PWA:* 100% free ($0), installable immediately via "Add to Home Screen" on iOS & Android.
+    - *Android:* Free ($0) via direct `.apk` sideloading, or $25 one-time fee on Google Play.
+    - *iOS:* Requires an Apple Developer account ($99/year) for internal distribution via TestFlight or App Store (built via Xcode on macOS).
 - **Fan accounts/login**: not needed now, but auth is being set up (BetterAuth + social providers) in a way that supports adding fan-facing accounts later without a rework
 - **Forum**: a fan/community forum is a planned future feature — not built in v1, but worth a small "coming soon" teaser somewhere on the site (e.g. Fan Central or Contact) to gauge interest.
 

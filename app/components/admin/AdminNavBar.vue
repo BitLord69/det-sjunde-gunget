@@ -16,6 +16,7 @@ const unreadMessagesCount = computed(() => {
 
 const navItems = computed(() => [
   { path: '/admin/songs', label: 'Låtar' },
+  { path: '/admin/ideas', label: 'Idébank' },
   { path: '/admin/gigs', label: 'Gig' },
   { path: '/admin/band', label: 'Bandet' },
   { path: '/admin/setlist', label: 'Setlist' },

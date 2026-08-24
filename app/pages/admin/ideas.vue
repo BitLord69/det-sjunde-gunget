@@ -517,7 +517,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- TOAST NOTIFICATION -->
     <div
       v-if="toastMessage"
@@ -525,6 +525,9 @@ onUnmounted(() => {
     >
       <span class="font-bold text-sm">{{ toastMessage }}</span>
     </div>
+
+    <!-- CMS Tab Navigation -->
+    <AdminNavBar :dirty="isRecording || recordedBlob !== null" />
 
     <!-- HEADER -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-primary/20 pb-4">

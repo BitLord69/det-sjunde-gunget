@@ -197,7 +197,7 @@ onBeforeRouteLeave((to, from, next) => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 pt-3 pb-12 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"

@@ -153,7 +153,7 @@ const parseLyricsBlocks = (text: string | null) => {
       <div class="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary/10 rounded-full blur-[140px]" />
     </div>
 
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-10">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-6 sm:space-y-8">
       <!-- HEADER: Centered with Eyebrow -->
       <PageHeader
         title="Låttexter"
@@ -349,7 +349,6 @@ const parseLyricsBlocks = (text: string | null) => {
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <style scoped>

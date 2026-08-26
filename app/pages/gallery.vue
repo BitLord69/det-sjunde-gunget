@@ -15,7 +15,7 @@ const photos = computed(() => galleryItems.value?.filter((i) => i.category !== '
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 py-12 lg:px-10 space-y-12">
+  <div class="mx-auto max-w-7xl px-6 pt-4 sm:pt-6 pb-12 lg:px-10 space-y-8 sm:space-y-10">
     <!-- Header -->
     <PageHeader :title="t('gallery.title')" :description="t('gallery.desc')" />
 

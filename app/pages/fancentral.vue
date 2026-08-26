@@ -16,7 +16,7 @@ const fanItems = computed(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 py-12 lg:px-10 space-y-16">
+  <div class="mx-auto max-w-7xl px-6 pt-4 sm:pt-6 pb-12 lg:px-10 space-y-10 sm:space-y-12">
     <!-- Header -->
     <PageHeader :title="t('fan_central.title')" :description="t('fan_central.desc')" />
 

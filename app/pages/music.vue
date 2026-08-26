@@ -311,7 +311,7 @@ const formatTime = (secs: number) => {
       <div class="absolute top-1/3 left-1/3 w-[500px] h-[500px] bg-secondary/15 rounded-full blur-[120px]" />
     </div>
 
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-12">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-6 sm:space-y-8">
       <!-- JUKEBOX PAGE HEADER -->
       <PageHeader :title="t('music.title')" :description="t('music.desc')" />
 

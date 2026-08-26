@@ -159,7 +159,7 @@ const tearTicket = (gigId: string) => {
       <div class="absolute top-40 right-1/4 w-[400px] h-[400px] bg-secondary/10 rounded-full blur-[100px]" />
     </div>
 
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-10">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-6 sm:space-y-8">
 
       <!-- GIGS PAGE HEADER -->
       <PageHeader :title="t('gigs.subtitle')" :description="t('gigs.desc')" />

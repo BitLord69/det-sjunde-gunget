@@ -12,16 +12,16 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <div class="text-center space-y-3 max-w-2xl mx-auto mb-12 sm:mb-14">
-    <div v-if="eyebrow" class="text-xs sm:text-sm font-mono uppercase tracking-[0.25em] text-secondary font-bold">
+  <div class="text-center space-y-1.5 max-w-2xl mx-auto mb-6 sm:mb-8">
+    <div v-if="eyebrow" class="text-[11px] sm:text-xs font-mono uppercase tracking-[0.25em] text-secondary font-bold">
       {{ eyebrow }}
     </div>
 
-    <h1 class="font-heading text-4xl sm:text-6xl lg:text-7xl text-primary text-gritty pt-2 pb-2 leading-tight">
+    <h1 class="font-heading text-4xl sm:text-6xl lg:text-7xl text-primary text-gritty leading-none my-1">
       {{ title }}
     </h1>
 
-    <p v-if="description" class="text-sm sm:text-base text-base-content/80 leading-relaxed max-w-xl mx-auto">
+    <p v-if="description" class="text-xs sm:text-sm text-base-content/80 leading-relaxed max-w-lg mx-auto pt-0.5">
       {{ description }}
     </p>
 

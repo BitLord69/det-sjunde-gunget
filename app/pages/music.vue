@@ -312,17 +312,26 @@ const formatTime = (secs: number) => {
     </div>
 
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-12">
-      <!-- Breadcrumb & Top Page Header -->
-      <div class="text-center space-y-3 max-w-2xl mx-auto mb-14">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-secondary/15 border border-secondary/30 text-secondary text-xs font-bold uppercase tracking-widest">
-          <span>🎶</span> {{ t('music.jukebox_model') }}
+      <!-- JUKEBOX MARQUEE LIGHT BOARD HEADER -->
+      <div class="text-center space-y-4 mb-14">
+        <!-- Marquee Light Board -->
+        <div class="inline-block relative">
+          <!-- Bulb border simulation -->
+          <div class="absolute -inset-3 rounded-2xl border-4 border-dashed border-primary/40 pointer-events-none" />
+          <div class="bg-gradient-to-r from-base-200 via-base-100 to-base-200 dark:from-[#201712] dark:via-[#3d2816] dark:to-[#201712] border-2 border-primary/60 rounded-xl px-8 sm:px-14 py-4 shadow-xl dark:shadow-[0_0_60px_rgba(200,121,63,0.3)]">
+            <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.3em] text-secondary font-bold mb-1">
+              ★ Det 7:e Gunget presenterar ★
+            </div>
+            <h1 class="font-heading text-3xl sm:text-5xl lg:text-6xl text-primary text-gritty pb-2">
+              {{ t('music.title') }}
+            </h1>
+            <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] text-secondary/80 mt-1">
+              {{ t('music.jukebox_model') }} • Blues & Rock
+            </div>
+          </div>
         </div>
 
-        <h1 class="font-heading text-4xl sm:text-6xl lg:text-7xl text-primary text-gritty pb-2">
-          {{ t('music.title') }}
-        </h1>
-
-        <p class="text-sm sm:text-base text-base-content/80 leading-relaxed">
+        <p class="text-sm sm:text-base text-base-content/80 leading-relaxed max-w-xl mx-auto">
           {{ t('music.desc') }}
         </p>
       </div>

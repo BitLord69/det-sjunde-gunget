@@ -182,11 +182,28 @@ const saveGig = async () => {
 
   editingGig.value = null
   await refreshGigs()
-  if (res.social?.message) {
-    showToast(`✓ Giget sparades! 📱 ${res.social.message}`)
+  if (res.social) {
+    if (res.social.success) {
+      showToast(`✓ Giget sparades! 📱 ${res.social.message}`)
+    } else {
+      showToast(`⚠️ Giget sparades lokalt, men social publicering misslyckades: ${res.social.message}`)
+    }
   } else {
     showToast('✓ Giget har sparats!')
   }
+}
+
+// ---------------- SOCIAL SHARE MODAL ----------------
+const shareModalOpen = ref(false)
+const selectedShareGig = ref<any | null>(null)
+
+const openShareGig = (gig: any) => {
+  selectedShareGig.value = gig
+  shareModalOpen.value = true
+}
+
+const onSocialPublished = (social: any) => {
+  showToast(`✓ ${social.message || 'Inlägget har publicerats på Facebook!'}`)
 }
 
 const deleteGig = async (id: string) => {
@@ -640,19 +657,52 @@ onBeforeRouteLeave((to, from, next) => {
                   {{ gig.status === 'free' ? 'Fri entré' : gig.status === 'sold_out' ? 'Utsålt' : 'Kommande' }}
                 </span>
               </td>
-              <td class="font-mono text-[10px] text-base-content/60 truncate max-w-xs">{{ gig.ticketUrl || 'I dörren' }}</td>
-              <td class="text-right space-x-2">
-                <button type="button" class="btn btn-xs btn-outline btn-primary rounded cursor-pointer" @click="openEditGig(gig)">
-                  Redigera
-                </button>
-                <button type="button" class="btn btn-xs btn-outline btn-error rounded cursor-pointer" @click="deleteGig(gig.id)">
-                  Ta bort
-                </button>
+              <td class="text-right whitespace-nowrap">
+                <div class="inline-flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-outline btn-secondary rounded cursor-pointer inline-flex items-center justify-center gap-1.5 font-sans"
+                    title="Dela giget till Facebook & Sociala medier"
+                    @click="openShareGig(gig)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="6" r="3" />
+                      <circle cx="18" cy="18" r="3" />
+                      <line x1="8.7" y1="10.7" x2="15.3" y2="7.3" />
+                      <line x1="8.7" y1="13.3" x2="15.3" y2="16.7" />
+                    </svg>
+                    <span>Dela</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-outline btn-primary rounded cursor-pointer inline-flex items-center justify-center font-sans"
+                    @click="openEditGig(gig)"
+                  >
+                    Redigera
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-outline btn-error rounded cursor-pointer inline-flex items-center justify-center font-sans"
+                    @click="deleteGig(gig.id)"
+                  >
+                    Ta bort
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
+
+    <!-- SOCIAL SHARE MODAL -->
+    <AdminSocialShareModal
+      v-model="shareModalOpen"
+      type="gig"
+      :item="selectedShareGig"
+      @published="onSocialPublished"
+    />
   </div>
 </template>

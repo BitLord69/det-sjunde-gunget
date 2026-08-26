@@ -160,37 +160,36 @@ const parseLyricsBlocks = (text: string | null) => {
         description="Sjung med i svänget! Här hittar du texterna till våra egna bluesrökare och tolkningar samt låthistorier direkt från replokalen."
       />
 
-        <!-- Quick Filter / Search Bar -->
-        <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <div class="relative w-full max-w-md">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Sök efter låt eller textrad..."
-              class="input input-bordered input-sm sm:input-md w-full rounded-full pl-10 pr-4 bg-base-200/90 text-xs sm:text-sm border-primary/30 focus:border-primary"
-            />
-            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-base-content/50">🔍</span>
-          </div>
+      <!-- Quick Filter / Search Bar -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6 sm:mb-8">
+        <div class="relative w-full max-w-md">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Sök efter låt eller textrad..."
+            class="input input-bordered input-sm sm:input-md w-full rounded-full pl-10 pr-4 bg-base-200/90 text-xs sm:text-sm border-primary/30 focus:border-primary"
+          />
+          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-base-content/50 pointer-events-none">🔍</span>
+        </div>
 
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              class="btn btn-sm rounded-full text-xs font-bold border transition-colors cursor-pointer"
-              :class="showChords ? 'btn-primary shadow-sm' : 'btn-outline border-primary/30 text-base-content/70'"
-              @click="showChords = !showChords"
-            >
-              🎸 {{ showChords ? 'Dölj ackord' : 'Visa ackord' }}
-            </button>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            class="btn btn-sm rounded-full text-xs font-bold border transition-colors cursor-pointer"
+            :class="showChords ? 'btn-primary shadow-sm' : 'btn-outline border-primary/30 text-base-content/70'"
+            @click="showChords = !showChords"
+          >
+            🎸 {{ showChords ? 'Dölj ackord' : 'Visa ackord' }}
+          </button>
 
-            <button
-              type="button"
-              class="btn btn-sm rounded-full text-xs font-bold border transition-colors cursor-pointer"
-              :class="showEnglish ? 'btn-secondary shadow-sm' : 'btn-outline border-secondary/30 text-base-content/70'"
-              @click="showEnglish = !showEnglish"
-            >
-              🇬🇧 {{ showEnglish ? 'Svenska texter' : 'Engelsk översättning' }}
-            </button>
-          </div>
+          <button
+            type="button"
+            class="btn btn-sm rounded-full text-xs font-bold border transition-colors cursor-pointer"
+            :class="showEnglish ? 'btn-secondary shadow-sm' : 'btn-outline border-secondary/30 text-base-content/70'"
+            @click="showEnglish = !showEnglish"
+          >
+            🇬🇧 {{ showEnglish ? 'Svenska texter' : 'Engelsk översättning' }}
+          </button>
         </div>
       </div>
 
@@ -349,6 +348,7 @@ const parseLyricsBlocks = (text: string | null) => {
         </div>
       </div>
     </div>
+  </div>
 </template>
 
 <style scoped>

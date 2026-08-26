@@ -20,6 +20,34 @@ const showToast = (msg: string) => {
 const { data: galleryItems, refresh: refreshGallery } = await useFetch<any[]>('/api/gallery', {
   default: () => [],
 })
+const { data: hashtagsData } = await useFetch<any[]>('/api/admin/hashtags', { default: () => [] })
+
+const allHashtags = computed<any[]>(() => (Array.isArray(hashtagsData.value) ? hashtagsData.value : []))
+
+const tagHasCategory = (tag: any, cat: string) => {
+  if (!tag || !tag.category) return false
+  if (tag.category === 'all') return true
+  return tag.category.split(',').map((s: string) => s.trim()).includes(cat)
+}
+
+const selectedGalTags = ref<string[]>([])
+const availableGalTags = computed(() => {
+  return allHashtags.value.filter((t) => t.isActive && (tagHasCategory(t, 'photo') || tagHasCategory(t, 'gig') || tagHasCategory(t, 'song')))
+})
+
+const toggleGalTag = (tag: string) => {
+  if (selectedGalTags.value.includes(tag)) {
+    selectedGalTags.value = selectedGalTags.value.filter((t) => t !== tag)
+  } else {
+    selectedGalTags.value.push(tag)
+  }
+}
+
+const galSocialPreview = computed(() => {
+  const caption = galForm.captionSv.trim() || 'Nytt foto från replokalen & scenen med Det 7:e Gunget!'
+  const tags = selectedGalTags.value.join(' ')
+  return `📷 NYTT I GALLERIET!\n\n"${caption}"\n\nKolla in fler bilder och ögonblick på vår webbplats! 🎸✨\n\nhttps://www.det7egunget.se/gallery\n\n${tags}`
+})
 
 const isUploading = ref(false)
 const uploadFile = async (event: Event, targetCallback: (url: string) => void) => {
@@ -61,6 +89,7 @@ const galForm = reactive({
   captionEn: '',
   altTextSv: '',
   altTextEn: '',
+  postToSocials: false,
 })
 
 const openAddGal = () => {
@@ -77,6 +106,8 @@ const openAddGal = () => {
   galForm.captionEn = ''
   galForm.altTextSv = ''
   galForm.altTextEn = ''
+  galForm.postToSocials = false
+  selectedGalTags.value = availableGalTags.value.map((t) => t.tag)
   editingGal.value = 'new'
 }
 
@@ -94,6 +125,8 @@ const openEditGal = (g: any) => {
   galForm.captionEn = g.captionEn || ''
   galForm.altTextSv = g.altTextSv || ''
   galForm.altTextEn = g.altTextEn || ''
+  galForm.postToSocials = false
+  selectedGalTags.value = availableGalTags.value.map((t) => t.tag)
   editingGal.value = g.id
 }
 
@@ -102,13 +135,37 @@ const saveGalleryItem = async () => {
     showToast('⚠️ Ange sökväg/URL till bilden!')
     return
   }
-  await $fetch('/api/admin/gallery', {
+  const res = await $fetch<{ success: boolean; social?: any }>('/api/admin/gallery', {
     method: 'POST',
-    body: galForm,
+    body: {
+      ...galForm,
+      hashtags: selectedGalTags.value,
+    },
   })
   editingGal.value = null
   await refreshGallery()
-  showToast('✓ Bilden har sparats!')
+  if (res?.social) {
+    if (res.social.success) {
+      showToast(`✓ Bilden sparades! 📱 ${res.social.message}`)
+    } else {
+      showToast(`⚠️ Bilden sparades lokalt, men social publicering misslyckades: ${res.social.message}`)
+    }
+  } else {
+    showToast('✓ Bilden har sparats!')
+  }
+}
+
+// ---------------- SOCIAL SHARE MODAL ----------------
+const shareModalOpen = ref(false)
+const selectedShareItem = ref<any | null>(null)
+
+const openShareGal = (item: any) => {
+  selectedShareItem.value = item
+  shareModalOpen.value = true
+}
+
+const onSocialPublished = (social: any) => {
+  showToast(`✓ ${social.message || 'Bilden har publicerats på Facebook!'}`)
 }
 
 const quickChangeFrameStyle = async (item: any, newStyle: string) => {
@@ -258,6 +315,50 @@ onBeforeRouteLeave((to, from, next) => {
             <label class="block text-xs font-bold text-secondary mb-1">Alt-text (engelska / accessibility)</label>
             <input v-model="galForm.altTextEn" type="text" placeholder="Det 7:e Gunget performing live on stage" class="input input-bordered w-full bg-base-200 input-sm" />
           </div>
+
+          <!-- Social Sharing & Hashtags Toggle -->
+          <div class="sm:col-span-2 p-4 bg-base-200/80 rounded-xl border border-primary/20 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="font-bold text-xs text-primary flex items-center gap-1">
+                  <span>📱</span> Publicera automatiskt på Facebook & Instagram
+                </span>
+                <p class="text-[11px] text-base-content/60">
+                  Skapar ett färdigt foto-inlägg med bild och text när du sparar bilden.
+                </p>
+              </div>
+              <input v-model="galForm.postToSocials" type="checkbox" class="toggle toggle-primary toggle-sm" />
+            </div>
+
+            <!-- Hashtag Selector for this Photo Post -->
+            <div v-if="galForm.postToSocials" class="pt-2 border-t border-primary/10 space-y-2">
+              <label class="block text-[11px] font-bold text-secondary">
+                Välj hashtags för detta inlägg:
+              </label>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="t in availableGalTags"
+                  :key="t.id"
+                  type="button"
+                  class="btn btn-xs rounded-full cursor-pointer font-mono"
+                  :class="selectedGalTags.includes(t.tag) ? 'btn-primary font-bold' : 'btn-ghost border border-base-content/20 text-base-content/70'"
+                  @click="toggleGalTag(t.tag)"
+                >
+                  {{ t.tag }}
+                </button>
+              </div>
+
+              <!-- Live Preview of Social Post -->
+              <div class="mt-3 p-3 bg-base-300/80 rounded-lg text-xs space-y-1">
+                <span class="text-[10px] font-mono uppercase text-secondary font-bold block">
+                  Förhandsgranskning av inlägg:
+                </span>
+                <p class="text-base-content/90 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">
+                  {{ galSocialPreview }}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="flex items-center gap-3 pt-3">
@@ -322,10 +423,34 @@ onBeforeRouteLeave((to, from, next) => {
 
             <!-- Action buttons (Right side) -->
             <div class="flex items-center gap-2 flex-shrink-0">
-              <button type="button" class="btn btn-xs btn-outline btn-primary rounded cursor-pointer" @click="openEditGal(item)">
+              <button
+                type="button"
+                class="btn btn-xs btn-outline btn-secondary rounded cursor-pointer inline-flex items-center justify-center gap-1.5 font-sans"
+                title="Dela bilden till Facebook & Sociala medier"
+                @click="openShareGal(item)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="6" r="3" />
+                  <circle cx="18" cy="18" r="3" />
+                  <line x1="8.7" y1="10.7" x2="15.3" y2="7.3" />
+                  <line x1="8.7" y1="13.3" x2="15.3" y2="16.7" />
+                </svg>
+                <span>Dela</span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-xs btn-outline btn-primary rounded cursor-pointer inline-flex items-center justify-center font-sans"
+                @click="openEditGal(item)"
+              >
                 Redigera
               </button>
-              <button type="button" class="btn btn-xs btn-outline btn-error rounded cursor-pointer" @click="deleteGalleryItem(item.id)">
+              <button
+                type="button"
+                class="btn btn-xs btn-outline btn-error rounded cursor-pointer inline-flex items-center justify-center font-sans"
+                @click="deleteGalleryItem(item.id)"
+              >
                 Ta bort
               </button>
             </div>
@@ -333,5 +458,13 @@ onBeforeRouteLeave((to, from, next) => {
         </div>
       </div>
     </div>
+
+    <!-- SOCIAL SHARE MODAL -->
+    <AdminSocialShareModal
+      v-model="shareModalOpen"
+      type="gallery"
+      :item="selectedShareItem"
+      @published="onSocialPublished"
+    />
   </div>
 </template>

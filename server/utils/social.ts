@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client'
 import { siteSettings } from '../db/schema'
@@ -156,37 +158,103 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
     }
   }
 
-  const fbToken = process.env.FB_PAGE_ACCESS_TOKEN
-  const fbPageId = process.env.FB_PAGE_ID
-  const igUserId = process.env.INSTAGRAM_ACCOUNT_ID
-  const webhookUrl = process.env.SOCIAL_WEBHOOK_URL
+  // Read fresh tokens (dynamically check .env on disk to avoid stale Node process.env cache)
+  let fbToken = process.env.FB_PAGE_ACCESS_TOKEN || ''
+  let fbPageId = process.env.FB_PAGE_ID || ''
+  let igUserId = process.env.INSTAGRAM_ACCOUNT_ID || ''
+  let webhookUrl = process.env.SOCIAL_WEBHOOK_URL || ''
+
+  try {
+    const envPath = path.resolve(process.cwd(), '.env')
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf-8')
+      const tokenMatch = envContent.match(/FB_PAGE_ACCESS_TOKEN=(.*)/)
+      if (tokenMatch && tokenMatch[1]) {
+        fbToken = tokenMatch[1].trim().replace(/^["']|["']$/g, '')
+      }
+      const pageIdMatch = envContent.match(/FB_PAGE_ID=(.*)/)
+      if (pageIdMatch && pageIdMatch[1]) {
+        fbPageId = pageIdMatch[1].trim().replace(/^["']|["']$/g, '')
+      }
+      const igMatch = envContent.match(/INSTAGRAM_ACCOUNT_ID=(.*)/)
+      if (igMatch && igMatch[1]) {
+        igUserId = igMatch[1].trim().replace(/^["']|["']$/g, '')
+      }
+    }
+  } catch (err: any) {
+    console.warn('[Social] Could not read fresh .env from disk:', err?.message)
+  }
 
   let hasExternalDispatch = false
 
-  // 1. Post to Facebook Page
+  // 1. Post to Facebook Page (Photo post if imageUrl is available, otherwise Feed post)
   if (fbToken && fbPageId) {
     try {
       hasExternalDispatch = true
-      const fbRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/feed`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: facebookText,
-          link: params.ticketUrl || params.embedUrl || 'https://det7egunget.se',
-          access_token: fbToken,
-        }),
-      })
+      let fbRes: Response
+
+      let localFilePath: string | null = null
+      if (params.imageUrl && !params.imageUrl.startsWith('http')) {
+        const cleanPath = params.imageUrl.replace(/^\//, '')
+        const candidate = path.resolve(process.cwd(), 'public', cleanPath)
+        if (fs.existsSync(candidate)) {
+          localFilePath = candidate
+        }
+      }
+
+      if (localFilePath) {
+        // Upload local image binary directly to Facebook
+        const fileBuffer = fs.readFileSync(localFilePath)
+        const ext = path.extname(localFilePath).toLowerCase()
+        const mimeType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg'
+        const fileBlob = new Blob([fileBuffer], { type: mimeType })
+
+        const formData = new FormData()
+        formData.append('source', fileBlob, path.basename(localFilePath))
+        formData.append('caption', facebookText)
+        formData.append('access_token', fbToken)
+
+        fbRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/photos`, {
+          method: 'POST',
+          body: formData,
+        })
+      } else if (params.imageUrl && params.imageUrl.startsWith('http')) {
+        // Upload via remote public URL
+        const formData = new FormData()
+        formData.append('url', params.imageUrl)
+        formData.append('caption', facebookText)
+        formData.append('access_token', fbToken)
+
+        fbRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/photos`, {
+          method: 'POST',
+          body: formData,
+        })
+      } else {
+        // Text / Link post to Feed
+        fbRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/feed`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: facebookText,
+            link: params.ticketUrl || params.embedUrl || 'https://det7egunget.se',
+            access_token: fbToken,
+          }),
+        })
+      }
 
       const fbData = await fbRes.json()
-      if (fbRes.ok) {
-        result.facebook = { success: true, id: fbData.id }
-        console.log('[Social] Successfully posted to Facebook Page:', fbData.id)
+      if (fbRes.ok && (fbData.id || fbData.post_id)) {
+        const publishedId = fbData.post_id || fbData.id
+        result.facebook = { success: true, id: publishedId }
+        console.log('[Social] ✓ Successfully posted to Facebook Page:', publishedId)
       } else {
-        result.facebook = { success: false, error: fbData.error?.message || 'FB API Error' }
-        console.error('[Social] Facebook post error:', fbData)
+        const errDetail = fbData.error?.message || 'FB API Error'
+        result.facebook = { success: false, error: errDetail }
+        console.error('[Social] ✕ Facebook post error:', fbData)
       }
     } catch (e: any) {
       result.facebook = { success: false, error: e.message }
+      console.error('[Social] ✕ Facebook network error:', e.message)
     }
   }
 
@@ -251,10 +319,31 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
 
   if (!hasExternalDispatch) {
     result.simulated = true
-    result.message = 'Inlägg skapat och formaterat för Facebook & Instagram (simulerat läge tills Meta API-tokens lagts till i .env).'
+    result.success = true
+    result.message = 'Simulerat läge: Inga API-tokens konfigurerade.'
     console.log('[Social Preview Generated]:\n', facebookText)
   } else {
-    result.message = 'Inlägget har publicerats på sociala medier!'
+    const fbOk = !result.facebook || result.facebook.success
+    const igOk = !result.instagram || result.instagram.success
+    const whOk = !result.webhook || result.webhook.success
+
+    if (fbOk && igOk && whOk) {
+      result.success = true
+      result.message = 'Publicerat på Facebook!'
+    } else {
+      result.success = false
+      const errors: string[] = []
+      if (result.facebook && !result.facebook.success) {
+        errors.push(`Facebook: ${result.facebook.error || 'Okänt fel'}`)
+      }
+      if (result.instagram && !result.instagram.success) {
+        errors.push(`Instagram: ${result.instagram.error || 'Okänt fel'}`)
+      }
+      if (result.webhook && !result.webhook.success) {
+        errors.push(`Webhook: ${result.webhook.error || 'Okänt fel'}`)
+      }
+      result.message = errors.join(' | ')
+    }
   }
 
   return result

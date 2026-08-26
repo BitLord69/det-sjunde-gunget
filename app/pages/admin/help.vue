@@ -194,9 +194,9 @@ const scrollTo = (id: string) => {
               </td>
             </tr>
             <tr class="hover:bg-base-100/50">
-              <td class="font-bold text-primary px-4 py-3">Texter & Ackord</td>
+              <td class="font-bold text-primary px-4 py-3">Låttexter</td>
               <td class="font-mono text-secondary px-4 py-3">/lyrics</td>
-              <td class="px-4 py-3">Sökbar låtbank med bandets texter, ackordanalyser och transponeringsfunktion.</td>
+              <td class="px-4 py-3">Sökbar låtbank med bandets texter, verser och låthistorier.</td>
               <td class="px-4 py-3 text-right">
                 <NuxtLink to="/lyrics" target="_blank" class="btn btn-ghost btn-xs text-primary underline">Öppna ↗</NuxtLink>
               </td>
@@ -296,7 +296,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Spelningar & Gigs</h3>
             <p class="text-xs text-base-content/80">
-              Lägg till nya spelningar, uppdatera tider, spelställe, ort och biljettlänkar. Spelningar flyttas automatiskt till arkivet när datumet passerat.
+              Lägg till nya spelningar, uppdatera tider, spelställe, ort och biljettlänkar. Innehåller autopost samt en direktknapp (<strong>📱 Dela</strong>) för att publicera valfritt sparat gig direkt till Facebook & Instagram med valbara hashtags och förhandsgranskning.
             </p>
           </div>
           <NuxtLink to="/admin/gigs" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -313,7 +313,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Låtar & Repertoar</h3>
             <p class="text-xs text-base-content/80">
-              Hantera hela repertoaren. Ange tonart, tempo (BPM), längd, lead-sångare, text & ackord samt länka Spotify/YouTube.
+              Hantera hela repertoaren. Ange text & ackord, AI Single Cover Studio för vintage vinylomslag, samt direktknappen (<strong>📱 Dela</strong>) för att dela valfri låt direkt till Facebook.
             </p>
           </div>
           <NuxtLink to="/admin/songs" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -364,7 +364,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Galleri & Bilder</h3>
             <p class="text-xs text-base-content/80">
-              Ladda upp livefoton, bandbilder och fläktfoton. Välj om bilden ska synas i det vanliga livegalleriet eller på Fan Central.
+              Ladda upp livefoton, bandbilder och fläktfoton. Välj ramstil och använd knappen (<strong>📱 Dela</strong>) på valfritt foto för att skicka fotot direkt till Facebook.
             </p>
           </div>
           <NuxtLink to="/admin/gallery" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">

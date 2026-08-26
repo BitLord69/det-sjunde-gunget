@@ -73,6 +73,14 @@ const toggleSongTag = (tag: string) => {
   }
 }
 
+const songSocialPreview = computed(() => {
+  const title = songForm.title.trim() || 'Ny låt'
+  const isOriginal = songForm.isOriginal
+  const artist = isOriginal ? 'Originalkomposition av Det 7:e Gunget' : `Cover av ${songForm.originalArtist || 'Klassiker'}`
+  const tags = selectedSongTags.value.join(' ')
+  return `🎵 NY LÅT I JUKEBOXEN!\n\n"${title}" (${artist})\n\nLyssna direkt i retro-jukeboxen på webbplatsen! 🎸✨\n\nhttps://www.det7egunget.se/music\n\n${tags}`
+})
+
 // ---------------- SONGS CRUD ----------------
 const editingSong = ref<any | null>(null)
 const songForm = reactive({
@@ -163,11 +171,28 @@ const saveSong = async () => {
 
   editingSong.value = null
   await refreshSongs()
-  if (res.social?.message) {
-    showToast(`✓ Låten sparades! 📱 ${res.social.message}`)
+  if (res.social) {
+    if (res.social.success) {
+      showToast(`✓ Låten sparades! 📱 ${res.social.message}`)
+    } else {
+      showToast(`⚠️ Låten sparades lokalt, men social publicering misslyckades: ${res.social.message}`)
+    }
   } else {
     showToast('✓ Låten har sparats!')
   }
+}
+
+// ---------------- SOCIAL SHARE MODAL ----------------
+const shareModalOpen = ref(false)
+const selectedShareSong = ref<any | null>(null)
+
+const openShareSong = (song: any) => {
+  selectedShareSong.value = song
+  shareModalOpen.value = true
+}
+
+const onSocialPublished = (social: any) => {
+  showToast(`✓ ${social.message || 'Låten har publicerats på Facebook!'}`)
 }
 
 const deleteSong = async (id: string) => {
@@ -527,6 +552,49 @@ onBeforeRouteLeave((to, from, next) => {
             <label class="block text-xs font-bold text-secondary mb-1">Ackord (t.ex. E7 - A7 - B7)</label>
             <input v-model="songForm.chords" type="text" placeholder="E7 - A7 - B7" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
           </div>
+          <!-- Social Sharing & Hashtags Toggle -->
+          <div class="sm:col-span-2 p-4 bg-base-200/80 rounded-xl border border-primary/20 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="font-bold text-xs text-primary flex items-center gap-1">
+                  <span>📱</span> Publicera automatiskt på Facebook & Instagram
+                </span>
+                <p class="text-[11px] text-base-content/60">
+                  Skapar ett färdigt socialt inlägg i kön när du sparar låten.
+                </p>
+              </div>
+              <input v-model="songForm.postToSocials" type="checkbox" class="toggle toggle-primary toggle-sm" />
+            </div>
+
+            <!-- Hashtag Selector for this Song Post -->
+            <div v-if="songForm.postToSocials" class="pt-2 border-t border-primary/10 space-y-2">
+              <label class="block text-[11px] font-bold text-secondary">
+                Välj hashtags för detta inlägg:
+              </label>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="t in availableSongTags"
+                  :key="t.id"
+                  type="button"
+                  class="btn btn-xs rounded-full cursor-pointer font-mono"
+                  :class="selectedSongTags.includes(t.tag) ? 'btn-primary font-bold' : 'btn-ghost border border-base-content/20 text-base-content/70'"
+                  @click="toggleSongTag(t.tag)"
+                >
+                  {{ t.tag }}
+                </button>
+              </div>
+
+              <!-- Live Preview of Social Post -->
+              <div class="mt-3 p-3 bg-base-300/80 rounded-lg text-xs space-y-1">
+                <span class="text-[10px] font-mono uppercase text-secondary font-bold block">
+                  Förhandsgranskning av inlägg:
+                </span>
+                <p class="text-base-content/90 font-mono text-[11px] whitespace-pre-wrap leading-relaxed">
+                  {{ songSocialPreview }}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="flex items-center gap-3 pt-3">
@@ -573,6 +641,14 @@ onBeforeRouteLeave((to, from, next) => {
                   @click="toggleSongSort('cover')"
                 >
                   <span>Omslag</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="songSortKey === 'cover' ? (songSortDir === 'asc' ? 'Sorterat: Har omslag först' : 'Sorterat: Saknar omslag först') : 'Klicka för att sortera efter omslag'"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-300" :class="[songSortKey === 'cover' ? (songSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100') : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content']">
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
                 </button>
               </th>
 
@@ -585,6 +661,14 @@ onBeforeRouteLeave((to, from, next) => {
                   @click="toggleSongSort('isOriginal')"
                 >
                   <span>Typ</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="songSortKey === 'isOriginal' ? (songSortDir === 'asc' ? 'Sorterat: Original först' : 'Sorterat: Covers först') : 'Klicka för att sortera efter låttyp'"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-300" :class="[songSortKey === 'isOriginal' ? (songSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100') : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content']">
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
                 </button>
               </th>
 
@@ -597,6 +681,14 @@ onBeforeRouteLeave((to, from, next) => {
                   @click="toggleSongSort('originalArtist')"
                 >
                   <span>Originalartist</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="songSortKey === 'originalArtist' ? (songSortDir === 'asc' ? 'Sorterat A till Ö' : 'Sorterat Ö till A') : 'Klicka för att sortera efter artist'"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-300" :class="[songSortKey === 'originalArtist' ? (songSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100') : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content']">
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
                 </button>
               </th>
 
@@ -609,6 +701,14 @@ onBeforeRouteLeave((to, from, next) => {
                   @click="toggleSongSort('embedProvider')"
                 >
                   <span>Plattform</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="songSortKey === 'embedProvider' ? (songSortDir === 'asc' ? 'Sorterat A till Ö' : 'Sorterat Ö till A') : 'Klicka för att sortera efter plattform'"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-300" :class="[songSortKey === 'embedProvider' ? (songSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100') : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content']">
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
                 </button>
               </th>
 
@@ -621,6 +721,14 @@ onBeforeRouteLeave((to, from, next) => {
                   @click="toggleSongSort('playCount')"
                 >
                   <span>Live-spelningar</span>
+                  <span
+                    class="tooltip tooltip-bottom inline-flex items-center"
+                    :data-tip="songSortKey === 'playCount' ? (songSortDir === 'asc' ? 'Sorterat: Minst spelade först' : 'Sorterat: Mest spelade först') : 'Klicka för att sortera efter antal live-spelningar'"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-300" :class="[songSortKey === 'playCount' ? (songSortDir === 'asc' ? 'rotate-0 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100' : 'rotate-180 text-primary drop-shadow-[0_0_5px_rgba(226,189,114,0.8)] opacity-100') : 'opacity-30 group-hover:opacity-80 rotate-0 text-base-content']">
+                      <path d="M12 2C6.5 2 3 5.5 3 10C3 16 10 21.5 12 22.5C14 21.5 21 16 21 10C21 5.5 17.5 2 12 2Z" fill="currentColor" />
+                    </svg>
+                  </span>
                 </button>
               </th>
 
@@ -646,32 +754,21 @@ onBeforeRouteLeave((to, from, next) => {
                   :title="hasSongCover(song) ? 'Klicka för att förhandsgranska skivomslaget' : 'Saknar omslag - Klicka för att skapa'"
                   @click="openCoverPreview(song)"
                 >
-                  <span
-                    v-if="hasSongCover(song)"
-                    class="badge badge-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-mono font-bold px-1.5 py-0.5 shadow-sm inline-flex items-center"
-                  >
-                    ✓
-                  </span>
-                  <span
-                    v-else
-                    class="badge badge-xs bg-rose-500/20 text-rose-400 border border-rose-500/40 font-mono font-bold px-1.5 py-0.5 shadow-sm inline-flex items-center"
-                  >
-                    ✕
-                  </span>
+                  <span v-if="hasSongCover(song)" class="text-base">💿</span>
+                  <span v-else class="text-rose-400 font-mono text-[10px] font-bold">⨉</span>
                 </button>
               </td>
               <td>
-                <span class="badge badge-xs font-bold uppercase text-[9px]" :class="song.isOriginal ? 'badge-primary' : 'badge-secondary'">
+                <span class="badge badge-xs font-mono uppercase text-[9px]" :class="song.isOriginal ? 'badge-primary' : 'badge-secondary'">
                   {{ song.isOriginal ? 'Original' : 'Cover' }}
                 </span>
               </td>
-              <td>{{ song.isOriginal ? '—' : song.originalArtist }}</td>
-              <td class="font-mono capitalize text-[10px]">{{ song.embedProvider }}</td>
+              <td class="text-base-content/70 italic">{{ song.originalArtist || '—' }}</td>
+              <td class="font-mono text-[10px] text-base-content/60">{{ song.embedProvider || '—' }}</td>
               <td class="text-center">
                 <button
                   type="button"
-                  class="btn btn-xs rounded-full font-mono text-[10px] gap-1 transition-all cursor-pointer"
-                  :class="getSongPlayCount(song) > 0 ? 'btn-primary font-bold shadow' : 'btn-ghost opacity-60 hover:opacity-100'"
+                  class="btn btn-xs btn-ghost font-mono text-[11px] gap-1 px-2 hover:bg-primary/20 hover:text-primary transition-colors cursor-pointer"
                   title="Klicka för att se vilka gig låten har spelats på"
                   @click="openSongStats(song)"
                 >
@@ -679,13 +776,39 @@ onBeforeRouteLeave((to, from, next) => {
                   <span>{{ getSongPlayCount(song) }} ggr</span>
                 </button>
               </td>
-              <td class="text-right space-x-2">
-                <button type="button" class="btn btn-xs btn-outline btn-primary rounded cursor-pointer" @click="openEditSong(song)">
-                  Redigera
-                </button>
-                <button type="button" class="btn btn-xs btn-outline btn-error rounded cursor-pointer" @click="deleteSong(song.id)">
-                  Ta bort
-                </button>
+              <td class="text-right whitespace-nowrap">
+                <div class="inline-flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-outline btn-secondary rounded cursor-pointer inline-flex items-center justify-center gap-1.5 font-sans"
+                    title="Dela låten till Facebook & Sociala medier"
+                    @click="openShareSong(song)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="6" r="3" />
+                      <circle cx="18" cy="18" r="3" />
+                      <line x1="8.7" y1="10.7" x2="15.3" y2="7.3" />
+                      <line x1="8.7" y1="13.3" x2="15.3" y2="16.7" />
+                    </svg>
+                    <span>Dela</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-outline btn-primary rounded cursor-pointer inline-flex items-center justify-center font-sans"
+                    @click="openEditSong(song)"
+                  >
+                    Redigera
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-outline btn-error rounded cursor-pointer inline-flex items-center justify-center font-sans"
+                    @click="deleteSong(song.id)"
+                  >
+                    Ta bort
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -890,5 +1013,13 @@ onBeforeRouteLeave((to, from, next) => {
         </div>
       </div>
     </div>
+
+    <!-- SOCIAL SHARE MODAL -->
+    <AdminSocialShareModal
+      v-model="shareModalOpen"
+      type="song"
+      :item="selectedShareSong"
+      @published="onSocialPublished"
+    />
   </div>
 </template>

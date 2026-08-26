@@ -333,7 +333,7 @@ const handleNewsletter = async () => {
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
               @click="isMobileMenuOpen = false"
             >
-              <span>📜 Låttexter & ackord</span>
+              <span>📜 {{ t('nav.lyrics') }}</span>
               <span class="text-xs text-base-content/40">›</span>
             </NuxtLink>
             <NuxtLink

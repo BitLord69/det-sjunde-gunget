@@ -4,8 +4,8 @@ const localePath = useLocalePath()
 const route = useRoute()
 
 useSeoMeta({
-  title: 'Låttexter & ackord | Det 7:e Gunget',
-  description: 'Sjung med i Det 7:e Gungets egna låtar! Officiella låttexter, verser, refränger och ackordskisser direkt från replokalen.',
+  title: 'Låttexter | Det 7:e Gunget',
+  description: 'Sjung med i Det 7:e Gungets egna låtar! Officiella låttexter, verser och refränger direkt från replokalen.',
 })
 
 interface Song {
@@ -156,8 +156,8 @@ const parseLyricsBlocks = (text: string | null) => {
     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-10">
       <!-- HEADER: Centered with Eyebrow -->
       <PageHeader
-        title="Låttexter & ackord"
-        description="Sjung med i svänget! Här hittar du texterna till våra egna bluesrökare och tolkningar, ackordskisser från replokalen och låthistorier."
+        title="Låttexter"
+        description="Sjung med i svänget! Här hittar du texterna till våra egna bluesrökare och tolkningar samt låthistorier direkt från replokalen."
       />
 
         <!-- Quick Filter / Search Bar -->

@@ -18,17 +18,7 @@ const fanItems = computed(() => {
 <template>
   <div class="mx-auto max-w-7xl px-6 py-12 lg:px-10 space-y-16">
     <!-- Header -->
-    <div class="space-y-4 max-w-3xl mb-14">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/15 text-secondary text-xs font-bold uppercase tracking-widest">
-        <span>💨</span> {{ t('fan_central.section_tag') }}
-      </div>
-      <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty pb-2">
-        {{ t('fan_central.title') }}
-      </h1>
-      <p class="text-base sm:text-lg text-base-content/80 leading-relaxed font-normal">
-        {{ t('fan_central.desc') }}
-      </p>
-    </div>
+    <PageHeader :title="t('fan_central.title')" :description="t('fan_central.desc')" />
 
     <!-- Category Filter -->
     <div class="flex flex-wrap gap-2 text-xs font-bold border-b border-primary/20 pb-4">

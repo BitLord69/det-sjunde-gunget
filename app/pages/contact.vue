@@ -10,14 +10,7 @@ useSeoMeta({
 <template>
   <div class="mx-auto max-w-7xl px-6 py-12 lg:px-10 space-y-16">
     <!-- Header -->
-    <div class="space-y-4 max-w-3xl mb-14">
-      <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty pb-2">
-        {{ t('contact.title') }}
-      </h1>
-      <p class="text-base sm:text-lg text-base-content/80 leading-relaxed font-normal">
-        {{ t('contact.desc') }}
-      </p>
-    </div>
+    <PageHeader :title="t('contact.title')" :description="t('contact.desc')" />
 
     <div class="grid lg:grid-cols-[1fr_1.1fr] gap-12 items-start">
       <!-- Left: Contact Details & Tech Rider -->

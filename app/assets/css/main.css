@@ -83,6 +83,9 @@ body {
 @layer utilities {
   .text-gritty {
     color: #ebd29c;
+    padding-top: 0.15em;
+    padding-bottom: 0.15em;
+    line-height: 1.2;
     
     /* Real raster PNG letterpress stipple mask - dense halftone texture */
     -webkit-mask-image: url('/media/textures/stipple-mask.png');

@@ -312,29 +312,8 @@ const formatTime = (secs: number) => {
     </div>
 
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-12">
-      <!-- JUKEBOX MARQUEE LIGHT BOARD HEADER -->
-      <div class="text-center space-y-4 mb-14">
-        <!-- Marquee Light Board -->
-        <div class="inline-block relative">
-          <!-- Bulb border simulation -->
-          <div class="absolute -inset-3 rounded-2xl border-4 border-dashed border-primary/40 pointer-events-none" />
-          <div class="bg-gradient-to-r from-base-200 via-base-100 to-base-200 dark:from-[#201712] dark:via-[#3d2816] dark:to-[#201712] border-2 border-primary/60 rounded-xl px-8 sm:px-14 py-4 shadow-xl dark:shadow-[0_0_60px_rgba(200,121,63,0.3)]">
-            <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.3em] text-secondary font-bold mb-1">
-              ★ Det 7:e Gunget presenterar ★
-            </div>
-            <h1 class="font-heading text-3xl sm:text-5xl lg:text-6xl text-primary text-gritty pb-2">
-              {{ t('music.title') }}
-            </h1>
-            <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] text-secondary/80 mt-1">
-              {{ t('music.jukebox_model') }} • Blues & Rock
-            </div>
-          </div>
-        </div>
-
-        <p class="text-sm sm:text-base text-base-content/80 leading-relaxed max-w-xl mx-auto">
-          {{ t('music.desc') }}
-        </p>
-      </div>
+      <!-- JUKEBOX PAGE HEADER -->
+      <PageHeader :title="t('music.title')" :description="t('music.desc')" />
 
       <!-- MAIN JUKEBOX MACHINE CABINET -->
       <div class="max-w-4xl mx-auto rounded-[40px] sm:rounded-[56px] p-4 sm:p-8 bg-gradient-to-b from-base-200/95 via-base-100 to-base-200/95 dark:from-[#2a1d17] dark:via-[#1a120e] dark:to-[#0d0907] border-4 border-primary/40 shadow-2xl dark:shadow-[0_0_80px_rgba(200,121,63,0.35)] relative">

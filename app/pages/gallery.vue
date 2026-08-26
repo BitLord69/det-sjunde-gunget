@@ -17,14 +17,7 @@ const photos = computed(() => galleryItems.value?.filter((i) => i.category !== '
 <template>
   <div class="mx-auto max-w-7xl px-6 py-12 lg:px-10 space-y-12">
     <!-- Header -->
-    <div class="space-y-4 max-w-3xl mb-14">
-      <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty pb-2">
-        {{ t('gallery.title') }}
-      </h1>
-      <p class="text-base sm:text-lg text-base-content/80 leading-relaxed font-normal">
-        {{ t('gallery.desc') }}
-      </p>
-    </div>
+    <PageHeader :title="t('gallery.title')" :description="t('gallery.desc')" />
 
     <!-- Gallery Grid -->
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">

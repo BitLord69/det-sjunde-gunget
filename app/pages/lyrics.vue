@@ -154,19 +154,11 @@ const parseLyricsBlocks = (text: string | null) => {
     </div>
 
     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-10">
-      <!-- HEADER: Stage Songbook Binder Banner -->
-      <div class="text-center space-y-4 max-w-3xl mx-auto">
-        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/15 border border-secondary/30 text-secondary text-xs font-bold uppercase tracking-widest">
-          <span>📜</span> Det 7:e Gungets officiella låttextbok
-        </div>
-
-        <h1 class="font-heading text-4xl sm:text-6xl text-primary text-gritty pb-2">
-          Låttexter & ackord
-        </h1>
-
-        <p class="text-sm sm:text-base text-base-content/80 leading-relaxed max-w-2xl mx-auto">
-          Sjung med i svänget! Här hittar du texterna till våra egna bluesrökare och tolkningar, ackordskisser från replokalen och låthistorier.
-        </p>
+      <!-- HEADER: Centered with Eyebrow -->
+      <PageHeader
+        title="Låttexter & ackord"
+        description="Sjung med i svänget! Här hittar du texterna till våra egna bluesrökare och tolkningar, ackordskisser från replokalen och låthistorier."
+      />
 
         <!-- Quick Filter / Search Bar -->
         <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

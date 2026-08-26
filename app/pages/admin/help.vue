@@ -178,7 +178,7 @@ const scrollTo = (id: string) => {
               </td>
             </tr>
             <tr class="hover:bg-base-100/50">
-              <td class="font-bold text-primary px-4 py-3">Musik & Jukebox</td>
+              <td class="font-bold text-primary px-4 py-3">Jukebox</td>
               <td class="font-mono text-secondary px-4 py-3">/music</td>
               <td class="px-4 py-3">Retro Jukebox med vinylsinglar. A-sida (egna låtar) och B-sida (covers). Inbäddade Spotify- och YouTube-spelare.</td>
               <td class="px-4 py-3 text-right">

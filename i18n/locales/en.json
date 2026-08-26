@@ -2,7 +2,7 @@
   "nav": {
     "home": "Home",
     "gigs": "Gigs",
-    "music": "Music",
+    "music": "Jukebox",
     "lyrics": "Lyrics",
     "band": "The band",
     "gallery": "Gallery",
@@ -86,7 +86,7 @@
   },
   "music": {
     "section_tag": "Jukebox & recordings",
-    "title": "Our music",
+    "title": "Jukebox",
     "desc": "Listen to our originals and sweaty live interpretations of classic blues-rock favorites.",
     "all": "All songs",
     "original": "Originals (Side A)",

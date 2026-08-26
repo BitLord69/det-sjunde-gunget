@@ -332,18 +332,9 @@ const formatTime = (secs: number) => {
         <!-- Outer Glowing Neon Arch Trim -->
         <div class="absolute -inset-1 rounded-[42px] sm:rounded-[58px] bg-gradient-to-r from-secondary/30 via-primary/40 to-secondary/30 blur-sm pointer-events-none -z-10" />
 
-        <!-- Chrome Top Arch & Vintage Marquee -->
-        <div class="text-center pb-6 border-b border-primary/20 relative">
-          <!-- Wurlitzer-Style Top Marquee Badge -->
-          <div class="inline-flex items-center justify-center gap-2 sm:gap-4 px-6 sm:px-10 py-2 rounded-full bg-gradient-to-r from-base-300 via-base-200 to-base-300 dark:from-[#201712] dark:via-[#4d321d] dark:to-[#201712] border-2 border-primary shadow-lg shadow-primary/20">
-            <span class="text-secondary text-sm">✦</span>
-            <span class="font-heading text-lg sm:text-2xl text-primary uppercase tracking-[0.2em] font-bold text-gritty">
-              DET 7:E GUNGET JUKEBOX
-            </span>
-            <span class="text-secondary text-sm">✦</span>
-          </div>
-
-          <div class="flex items-center justify-between mt-3 px-2 sm:px-6 text-[11px] font-mono">
+        <!-- Chrome Top Arch & Player Mode Selector -->
+        <div class="pb-4 border-b border-primary/20 relative">
+          <div class="flex items-center justify-between px-2 sm:px-6 text-[11px] font-mono">
             <span class="text-secondary uppercase tracking-widest font-bold hidden sm:inline">
               Hi-Fi Stereophonic Sound • 45 R.P.M.
             </span>

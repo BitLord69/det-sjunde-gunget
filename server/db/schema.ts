@@ -40,6 +40,20 @@ export const adminSessions = sqliteTable('admin_sessions', {
     .default(sql`(unixepoch() * 1000)`),
 })
 
+export const adminAccounts = sqliteTable('admin_accounts', {
+  id: text('id').primaryKey(),
+  adminId: text('admin_id')
+    .notNull()
+    .references(() => admins.id, { onDelete: 'cascade' }),
+  provider: text('provider').notNull(),
+  providerAccountId: text('provider_account_id').notNull(),
+  email: text('email'),
+  username: text('username'),
+  name: text('name'),
+  avatarUrl: text('avatar_url'),
+  ...timestamps,
+})
+
 export const user = sqliteTable('user', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),

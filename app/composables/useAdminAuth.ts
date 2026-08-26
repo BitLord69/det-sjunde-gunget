@@ -61,6 +61,35 @@ export const useAdminAuth = () => {
     }
   }
 
+  const updateProfile = async (profileData: {
+    name?: string
+    email?: string
+    username?: string
+    avatarUrl?: string
+  }) => {
+    isLoading.value = true
+    authError.value = null
+    try {
+      const data = await $fetch<{ success: boolean; user: AdminUser; message: string }>(
+        '/api/auth/profile',
+        {
+          method: 'PUT',
+          body: profileData,
+        }
+      )
+      if (data.user) {
+        adminUser.value = data.user
+      }
+      return { success: true, message: data.message, user: data.user }
+    } catch (err: any) {
+      const msg = err?.data?.message || 'Kunde inte uppdatera profilen.'
+      authError.value = msg
+      return { success: false, error: msg }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   const logout = async () => {
     try {
       await $fetch('/api/auth/logout', { method: 'POST' })
@@ -79,6 +108,7 @@ export const useAdminAuth = () => {
     fetchUser,
     login,
     changePassword,
+    updateProfile,
     logout,
   }
 }

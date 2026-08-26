@@ -21,6 +21,7 @@ const routeMap: Record<string, string> = {
   subscribers: '/admin/subscribers',
   hashtags: '/admin/hashtags',
   settings: '/admin/settings',
+  help: '/admin/help',
 }
 
 const targetPath = routeMap[tab] || '/admin/songs'

@@ -10,6 +10,8 @@ export default defineEventHandler(async (event) => {
     map[s.key] = s.value
   }
 
+  const isMockDefault = process.env.SOCIAL_MOCK_MODE === 'true' || process.env.SOCIAL_DRY_RUN === 'true'
+
   return {
     newsletterEnabled: map.newsletter_enabled === 'true',
     landingSongCount: map.landing_song_count ? Math.max(2, Math.min(10, parseInt(map.landing_song_count, 10))) : 4,
@@ -22,6 +24,7 @@ export default defineEventHandler(async (event) => {
     discordNotifyFanPhotos: map.discord_notify_fan_photos === 'true',
     discordNotifyGuestbook: map.discord_notify_guestbook === 'true',
     notificationEmail: map.notification_email || process.env.BREVO_CONTACT_EMAIL || 'kontakt@det7egunget.se',
+    socialMockMode: map.social_mock_mode !== undefined ? map.social_mock_mode === 'true' : isMockDefault,
     settings: map,
   }
 })

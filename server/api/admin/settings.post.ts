@@ -70,6 +70,10 @@ export default defineEventHandler(async (event) => {
     tasks.push(upsertSetting('notification_email', body.notificationEmail.trim()))
   }
 
+  if (body.socialMockMode !== undefined) {
+    tasks.push(upsertSetting('social_mock_mode', body.socialMockMode ? 'true' : 'false'))
+  }
+
   if (tasks.length > 0) {
     await Promise.all(tasks)
   }

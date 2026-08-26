@@ -1,5 +1,6 @@
 <script setup lang="ts">
-const { adminUser, logout, changePassword, isLoading } = useAdminAuth()
+const { adminUser, logout } = useAdminAuth()
+const route = useRoute()
 
 // Dedicated cookie-based theme persistence for Admin
 const adminTheme = useCookie<'dark' | 'light'>('admin_theme', {
@@ -26,38 +27,11 @@ const toggleTheme = () => {
   applyTheme(next)
 }
 
+const isProfilePage = computed(() => route.path === '/admin/profile')
+
 onMounted(() => {
   applyTheme(adminTheme.value || 'dark')
 })
-
-const isPasswordModalOpen = ref(false)
-const oldPassword = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
-const passwordMsg = ref<{ type: 'success' | 'error'; text: string } | null>(null)
-
-const handlePasswordChange = async () => {
-  passwordMsg.value = null
-
-  if (newPassword.value !== confirmPassword.value) {
-    passwordMsg.value = { type: 'error', text: 'De nya lösenorden matchar inte varandra.' }
-    return
-  }
-
-  const result = await changePassword(oldPassword.value, newPassword.value)
-  if (result.success) {
-    passwordMsg.value = { type: 'success', text: result.message || 'Lösenordet har ändrats!' }
-    oldPassword.value = ''
-    newPassword.value = ''
-    confirmPassword.value = ''
-    setTimeout(() => {
-      isPasswordModalOpen.value = false
-      passwordMsg.value = null
-    }, 1500)
-  } else {
-    passwordMsg.value = { type: 'error', text: result.error || 'Kunde inte ändra lösenord.' }
-  }
-}
 </script>
 
 <template>
@@ -86,27 +60,34 @@ const handlePasswordChange = async () => {
         </div>
 
         <!-- Right Side Actions & Profile -->
-        <div class="flex items-center gap-3">
-          <!-- Active Logged In Admin Profile -->
-          <div v-if="adminUser" class="flex items-center gap-2 bg-base-300/80 px-3 py-1.5 rounded-full border border-primary/20 text-xs">
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Active Logged In Admin Profile Link (Navigates to /admin/profile) -->
+          <NuxtLink
+            v-if="adminUser"
+            to="/admin/profile"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs transition-all cursor-pointer group shadow-sm"
+            :class="isProfilePage
+              ? 'bg-primary text-primary-content border-primary font-bold shadow-md'
+              : 'bg-base-300/80 hover:bg-base-300 border-primary/30 hover:border-primary text-base-content'"
+            title="Gå till Min profil & kontoinställningar"
+          >
             <div class="avatar placeholder">
-              <div class="w-6 h-6 rounded-full bg-primary text-primary-content text-[10px] font-bold overflow-hidden">
+              <div
+                class="w-6 h-6 rounded-full text-[10px] font-bold overflow-hidden shadow-sm flex items-center justify-center"
+                :class="isProfilePage ? 'bg-neutral text-primary' : 'bg-primary text-primary-content'"
+              >
                 <NuxtImg v-if="adminUser.avatarUrl" :src="adminUser.avatarUrl" :alt="adminUser.name" class="w-full h-full object-cover" />
                 <span v-else>{{ adminUser.name.charAt(0) }}</span>
               </div>
             </div>
-            <span class="font-bold text-primary">{{ adminUser.name }}</span>
-          </div>
-
-          <!-- Change Password Button -->
-          <button
-            type="button"
-            class="btn btn-ghost btn-xs sm:btn-sm rounded-full text-xs font-bold text-base-content/80 hover:text-primary"
-            title="Byt lösenord"
-            @click="isPasswordModalOpen = true"
-          >
-            🔑 <span class="hidden sm:inline">Byt lösenord</span>
-          </button>
+            <span class="font-bold" :class="isProfilePage ? 'text-primary-content' : 'text-primary group-hover:underline'">
+              {{ adminUser.name }}
+            </span>
+            <span class="text-[10px] hidden md:inline" :class="isProfilePage ? 'opacity-90' : 'text-base-content/60'">
+              ({{ adminUser.email }})
+            </span>
+            <span class="text-[10px]" :class="isProfilePage ? 'text-primary-content' : 'text-primary/70'">⚙️</span>
+          </NuxtLink>
 
           <!-- Light / Dark Mode Toggle with Dedicated Cookie -->
           <ClientOnly>
@@ -116,11 +97,11 @@ const handlePasswordChange = async () => {
               :class="adminTheme === 'dark'
                 ? 'bg-base-200 text-yellow-300 border-primary/30 hover:border-primary hover:bg-base-300'
                 : 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200 shadow-sm'"
-              :title="adminTheme === 'dark' ? 'Växla till ljust läge (Sparas i cookie: admin_theme)' : 'Växla till mörkt läge (Sparas i cookie: admin_theme)'"
+              :title="adminTheme === 'dark' ? 'Växla till ljust läge' : 'Växla till mörkt läge'"
               @click="toggleTheme"
             >
               <span class="text-base">{{ adminTheme === 'dark' ? '🌙' : '☀️' }}</span>
-              <span class="text-xs font-mono hidden md:inline">{{ adminTheme === 'dark' ? 'Mörkt läge' : 'Ljust läge' }}</span>
+              <span class="text-xs font-mono hidden md:inline">{{ adminTheme === 'dark' ? 'Mörkt' : 'Ljust' }}</span>
             </button>
           </ClientOnly>
 
@@ -130,7 +111,7 @@ const handlePasswordChange = async () => {
             target="_blank"
             class="btn btn-outline btn-primary btn-xs sm:btn-sm rounded-full font-bold text-xs"
           >
-            Till sajten ↗
+            Sajten ↗
           </NuxtLink>
 
           <!-- Logout Button -->
@@ -149,86 +130,5 @@ const handlePasswordChange = async () => {
     <main class="flex-grow">
       <slot />
     </main>
-
-    <!-- Change Password Modal -->
-    <div
-      v-if="isPasswordModalOpen"
-      class="fixed inset-0 z-50 bg-neutral/80 backdrop-blur-sm flex items-center justify-center p-4"
-      @click="isPasswordModalOpen = false"
-    >
-      <div
-        class="bg-base-200 p-6 sm:p-8 rounded-2xl border border-primary/30 max-w-md w-full shadow-2xl space-y-4"
-        @click.stop
-      >
-        <div class="flex items-center justify-between border-b border-primary/20 pb-3">
-          <h3 class="font-heading text-xl text-primary font-bold">Byt lösenord</h3>
-          <button
-            type="button"
-            class="btn btn-sm btn-circle btn-ghost text-xs"
-            @click="isPasswordModalOpen = false"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div v-if="passwordMsg" class="p-3 rounded-xl text-xs font-bold" :class="passwordMsg.type === 'success' ? 'bg-success/20 text-success' : 'bg-error/20 text-error'">
-          {{ passwordMsg.text }}
-        </div>
-
-        <form class="space-y-3" @submit.prevent="handlePasswordChange">
-          <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Nuvarande lösenord</label>
-            <input
-              v-model="oldPassword"
-              type="password"
-              required
-              class="input input-bordered w-full bg-base-100 input-sm text-sm"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Nytt lösenord (minst 6 tecken)</label>
-            <input
-              v-model="newPassword"
-              type="password"
-              required
-              minlength="6"
-              class="input input-bordered w-full bg-base-100 input-sm text-sm"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Bekräfta nytt lösenord</label>
-            <input
-              v-model="confirmPassword"
-              type="password"
-              required
-              minlength="6"
-              class="input input-bordered w-full bg-base-100 input-sm text-sm"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div class="flex items-center gap-3 pt-3">
-            <button
-              type="submit"
-              class="btn btn-primary btn-sm rounded-full font-bold flex-1"
-              :disabled="isLoading"
-            >
-              {{ isLoading ? 'Sparar...' : 'Spara nytt lösenord' }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-ghost btn-sm rounded-full"
-              @click="isPasswordModalOpen = false"
-            >
-              Avbryt
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
   </div>
 </template>

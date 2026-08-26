@@ -31,6 +31,7 @@ const navItems = computed(() => [
   { path: '/admin/subscribers', label: 'Nyhetsbrev' },
   { path: '/admin/merch', label: 'Merch' },
   { path: '/admin/settings', label: 'Inställningar' },
+  { path: '/admin/help', label: 'Hjälp' },
 ])
 
 const isCurrent = (path: string) => {

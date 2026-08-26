@@ -28,6 +28,7 @@ const { data: adminSettings, refresh: refreshSettings } = await useFetch<{
   discordNotifyBookings?: boolean
   discordNotifyFanPhotos?: boolean
   discordNotifyGuestbook?: boolean
+  socialMockMode?: boolean
   notificationEmail?: string
   settings?: Record<string, string>
 }>('/api/admin/settings')
@@ -43,6 +44,7 @@ const settingsForm = reactive({
   discordNotifyFanPhotos: false,
   discordNotifyGuestbook: false,
   notificationEmail: 'kontakt@det7egunget.se',
+  socialMockMode: false,
 })
 
 watch(
@@ -59,6 +61,7 @@ watch(
       settingsForm.discordNotifyFanPhotos = newVal.discordNotifyFanPhotos ?? false
       settingsForm.discordNotifyGuestbook = newVal.discordNotifyGuestbook ?? false
       settingsForm.notificationEmail = newVal.notificationEmail || 'kontakt@det7egunget.se'
+      settingsForm.socialMockMode = newVal.socialMockMode ?? false
     }
   },
   { immediate: true },
@@ -77,7 +80,8 @@ const isSettingsDirty = computed(() => {
     settingsForm.discordNotifyBookings !== (orig.discordNotifyBookings ?? true) ||
     settingsForm.discordNotifyFanPhotos !== (orig.discordNotifyFanPhotos ?? false) ||
     settingsForm.discordNotifyGuestbook !== (orig.discordNotifyGuestbook ?? false) ||
-    settingsForm.notificationEmail !== (orig.notificationEmail || 'kontakt@det7egunget.se')
+    settingsForm.notificationEmail !== (orig.notificationEmail || 'kontakt@det7egunget.se') ||
+    settingsForm.socialMockMode !== (orig.socialMockMode ?? false)
   )
 })
 
@@ -190,7 +194,7 @@ const saveSettings = async () => {
             </span>
           </div>
           <p class="text-xs text-base-content/70 mt-1">
-            Ställ in Discord-aviseringar, kontakt-e-post, startsidans innehåll och AI-omslagstudio.
+            Ställ in Discord-aviseringar, testläge för sociala medier, e-postmottagare, startsidans innehåll och AI-studio.
           </p>
         </div>
         <button
@@ -205,118 +209,158 @@ const saveSettings = async () => {
         </button>
       </div>
 
-      <div class="grid lg:grid-cols-2 gap-6">
-        <!-- CARD 1: DISCORD NOTIFICATIONS (HERO CARD) -->
-        <div class="stage-card p-6 sm:p-7 rounded-3xl border-2 border-primary/40 shadow-xl space-y-5 relative overflow-hidden bg-base-100/95">
-          <div class="flex items-center justify-between border-b border-primary/20 pb-3">
-            <div class="flex items-center gap-2.5">
-              <span class="text-2xl">🤖</span>
-              <div>
-                <h3 class="font-heading text-lg text-primary font-bold flex items-center gap-2">
-                  Discord-aviseringar
-                  <span class="badge badge-accent badge-xs font-mono font-bold text-[9px] uppercase">Nyhet</span>
-                </h3>
-                <p class="text-xs text-base-content/70">Få blixtsnabba notiser i bandets Discord-kanal</p>
+      <div class="grid lg:grid-cols-2 gap-6 items-start">
+        <!-- LEFT COLUMN: DISCORD & SOCIAL MEDIA MOCK MODE -->
+        <div class="space-y-6">
+          <!-- CARD 1: DISCORD NOTIFICATIONS -->
+          <div class="stage-card p-6 rounded-3xl border border-primary/30 shadow-xl space-y-4 bg-base-100/95">
+            <div class="flex items-center justify-between border-b border-primary/20 pb-3">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">🤖</span>
+                <div>
+                  <h3 class="font-heading text-base text-primary font-bold flex items-center gap-2">
+                    Discord-aviseringar
+                    <span class="badge badge-accent badge-xs font-mono font-bold text-[9px] uppercase">Nyhet</span>
+                  </h3>
+                  <p class="text-[11px] text-base-content/70">Få blixtsnabba notiser i bandets Discord-kanal</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Webhook URL Input -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-secondary">
-              Discord Webhook URL
-            </label>
-            <div class="flex items-center gap-2">
-              <input
-                v-model="settingsForm.discordWebhookUrl"
-                type="url"
-                placeholder="https://discord.com/api/webhooks/..."
-                class="input input-bordered input-sm flex-grow bg-base-200 font-mono text-xs"
-              />
-              <button
-                type="button"
-                class="btn btn-outline btn-accent btn-sm rounded-lg font-bold flex items-center gap-1 cursor-pointer flex-shrink-0"
-                :disabled="isTestingDiscord || !settingsForm.discordWebhookUrl.trim()"
-                @click="testDiscordWebhook"
+            <!-- Webhook URL Input -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-secondary">
+                Discord Webhook URL
+              </label>
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="settingsForm.discordWebhookUrl"
+                  type="url"
+                  placeholder="https://discord.com/api/webhooks/..."
+                  class="input input-bordered input-sm flex-grow bg-base-200 font-mono text-xs"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline btn-accent btn-sm rounded-lg font-bold flex items-center gap-1 cursor-pointer flex-shrink-0"
+                  :disabled="isTestingDiscord || !settingsForm.discordWebhookUrl.trim()"
+                  @click="testDiscordWebhook"
+                >
+                  <span v-if="isTestingDiscord" class="loading loading-spinner loading-xs"></span>
+                  <span>🔔 Skicka test</span>
+                </button>
+              </div>
+              <p class="text-[10px] text-base-content/60 leading-normal">
+                Skapa en webhook i Discord under <em>Kanalinställningar → Integrationer → Webhooks</em>.
+              </p>
+              <div
+                v-if="discordTestStatus"
+                class="p-2.5 rounded-xl text-xs font-bold mt-2"
+                :class="discordTestStatus.success ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'"
               >
-                <span v-if="isTestingDiscord" class="loading loading-spinner loading-xs"></span>
-                <span>🔔 Skicka test</span>
-              </button>
+                {{ discordTestStatus.message }}
+              </div>
             </div>
-            <p class="text-[11px] text-base-content/60 leading-normal">
-              Skapa en webhook i din Discord-server under <em>Kanalinställningar → Integrationer → Webhooks</em> och klistra in länken här.
-            </p>
-            <div
-              v-if="discordTestStatus"
-              class="p-2.5 rounded-xl text-xs font-bold mt-2"
-              :class="discordTestStatus.success ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'"
-            >
-              {{ discordTestStatus.message }}
+
+            <!-- Notification Event Triggers -->
+            <div class="space-y-2.5 pt-1">
+              <label class="block text-[11px] font-bold text-secondary uppercase tracking-wider">
+                Händelser som ska skicka Discord-notis:
+              </label>
+
+              <!-- Trigger 1: Booking Inquiries -->
+              <label class="flex items-start justify-between gap-3 p-2.5 bg-base-200/70 rounded-xl border border-primary/10 cursor-pointer hover:border-primary/30 transition-all">
+                <div class="space-y-0.5">
+                  <span class="text-xs font-bold text-base-content flex items-center gap-1.5">
+                    <span>🎸</span> Nya bokningsförfrågningar
+                  </span>
+                  <p class="text-[11px] text-base-content/65">
+                    Skickar kontaktperson, datum, spelplats och länk till admin.
+                  </p>
+                </div>
+                <input
+                  v-model="settingsForm.discordNotifyBookings"
+                  type="checkbox"
+                  class="toggle toggle-primary toggle-sm flex-shrink-0 mt-0.5"
+                />
+              </label>
+
+              <!-- Trigger 2: Fan Photos -->
+              <label class="flex items-start justify-between gap-3 p-2.5 bg-base-200/70 rounded-xl border border-primary/10 cursor-pointer hover:border-primary/30 transition-all">
+                <div class="space-y-0.5">
+                  <span class="text-xs font-bold text-base-content flex items-center gap-1.5">
+                    <span>📸</span> Nya fan-bilder inskickade
+                  </span>
+                  <p class="text-[11px] text-base-content/65">
+                    Aviserar när fans laddat upp foton till Fan Central för granskning.
+                  </p>
+                </div>
+                <input
+                  v-model="settingsForm.discordNotifyFanPhotos"
+                  type="checkbox"
+                  class="toggle toggle-secondary toggle-sm flex-shrink-0 mt-0.5"
+                />
+              </label>
+
+              <!-- Trigger 3: Guestbook -->
+              <label class="flex items-start justify-between gap-3 p-2.5 bg-base-200/70 rounded-xl border border-primary/10 cursor-pointer hover:border-primary/30 transition-all">
+                <div class="space-y-0.5">
+                  <span class="text-xs font-bold text-base-content flex items-center gap-1.5">
+                    <span>📖</span> Nya gästboksinlägg
+                  </span>
+                  <p class="text-[11px] text-base-content/65">
+                    Aviserar när en besökare skrivit en hälsning i gästboken.
+                  </p>
+                </div>
+                <input
+                  v-model="settingsForm.discordNotifyGuestbook"
+                  type="checkbox"
+                  class="toggle toggle-accent toggle-sm flex-shrink-0 mt-0.5"
+                />
+              </label>
             </div>
           </div>
 
-          <!-- Notification Event Triggers -->
-          <div class="space-y-3 pt-2">
-            <label class="block text-xs font-bold text-secondary uppercase tracking-wider">
-              Händelser som ska skicka Discord-notis:
-            </label>
-
-            <!-- Trigger 1: Booking Inquiries -->
-            <label class="flex items-start justify-between gap-3 p-3 bg-base-200/70 rounded-xl border border-primary/10 cursor-pointer hover:border-primary/30 transition-all">
-              <div class="space-y-0.5">
-                <span class="text-xs font-bold text-base-content flex items-center gap-1.5">
-                  <span>🎸</span> Nya bokningsförfrågningar (Kontaktformulär)
-                </span>
-                <p class="text-[11px] text-base-content/65">
-                  Skickar kontaktperson, datum, spelplats, typ av event och direktlänk till adminpanelen.
-                </p>
+          <!-- CARD 2: SOCIAL MEDIA TEST / MOCK MODE (MOVED TO LEFT PANEL) -->
+          <div class="stage-card p-6 rounded-3xl border border-primary/30 shadow-xl space-y-4 bg-base-100/95">
+            <div class="flex items-center justify-between gap-3 border-b border-primary/20 pb-3">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="text-xl flex-shrink-0">📢</span>
+                <div class="min-w-0">
+                  <h3 class="font-heading text-base text-primary font-bold truncate">Sociala Medier — Testläge</h3>
+                  <p class="text-[11px] text-base-content/70 truncate">Simulerad eller skarp delning</p>
+                </div>
               </div>
-              <input
-                v-model="settingsForm.discordNotifyBookings"
-                type="checkbox"
-                class="toggle toggle-primary toggle-sm flex-shrink-0 mt-0.5"
-              />
-            </label>
+              <span
+                class="badge badge-sm font-mono font-bold text-[11px] whitespace-nowrap flex-shrink-0 px-2.5 py-1"
+                :class="settingsForm.socialMockMode ? 'badge-warning text-warning-content' : 'badge-success text-success-content'"
+              >
+                {{ settingsForm.socialMockMode ? '🟡 Testläge Aktivt' : '🟢 Skarp publicering' }}
+              </span>
+            </div>
 
-            <!-- Trigger 2: Fan Photos -->
-            <label class="flex items-start justify-between gap-3 p-3 bg-base-200/70 rounded-xl border border-primary/10 cursor-pointer hover:border-primary/30 transition-all">
-              <div class="space-y-0.5">
-                <span class="text-xs font-bold text-base-content flex items-center gap-1.5">
-                  <span>📸</span> Nya fan-bilder inskickade
-                </span>
-                <p class="text-[11px] text-base-content/65">
-                  Aviserar när fans laddat upp foton till Fan Central för granskning och godkännande.
-                </p>
-              </div>
-              <input
-                v-model="settingsForm.discordNotifyFanPhotos"
-                type="checkbox"
-                class="toggle toggle-secondary toggle-sm flex-shrink-0 mt-0.5"
-              />
-            </label>
-
-            <!-- Trigger 3: Guestbook -->
-            <label class="flex items-start justify-between gap-3 p-3 bg-base-200/70 rounded-xl border border-primary/10 cursor-pointer hover:border-primary/30 transition-all">
-              <div class="space-y-0.5">
-                <span class="text-xs font-bold text-base-content flex items-center gap-1.5">
-                  <span>📖</span> Nya gästboksinlägg
-                </span>
-                <p class="text-[11px] text-base-content/65">
-                  Aviserar när en besökare skrivit en hälsning eller recension i bandets gästbok.
-                </p>
-              </div>
-              <input
-                v-model="settingsForm.discordNotifyGuestbook"
-                type="checkbox"
-                class="toggle toggle-accent toggle-sm flex-shrink-0 mt-0.5"
-              />
-            </label>
+            <div class="space-y-3 text-xs">
+              <label class="flex items-start justify-between gap-4 cursor-pointer p-3.5 rounded-2xl bg-base-200/80 border border-primary/20 hover:border-primary transition-all">
+                <div class="space-y-1">
+                  <span class="font-bold text-base-content block text-sm">
+                    Aktivera Testläge (Mock Mode)
+                  </span>
+                  <p class="text-[11px] text-base-content/75 leading-relaxed">
+                    När testläget är <strong>på</strong> simuleras delningar till Facebook och Instagram. Inläggstexterna formateras och loggas, men inget publiceras på bandets riktiga Facebook-sida. Slå <strong>av</strong> när ni är redo för skarp livesändning!
+                  </p>
+                </div>
+                <input
+                  v-model="settingsForm.socialMockMode"
+                  type="checkbox"
+                  class="toggle toggle-warning toggle-md flex-shrink-0 mt-1"
+                />
+              </label>
+            </div>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: EMAIL & SITE SETTINGS -->
+        <!-- RIGHT COLUMN: EMAIL, HOMEPAGE SLIDERS & AI COVER STUDIO -->
         <div class="space-y-6">
-          <!-- CARD 2: EMAIL NOTIFICATIONS -->
+          <!-- CARD 3: EMAIL NOTIFICATIONS -->
           <div class="stage-card p-6 rounded-3xl border border-primary/30 shadow-lg space-y-4 bg-base-100/95">
             <div class="flex items-center gap-2.5 border-b border-primary/20 pb-3">
               <span class="text-xl">📧</span>
@@ -342,7 +386,7 @@ const saveSettings = async () => {
             </div>
           </div>
 
-          <!-- CARD 3: HOMEPAGE SLIDERS & CONTENT -->
+          <!-- CARD 4: HOMEPAGE SLIDERS & CONTENT -->
           <div class="stage-card p-6 rounded-3xl border border-primary/30 shadow-lg space-y-4 bg-base-100/95">
             <div class="flex items-center gap-2.5 border-b border-primary/20 pb-3">
               <span class="text-xl">🎛️</span>
@@ -354,9 +398,9 @@ const saveSettings = async () => {
 
             <div class="space-y-4 text-xs">
               <!-- Slider 1: Songs count -->
-              <div class="space-y-1.5">
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-base-content">🎵 Antal låtar på startsidan</span>
+              <div class="space-y-1">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-bold text-base-content">🎵 Antal låtar i jukebox-puffen</span>
                   <span class="badge badge-primary badge-sm font-mono font-bold">{{ settingsForm.landingSongCount }} st</span>
                 </div>
                 <input
@@ -374,9 +418,9 @@ const saveSettings = async () => {
                 </div>
               </div>
 
-              <!-- Slider 2: Merch count -->
-              <div class="space-y-1.5">
-                <div class="flex items-center justify-between">
+              <!-- Slider 2: Merch items count -->
+              <div class="space-y-1">
+                <div class="flex justify-between items-center text-xs">
                   <span class="font-bold text-base-content">👕 Antal merch-artiklar på startsidan</span>
                   <span class="badge badge-primary badge-sm font-mono font-bold">{{ settingsForm.landingMerchCount }} st</span>
                 </div>
@@ -410,7 +454,7 @@ const saveSettings = async () => {
             </div>
           </div>
 
-          <!-- CARD 4: AI COVER STUDIO SETTINGS -->
+          <!-- CARD 5: AI COVER STUDIO SETTINGS -->
           <div class="stage-card p-6 rounded-3xl border border-primary/30 shadow-lg space-y-4 bg-base-100/95">
             <div class="flex items-center gap-2.5 border-b border-primary/20 pb-3">
               <span class="text-xl">✨</span>

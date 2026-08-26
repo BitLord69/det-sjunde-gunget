@@ -2,8 +2,29 @@ import crypto from 'node:crypto'
 import type { H3Event } from 'h3'
 import { eq, and, gt } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
-import { db } from '../db/client'
-import { admins, adminSessions } from '../db/schema'
+import { tursoClient, db } from '../db/client'
+import { admins, adminSessions, adminAccounts } from '../db/schema'
+
+export async function ensureAdminAccountsTable() {
+  try {
+    await tursoClient.execute(`
+      CREATE TABLE IF NOT EXISTS admin_accounts (
+        id TEXT PRIMARY KEY,
+        admin_id TEXT NOT NULL REFERENCES admins(id) ON DELETE CASCADE,
+        provider TEXT NOT NULL,
+        provider_account_id TEXT NOT NULL,
+        email TEXT,
+        username TEXT,
+        name TEXT,
+        avatar_url TEXT,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+      )
+    `)
+  } catch (err) {
+    // Ignore if table exists
+  }
+}
 
 export interface SafeAdminUser {
   id: string

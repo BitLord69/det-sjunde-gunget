@@ -22,48 +22,40 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, '/admin/login?error=missing_code')
   }
 
-  const clientId = process.env.GOOGLE_CLIENT_ID || '462278567234-thghbfbq5k2akhr8cj6fpr618g7qmise.apps.googleusercontent.com'
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || ''
+  const clientId = process.env.FACEBOOK_CLIENT_ID || process.env.FACEBOOK_APP_ID || ''
+  const clientSecret = process.env.FACEBOOK_CLIENT_SECRET || process.env.FACEBOOK_APP_SECRET || ''
 
   const host = getRequestHeader(event, 'host') || 'localhost:3000'
   const protocol = host.includes('localhost') ? 'http' : 'https'
-  const redirectUri = `${protocol}://${host}/api/auth/callback/google`
+  const redirectUri = `${protocol}://${host}/api/auth/callback/facebook`
 
   try {
     await ensureAdminAccountsTable()
 
     // 1. Exchange authorization code for access token
-    const tokenResponse: any = await $fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      body: new URLSearchParams({
-        code,
+    const tokenResponse: any = await $fetch('https://graph.facebook.com/v19.0/oauth/access_token', {
+      params: {
         client_id: clientId,
         client_secret: clientSecret,
         redirect_uri: redirectUri,
-        grant_type: 'authorization_code',
-      }),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        code,
       },
     })
 
     const accessToken = tokenResponse.access_token
 
-    // 2. Fetch Google user profile
-    const googleUser: any = await $fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+    // 2. Fetch Facebook user profile
+    const fbUser: any = await $fetch('https://graph.facebook.com/me', {
+      params: {
+        fields: 'id,name,email,picture.type(large)',
+        access_token: accessToken,
       },
     })
 
-    const email = (googleUser.email || '').toLowerCase().trim()
-    const name = googleUser.name || 'Google Admin'
-    const picture = googleUser.picture || null
-    const providerAccountId = googleUser.sub || googleUser.id || `google-${nanoid(8)}`
-
-    if (!email) {
-      return sendRedirect(event, '/admin/login?error=no_email_from_google')
-    }
+    const email = (fbUser.email || '').toLowerCase().trim()
+    const name = fbUser.name || 'Facebook Admin'
+    const picture = fbUser.picture?.data?.url || null
+    const providerAccountId = String(fbUser.id)
 
     // Check if the user is already logged in (CONNECT ACTION)
     const loggedInAdmin = await getAdminFromSession(event)
@@ -71,13 +63,13 @@ export default defineEventHandler(async (event) => {
     if (loggedInAdmin || stateObj.action === 'connect') {
       const targetAdminId = loggedInAdmin?.id
       if (targetAdminId) {
-        // Remove existing google link for this admin if any
+        // Remove existing facebook link for this admin if any
         await db
           .delete(adminAccounts)
           .where(
             and(
               eq(adminAccounts.adminId, targetAdminId),
-              eq(adminAccounts.provider, 'google')
+              eq(adminAccounts.provider, 'facebook')
             )
           )
 
@@ -86,16 +78,16 @@ export default defineEventHandler(async (event) => {
         await db.insert(adminAccounts).values({
           id: `acc-${nanoid(8)}`,
           adminId: targetAdminId,
-          provider: 'google',
+          provider: 'facebook',
           providerAccountId,
-          email,
+          email: email || null,
           name,
           avatarUrl: picture,
           createdAt: now,
           updatedAt: now,
         })
 
-        return sendRedirect(event, '/admin/profile?connected=google')
+        return sendRedirect(event, '/admin/profile?connected=facebook')
       }
     }
 
@@ -106,10 +98,10 @@ export default defineEventHandler(async (event) => {
       .from(adminAccounts)
       .where(
         and(
-          eq(adminAccounts.provider, 'google'),
+          eq(adminAccounts.provider, 'facebook'),
           or(
             eq(adminAccounts.providerAccountId, providerAccountId),
-            sql`lower(${adminAccounts.email}) = ${email}`
+            email ? sql`lower(${adminAccounts.email}) = ${email}` : sql`1=0`
           )
         )
       )
@@ -128,7 +120,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 2. If not in admin_accounts, check admins by email
-    if (!targetAdmin) {
+    if (!targetAdmin && email) {
       const matchingAdmins = await db
         .select()
         .from(admins)
@@ -143,9 +135,9 @@ export default defineEventHandler(async (event) => {
         await db.insert(adminAccounts).values({
           id: `acc-${nanoid(8)}`,
           adminId: targetAdmin.id,
-          provider: 'google',
+          provider: 'facebook',
           providerAccountId,
-          email,
+          email: email || null,
           name,
           avatarUrl: picture,
           createdAt: now,
@@ -161,10 +153,10 @@ export default defineEventHandler(async (event) => {
       await db.insert(admins).values({
         id,
         name,
-        email,
-        username: email.split('@')[0] || `google_${nanoid(4)}`,
+        email: email || `${providerAccountId}@facebook.user`,
+        username: `fb_${nanoid(6)}`,
         role: 'Administratör',
-        provider: 'google',
+        provider: 'facebook',
         avatarUrl: picture,
         createdAt: now,
         updatedAt: now,
@@ -173,9 +165,9 @@ export default defineEventHandler(async (event) => {
       await db.insert(adminAccounts).values({
         id: `acc-${nanoid(8)}`,
         adminId: id,
-        provider: 'google',
+        provider: 'facebook',
         providerAccountId,
-        email,
+        email: email || null,
         name,
         avatarUrl: picture,
         createdAt: now,
@@ -194,7 +186,7 @@ export default defineEventHandler(async (event) => {
     await createAdminSession(targetAdmin.id, event)
     return sendRedirect(event, '/admin')
   } catch (err: any) {
-    console.error('Google OAuth Callback Error:', err)
-    return sendRedirect(event, `/admin/login?error=google_auth_failed`)
+    console.error('Facebook OAuth Callback Error:', err)
+    return sendRedirect(event, `/admin/login?error=facebook_auth_failed`)
   }
 })

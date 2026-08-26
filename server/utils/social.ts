@@ -1,7 +1,6 @@
-/**
- * Social Media Cross-Posting Utility
- * Formats and broadcasts updates to Facebook Page, Instagram Business, and Webhooks.
- */
+import { eq } from 'drizzle-orm'
+import { db } from '../db/client'
+import { siteSettings } from '../db/schema'
 
 export interface SocialPostParams {
   type: 'gig' | 'song' | 'news' | 'gallery'
@@ -131,16 +130,29 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
     message: 'Inlägg förberett.',
   }
 
-  const isMockMode = process.env.SOCIAL_MOCK_MODE === 'true' || process.env.SOCIAL_DRY_RUN === 'true'
+  let isMockMode = process.env.SOCIAL_MOCK_MODE === 'true' || process.env.SOCIAL_DRY_RUN === 'true'
+  try {
+    const settingRow = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.key, 'social_mock_mode'))
+      .limit(1)
+    if (settingRow[0]) {
+      isMockMode = settingRow[0].value === 'true'
+    }
+  } catch {
+    // Fallback to env variable
+  }
+
   if (isMockMode) {
-    console.log('\n[Social MOCK / DRY RUN MODE - Inget skarpt inlägg skickas]:')
+    console.log('\n[Social MOCK / TEST MODE - Inget skarpt inlägg skickas]:')
     console.log('--- FACEBOOK POST PREVIEW ---\n' + facebookText)
     console.log('--- INSTAGRAM POST PREVIEW ---\n' + instagramText)
     return {
       success: true,
       simulated: true,
       previewText: facebookText,
-      message: 'Simulerad delning (Mock/Dry-run är aktivt i .env - inget publiceras skarpt på Facebook/Instagram).',
+      message: 'Simulerad delning (Testläge/Mock Mode är aktivt i inställningarna — inget publiceras skarpt på Facebook/Instagram).',
     }
   }
 

@@ -5,7 +5,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'Administratörer | Det 7:e Gunget Admin',
+  title: 'Administratörer & Bandkonton | Det 7:e Gunget Admin',
 })
 
 const { adminUser } = useAdminAuth()
@@ -50,7 +50,7 @@ const uploadFile = async (event: Event, targetCallback: (url: string) => void) =
   }
 }
 
-// ---------------- ADMIN USERS CRUD ----------------
+// ---------------- ADD NEW ADMIN (Invite/Create) ----------------
 const isAddAdminOpen = ref(false)
 const newAdminForm = reactive({
   name: '',
@@ -62,10 +62,6 @@ const newAdminForm = reactive({
 })
 
 const openAddAdmin = () => {
-  if (isAddAdminOpen.value) {
-    const ok = confirm('⚠️ Du har redan ett öppet administratörsformulär.\n\nVill du börja om?')
-    if (!ok) return
-  }
   newAdminForm.name = ''
   newAdminForm.email = ''
   newAdminForm.username = ''
@@ -125,7 +121,7 @@ onBeforeRouteLeave((to, from, next) => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -139,17 +135,28 @@ onBeforeRouteLeave((to, from, next) => {
 
     <!-- ADMINS & USER MANAGEMENT -->
     <div class="space-y-6">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 class="font-heading text-2xl text-primary font-bold">Hantera administratörer</h2>
-          <p class="text-xs text-base-content/70">Alla bandmedlemmar och behöriga admins som kan logga in och redigera innehållet.</p>
+          <h2 class="font-heading text-2xl text-primary font-bold">Administratörer & Bandkonton</h2>
+          <p class="text-xs text-base-content/70">Översikt över bandets medlemmar som har administratörsbehörighet.</p>
         </div>
         <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-5 cursor-pointer" @click="openAddAdmin">
           + Ny administratör
         </button>
       </div>
 
-      <!-- Add Admin Modal Form -->
+      <!-- Information Callout Box -->
+      <div class="bg-base-200/90 border border-primary/30 p-4 rounded-2xl flex items-start gap-3.5 text-xs leading-relaxed shadow-sm">
+        <span class="text-2xl flex-shrink-0">🔒</span>
+        <div class="space-y-1">
+          <strong class="text-primary font-bold text-sm block">Hur ändrar jag min e-postadress eller ansluter Google/Facebook?</strong>
+          <p class="text-base-content/85">
+            För att garantera full personlig integritet kan varje bandmedlem endast redigera sina <strong>egna uppgifter</strong>. Klicka på ditt namn uppe till höger i toppmenyn (eller på din avatar) för att öppna modalen <strong>"Min profil & Inloggningar"</strong> där du ändrar e-postadress, profilbild och kopplar dina Google-, GitHub- eller Facebook-konton.
+          </p>
+        </div>
+      </div>
+
+      <!-- Add Admin Form -->
       <div v-if="isAddAdminOpen" class="stage-card p-6 sm:p-8 rounded-2xl border border-primary/40 space-y-4 shadow-2xl">
         <div class="flex items-center justify-between border-b border-primary/20 pb-3">
           <h3 class="font-heading text-xl text-primary font-bold">
@@ -166,8 +173,8 @@ onBeforeRouteLeave((to, from, next) => {
             <input v-model="newAdminForm.name" type="text" placeholder="T.ex. Janis Svensson" class="input input-bordered w-full bg-base-200 input-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-secondary mb-1">E-postadress *</label>
-            <input v-model="newAdminForm.email" type="email" placeholder="namn@det7egunget.se" class="input input-bordered w-full bg-base-200 input-sm" />
+            <label class="block text-xs font-bold text-secondary mb-1">E-postadress (Inloggningsmail) *</label>
+            <input v-model="newAdminForm.email" type="email" placeholder="namn@det7egunget.se" class="input input-bordered w-full bg-base-200 input-sm font-mono" />
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Användarnamn (valfritt)</label>
@@ -184,7 +191,7 @@ onBeforeRouteLeave((to, from, next) => {
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Avatar / Profilbild (valfritt)</label>
             <div class="flex items-center gap-2">
-              <input v-model="newAdminForm.avatarUrl" type="text" placeholder="/media/band/avatar.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" />
+              <input v-model="newAdminForm.avatarUrl" type="text" placeholder="/media/brand/avatar.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" />
               <label class="btn btn-outline btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
                 <span>📁 Ladda upp</span>
                 <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => newAdminForm.avatarUrl = url)" />
@@ -193,7 +200,7 @@ onBeforeRouteLeave((to, from, next) => {
           </div>
         </div>
 
-        <div class="flex items-center gap-3 pt-3">
+        <div class="flex items-center gap-3 pt-3 border-t border-primary/20">
           <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6 cursor-pointer" @click="saveNewAdmin">
             Skapa administratör
           </button>
@@ -204,23 +211,23 @@ onBeforeRouteLeave((to, from, next) => {
       </div>
 
       <!-- Admins List Table -->
-      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card shadow-lg">
         <table class="table table-zebra w-full text-xs">
           <thead>
-            <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
+            <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20 bg-base-300/50">
               <th>Medlem / Admin</th>
-              <th>E-post</th>
+              <th>E-postadress (Inloggning)</th>
               <th>Användarnamn</th>
               <th>Roll</th>
-              <th>Inloggningstyp</th>
-              <th class="text-right">Åtgärd</th>
+              <th>Primär inloggning</th>
+              <th class="text-right">Administration</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="admin in adminUsers || []" :key="admin.id" :class="admin.id === adminUser?.id ? 'bg-primary/10' : ''">
               <td class="flex items-center gap-3 py-3">
                 <div class="avatar placeholder">
-                  <div class="w-8 h-8 rounded-full bg-primary text-primary-content text-xs font-bold overflow-hidden">
+                  <div class="w-8 h-8 rounded-full bg-primary text-primary-content text-xs font-bold overflow-hidden shadow">
                     <NuxtImg v-if="admin.avatarUrl" :src="admin.avatarUrl" :alt="admin.name" class="w-full h-full object-cover" />
                     <span v-else>{{ admin.name.charAt(0) }}</span>
                   </div>
@@ -230,10 +237,12 @@ onBeforeRouteLeave((to, from, next) => {
                   <span v-if="admin.id === adminUser?.id" class="badge badge-accent badge-xs font-bold text-[9px]">Du</span>
                 </div>
               </td>
-              <td class="font-mono text-[11px]">{{ admin.email }}</td>
-              <td class="font-mono text-[11px]">{{ admin.username }}</td>
+              <td class="font-mono text-[11px] font-bold text-base-content/90">{{ admin.email }}</td>
+              <td class="font-mono text-[11px] text-base-content/70">{{ admin.username }}</td>
               <td><span class="badge badge-sm font-bold text-[10px]">{{ admin.role }}</span></td>
-              <td class="font-mono capitalize text-[10px]">{{ admin.provider }}</td>
+              <td class="font-mono capitalize text-[10px]">
+                <span class="badge badge-ghost badge-xs">{{ admin.provider }}</span>
+              </td>
               <td class="text-right">
                 <button
                   v-if="admin.id !== adminUser?.id"
@@ -243,7 +252,7 @@ onBeforeRouteLeave((to, from, next) => {
                 >
                   Ta bort
                 </button>
-                <span v-else class="text-[10px] text-base-content/40 italic">Aktiv inloggning</span>
+                <span v-else class="text-[10px] text-primary/70 font-semibold italic">Inloggad profil</span>
               </td>
             </tr>
           </tbody>

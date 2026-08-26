@@ -110,11 +110,9 @@ Primary language is **Swedish** (the band is Swedish, name is Swedish), with **E
 - **Rehearsal Room Archive & Voice Memo Recorder ("Riff & Idea Bank")**: Mobile-first audio memo recorder in `/admin/ideas` equipped with Web Audio API live VU-meter / frequency canvas visualizer, 30s target timer, tap-tempo calculator, musical key selector, playback speed modulation (0.75x slow-down for learning riffs), song linkage, and Turso DB backing.
 - **Calendar Integration**: 1-click Google Calendar event generation and standard iCalendar (.ics) download on gig cards and ticket stubs.
 - **Blues Harp Easter Egg**: Interactive Chicago blues harmonica bend lick & visual animation on landing page logo click using Web Audio API synthesis.
-- **OAuth credentials**: you already have provider accounts; new OAuth apps will be registered per-provider when we reach the auth implementation step. Not a blocker.
-- **Deployment**: reusing existing Vercel auto-deploy setup from another project — no new CI/CD to configure.
-- **Testing**: no automated test suite for v1 — site has limited end-user functionality (mainly content display + two forms), so manual testing is sufficient for now. Revisit if/when the forum ships.
-- **Error monitoring**: skipped for v1 (e.g. Sentry) — can be added later with minimal setup if bugs become hard to track down via user reports alone.
-- **Music/video licensing**: Music page uses embedded Spotify/Bandcamp/YouTube players rather than self-hosted audio, avoiding mechanical licensing questions around cover songs. Standard (non-privacy-enhanced) YouTube embeds are used **deliberately** — chosen over `youtube-nocookie.com` specifically to retain YouTube-side view/engagement analytics on the band's videos — which necessitates a cookie consent banner site-wide (see §7). This is a considered tradeoff, not an oversight.
+- **OAuth credentials & Social Login**: Multi-provider authentication with Google, GitHub, and Facebook OAuth 2.0. Band members can connect/disconnect external accounts and edit their personal email/profile safely inside "Min profil".
+- **Password Reset Flow**: Self-service "Glömt lösenord?" on login page with secure 1-hour token dispatched via transactional email (Brevo) and `/admin/reset-password` setup.
+- **Social Media Mock Mode**: Admin toggle switch under `/admin/settings` backed by dynamic `siteSettings.social_mock_mode` DB state, allowing simulated cross-posting without spamming live Facebook/Instagram pages.
 - **Default theme**: matches visitor's system preference (`prefers-color-scheme`) on first visit; manual toggle overrides and persists via cookie.
 
 ## 11. Future Considerations & Ideas Backlog

@@ -310,6 +310,44 @@ async function runMigration() {
     )
   `)
 
+  // 14. Fan Submissions table
+  await remoteClient.execute(`
+    CREATE TABLE IF NOT EXISTS fan_submissions (
+      id text PRIMARY KEY NOT NULL,
+      media_url text NOT NULL,
+      caption text,
+      location text,
+      taken_when text,
+      uploader_email text NOT NULL,
+      uploader_name text,
+      status text DEFAULT 'pending' NOT NULL,
+      rotation integer DEFAULT 0,
+      fastener_type text DEFAULT 'pin',
+      pin_color text DEFAULT 'random',
+      is_machine_fan integer DEFAULT 0 NOT NULL,
+      reviewed_at integer,
+      created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+      updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+    )
+  `)
+
+  // 15. Banned Emails table
+  await remoteClient.execute(`
+    CREATE TABLE IF NOT EXISTS banned_emails (
+      id text PRIMARY KEY NOT NULL,
+      email text UNIQUE NOT NULL,
+      reason text,
+      banned_by text,
+      banned_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+      created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+      updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+    )
+  `)
+
+  try {
+    await remoteClient.execute('ALTER TABLE banned_emails ADD COLUMN banned_by text')
+  } catch {}
+
   console.log('✓ All database tables & columns successfully verified in Turso Cloud!')
 
   // Check if data should be synced from local SQLite
@@ -331,6 +369,14 @@ async function runMigration() {
     try {
       localMerch = await localClient.execute('SELECT * FROM merch_products')
     } catch {}
+    let localFans = { rows: [] }
+    try {
+      localFans = await localClient.execute('SELECT * FROM fan_submissions')
+    } catch {}
+    let localBanned = { rows: [] }
+    try {
+      localBanned = await localClient.execute('SELECT * FROM banned_emails')
+    } catch {}
 
     console.log(`\nSyncing data from local database:`)
     console.log(`- ${localAdmins.rows.length} admins`)
@@ -342,12 +388,16 @@ async function runMigration() {
     console.log(`- ${localSetlist.rows.length} setlist tracks`)
     console.log(`- ${localGigSetlist.rows.length} gig setlist items`)
     console.log(`- ${localMerch.rows.length} merch products`)
+    console.log(`- ${localFans.rows.length} fan submissions`)
+    console.log(`- ${localBanned.rows.length} banned emails`)
     console.log(`- ${localSettings.rows.length} site settings`)
 
     // Clean remote tables before insert
     await remoteClient.batch([
       { sql: 'DELETE FROM gig_setlist_items', args: [] },
       { sql: 'DELETE FROM merch_products', args: [] },
+      { sql: 'DELETE FROM fan_submissions', args: [] },
+      { sql: 'DELETE FROM banned_emails', args: [] },
       { sql: 'DELETE FROM admin_sessions', args: [] },
       { sql: 'DELETE FROM admins', args: [] },
       { sql: 'DELETE FROM gigs', args: [] },
@@ -396,6 +446,14 @@ async function runMigration() {
       ...localMerch.rows.map((row) => ({
         sql: `INSERT INTO merch_products (id, product_type_id, name, type_sv, type_en, category_sv, category_en, price, price_amount, currency, image_url, product_url, is_active, last_synced_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [row.id, row.product_type_id, row.name, row.type_sv, row.type_en, row.category_sv, row.category_en, row.price, row.price_amount, row.currency, row.image_url, row.product_url, row.is_active, row.last_synced_at, row.created_at, row.updated_at],
+      })),
+      ...localFans.rows.map((row) => ({
+        sql: `INSERT INTO fan_submissions (id, media_url, caption, location, taken_when, uploader_email, uploader_name, status, rotation, fastener_type, pin_color, is_machine_fan, reviewed_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.media_url, row.caption, row.location, row.taken_when, row.uploader_email, row.uploader_name, row.status, row.rotation, row.fastener_type, row.pin_color, row.is_machine_fan, row.reviewed_at, row.created_at, row.updated_at],
+      })),
+      ...localBanned.rows.map((row) => ({
+        sql: `INSERT INTO banned_emails (id, email, reason, banned_by, banned_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.email, row.reason, row.banned_by, row.banned_at, row.created_at, row.updated_at],
       })),
       ...localSettings.rows.map((row) => ({
         sql: `INSERT INTO site_settings (key, value, created_at, updated_at) VALUES (?, ?, ?, ?)`,

@@ -2,8 +2,8 @@
 const { t, locale } = useI18n()
 
 useSeoMeta({
-  title: 'Om bandet | Det 7:e Gunget',
-  description: 'Möt Janis, Bosse, Marcus och Jonas i Det 7:e Gunget. Fyra herrar över 50 som spelar äkta svensk blues och rock.',
+  title: computed(() => `${t('band.title')} | Det 7:e Gunget`),
+  description: computed(() => t('band.desc')),
 })
 
 const { data: bandMembers } = await useFetch('/api/band')
@@ -36,7 +36,7 @@ const { data: bandMembers } = await useFetch('/api/band')
       <div class="frame-wood rounded-2xl overflow-hidden shadow-2xl">
         <NuxtImg
           src="/media/band/1..7de Gunget photoshoot1 21-6 26-21.jpg"
-          alt="Det 7:e Gunget bandporträtt"
+          :alt="t('common.band_photo_alt')"
           class="w-full aspect-[4/3] object-cover filter contrast-105"
         />
         <div class="p-3 text-center text-xs font-heading font-bold text-primary bg-neutral">

@@ -73,14 +73,14 @@ const handleLogoClick = () => {
         <div
           class="relative group cursor-pointer select-none transition-transform duration-300 active:scale-95"
           :class="isPlayingHarp ? 'scale-105 animate-[pulse_0.4s_ease-in-out_infinite]' : 'hover:scale-102'"
-          title="Klicka på munspelet i logon för ett äkta bluesriff!"
+          :title="t('hero.harp_tooltip')"
           @click="handleLogoClick"
         >
           <div class="absolute inset-4 rounded-full bg-[#181310] -z-10 shadow-2xl dark:hidden" />
           
           <NuxtImg
             src="/media/brand/Logotyp.webp"
-            alt="Det 7:e Gunget emblem logotyp — klicka för munspelsriff"
+            :alt="t('hero.logo_alt')"
             class="w-[320px] sm:w-[420px] lg:w-[460px] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:rotate-1"
             :class="isPlayingHarp ? 'filter drop-shadow-[0_0_25px_rgba(200,121,63,0.85)]' : ''"
             priority

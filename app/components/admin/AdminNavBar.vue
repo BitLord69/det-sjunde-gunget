@@ -8,10 +8,15 @@ const isMobileDropdownOpen = ref(false)
 
 // Fetch fresh unread messages count for booking notifications badge
 const { data: messagesData } = await useFetch<any[]>('/api/admin/messages', { default: () => [], lazy: true })
+const { data: fanCentralData } = await useFetch<{ counts?: { pending: number } }>('/api/admin/fan-central/submissions', { default: () => ({ counts: { pending: 0 } }), lazy: true })
 
 const unreadMessagesCount = computed(() => {
   if (!messagesData.value || !Array.isArray(messagesData.value)) return 0
   return messagesData.value.filter((m: any) => m.status === 'unread').length
+})
+
+const pendingFanCount = computed(() => {
+  return fanCentralData.value?.counts?.pending || 0
 })
 
 const navItems = computed(() => [
@@ -21,6 +26,11 @@ const navItems = computed(() => [
   { path: '/admin/band', label: 'Bandet' },
   { path: '/admin/setlist', label: 'Setlist' },
   { path: '/admin/gallery', label: 'Galleri' },
+  {
+    path: '/admin/fancentral',
+    label: 'Fan Central',
+    badge: pendingFanCount.value > 0 ? `${pendingFanCount.value}` : null,
+  },
   { path: '/admin/hashtags', label: 'Taggar' },
   {
     path: '/admin/messages',

@@ -56,7 +56,7 @@ withDefaults(defineProps<Props>(), {
     <!-- Empty State -->
     <div v-else class="stage-card p-12 rounded-2xl text-center max-w-xl mx-auto space-y-4">
       <span class="text-4xl">🎸</span>
-      <h3 class="text-xl font-heading text-primary">Nya datum är på gång!</h3>
+      <h3 class="text-xl font-heading text-primary">{{ t('gigs.new_dates_soon') }}</h3>
       <p class="text-sm text-base-content/70">
         {{ t('gigs.no_upcoming') }}
       </p>
@@ -67,12 +67,12 @@ withDefaults(defineProps<Props>(), {
       <div class="flex items-center gap-3">
         <span class="text-2xl">📜</span>
         <div>
-          <span class="font-bold text-sm text-base-content block">Arkiv över svettiga gig</span>
-          <span class="text-xs text-base-content/60">Senast spelade vi på {{ pastGigs[0]?.venue }} i {{ pastGigs[0]?.city }}.</span>
+          <span class="font-bold text-sm text-base-content block">{{ t('gigs.archive_title') }}</span>
+          <span class="text-xs text-base-content/60">{{ t('gigs.latest_played', { venue: pastGigs[0]?.venue, city: pastGigs[0]?.city }) }}</span>
         </div>
       </div>
       <a href="#contact" class="btn btn-outline btn-sm btn-secondary rounded-full">
-        Boka oss till ditt event →
+        {{ t('gigs.book_for_event') }}
       </a>
     </div>
   </section>

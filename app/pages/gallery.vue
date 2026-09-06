@@ -3,8 +3,8 @@ const { t, locale } = useI18n()
 const localePath = useLocalePath()
 
 useSeoMeta({
-  title: 'Galleri & scenbilder | Det 7:e Gunget',
-  description: 'Se bilder och ögonblick från Det 7:e Gungets spelningar, replokaler och studiosessioner.',
+  title: computed(() => `${t('gallery.title')} | Det 7:e Gunget`),
+  description: computed(() => t('gallery.desc')),
 })
 
 const { data: galleryItems } = await useFetch('/api/gallery')

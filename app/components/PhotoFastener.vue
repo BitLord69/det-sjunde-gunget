@@ -233,12 +233,17 @@ const gradientId = computed(() => {
   <!-- 🏷️ Masking Tape Strip Fastener -->
   <div
     v-else-if="type === 'tape'"
-    class="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none"
+    class="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none filter drop-shadow-md"
     style="transform: translateX(-50%) rotate(-2deg);"
   >
     <div
-      class="w-20 h-6 bg-amber-200/60 dark:bg-amber-400/40 backdrop-blur-xs border border-white/20 shadow-md transform -skew-x-2"
-      style="clip-path: polygon(0% 0%, 98% 2%, 100% 98%, 2% 100%);"
+      class="w-22 h-6 bg-amber-200/70 dark:bg-amber-400/50 backdrop-blur-xs transform -skew-x-2"
+      style="clip-path: polygon(
+        0% 0%, 100% 0%,
+        94% 10%, 100% 20%, 93% 30%, 99% 40%, 94% 50%, 100% 60%, 93% 70%, 99% 80%, 94% 90%, 98% 100%,
+        2% 100%,
+        7% 90%, 1% 80%, 6% 70%, 0% 60%, 7% 50%, 1% 40%, 6% 30%, 0% 20%, 7% 10%, 0% 0%
+      );"
     />
   </div>
 

@@ -212,7 +212,7 @@ const scrollTo = (id: string) => {
             <tr class="hover:bg-base-100/50">
               <td class="font-bold text-primary px-4 py-3">Fan Central</td>
               <td class="font-mono text-secondary px-4 py-3">/fancentral</td>
-              <td class="px-4 py-3">Humorfylld sida som hyllar fansen – både hängivna konsertbesökare och roterande elektriska bordsfläktar.</td>
+              <td class="px-4 py-3">Anslagstavla i kork med träram och nålade foton där besökare kan ladda upp konsertminnen och hälsningar. Maskinfläktar är diskret inblandade som en kul överraskning.</td>
               <td class="px-4 py-3 text-right">
                 <NuxtLink to="/fancentral" target="_blank" class="btn btn-ghost btn-xs text-primary underline">Öppna ↗</NuxtLink>
               </td>
@@ -369,6 +369,23 @@ const scrollTo = (id: string) => {
           </div>
           <NuxtLink to="/admin/gallery" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Galleri →
+          </NuxtLink>
+        </div>
+
+        <!-- Fan Central & Moderering -->
+        <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="badge badge-primary font-mono font-bold text-xs">/admin/fancentral</span>
+              <span class="text-xl">📌</span>
+            </div>
+            <h3 class="font-heading text-lg font-bold text-primary">Fan Central & Moderering</h3>
+            <p class="text-xs text-base-content/80">
+              Granska besökarnas inskickade bilder i <strong>Granskningskön (Staging)</strong>. Godkänn foton för anslagstavlan, anpassa nålfärg och vinkel, eller avvisa och spärra olämpliga e-postadresser.
+            </p>
+          </div>
+          <NuxtLink to="/admin/fancentral" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
+            Gå till Fan Central →
           </NuxtLink>
         </div>
 
@@ -570,6 +587,21 @@ const scrollTo = (id: string) => {
             <li><strong>Glömt lösenord:</strong> Gå till inloggningssidan (<NuxtLink to="/admin/login" class="text-primary font-bold underline">/admin/login</NuxtLink>), klicka på <strong class="text-primary">Glömt lösenord?</strong> och fyll i din e-post. Du får en säker återställningslänk i din inkorg giltig i 1 timme.</li>
             <li><strong>Byta lösenord / e-post när du är inloggad:</strong> Gå till <NuxtLink to="/admin/profile" class="text-primary font-bold underline">Min Profil (/admin/profile)</NuxtLink> genom att klicka på ditt namn uppe till höger. Där byter du e-post och lösenord direkt.</li>
             <li><strong>Social inloggning:</strong> På samma profilsida klickar du på <strong>+ Koppla</strong> bredvid Google, GitHub eller Facebook. Därefter loggar du in med 1 klick!</li>
+          </ol>
+        </div>
+
+        <!-- Scenario E -->
+        <div class="bg-base-200/60 p-5 rounded-2xl border border-primary/20 space-y-2">
+          <div class="flex items-center gap-2 font-bold text-primary">
+            <span class="badge badge-primary badge-sm">Scenario E</span>
+            <h3 class="font-heading text-base">"Ett fan har skickat in en bild – hur granskar jag eller spärrar olämpligt innehåll?"</h3>
+          </div>
+          <ol class="list-decimal list-inside text-xs sm:text-sm text-base-content/90 space-y-1.5 pl-2">
+            <li>När en besökare laddar upp ett foto till Fan Central får ni en Discord-notis (om detta är aktiverat i <NuxtLink to="/admin/settings" class="text-primary font-bold underline">Inställningar</NuxtLink>) och admin-menyn visar en röd siffra vid <NuxtLink to="/admin/fancentral" class="text-primary font-bold underline">Fan Central</NuxtLink>.</li>
+            <li>Gå till <strong>Granskningskö (Staging)</strong> på sidan <NuxtLink to="/admin/fancentral" class="text-primary font-bold underline">/admin/fancentral</NuxtLink>.</li>
+            <li>Här ser du bilden, vem som skickat in den, kommentar, var och när bilden togs. Du kan välja nålfärg och vinkel om du vill finslipa presentationen.</li>
+            <li>Klicka på <strong>✓ Godkänn & Nåla upp</strong> för att publicera bilden på korktavlan direkt.</li>
+            <li>Är bilden olämplig eller spam? Klicka på <strong>🚫 Spärra e-post</strong>. Detta avvisar bilden och spärrar e-postadressen så personen inte kan ladda upp mer. Du kan när som helst se eller häva spärrar under fliken <strong>Spärrade e-postadresser</strong>.</li>
           </ol>
         </div>
       </div>

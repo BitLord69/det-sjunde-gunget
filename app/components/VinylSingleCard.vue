@@ -147,7 +147,7 @@ const getSongCover = (song: Song) => {
             class="text-[10px] font-mono font-bold truncate uppercase tracking-wider"
             :class="song.isOriginal ? 'text-[#3b1c09]' : 'text-[#fef3c7]/80'"
           >
-            {{ song.isOriginal ? 'Originalkomposition' : `Cover • ${song.originalArtist || 'Okänd'}` }}
+            {{ song.isOriginal ? (locale === 'en' ? 'Original Composition' : 'Originalkomposition') : ('Cover • ' + (song.originalArtist || (locale === 'en' ? 'Unknown' : 'Okänd'))) }}
           </p>
         </div>
       </div>
@@ -166,7 +166,7 @@ const getSongCover = (song: Song) => {
               ? 'bg-primary text-neutral border-white ring-4 ring-primary/60 scale-105'
               : 'bg-black/70 hover:bg-primary text-amber-200 hover:text-neutral border-primary/60 hover:scale-110 opacity-90 group-hover:opacity-100',
           ]"
-          :title="isPlaying ? 'Pausa' : 'Provlyssna'"
+          :title="isPlaying ? (locale === 'en' ? 'Pause' : 'Pausa') : (locale === 'en' ? 'Preview' : 'Provlyssna')"
           @click.stop="$emit('togglePlay', song)"
         >
           <span class="drop-shadow-md">{{ isPlaying ? '⏸' : '▶' }}</span>
@@ -178,7 +178,7 @@ const getSongCover = (song: Song) => {
         v-if="isPlaying"
         class="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 badge badge-primary font-mono font-black text-[9px] uppercase px-2.5 py-0.5 shadow-lg animate-pulse"
       >
-        SPELAR NU
+        {{ locale === 'en' ? 'NOW PLAYING' : 'SPELAR NU' }}
       </div>
     </div>
 
@@ -187,7 +187,7 @@ const getSongCover = (song: Song) => {
       <NuxtLink
         :to="localePath({ path: '/music', query: { song: song.id } })"
         class="text-primary hover:text-amber-300 font-bold flex items-center gap-1 transition-colors text-[11px]"
-        title="Lyssna i Jukeboxen med låttext"
+        :title="locale === 'en' ? 'Listen in the Jukebox with lyrics' : 'Lyssna i Jukeboxen med låttext'"
       >
         <span>📻 Jukebox</span>
       </NuxtLink>
@@ -210,7 +210,7 @@ const getSongCover = (song: Song) => {
         <span>↗</span>
       </a>
       <span v-else class="text-base-content/40 text-[10px]">
-        {{ song.audioUrl ? 'Direkt' : '' }}
+        {{ song.audioUrl ? (locale === 'en' ? 'Audio' : 'Direkt') : '' }}
       </span>
     </div>
   </div>

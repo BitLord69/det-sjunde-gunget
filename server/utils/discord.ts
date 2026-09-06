@@ -128,3 +128,58 @@ export async function sendDiscordBookingAlert(
     footerText: `Det 7:e Gunget (ID: ${data.id})`,
   })
 }
+
+/**
+ * Formats and sends a rich fan photo submission alert to Discord
+ */
+export async function sendDiscordFanPhotoAlert(
+  webhookUrl: string,
+  data: {
+    id: string
+    email: string
+    name?: string | null
+    caption?: string | null
+    location?: string | null
+    takenWhen?: string | null
+    mediaUrl: string
+  },
+  adminUrl?: string,
+): Promise<{ success: boolean; error?: string }> {
+  const fields: DiscordEmbedField[] = [
+    {
+      name: '👤 Inskickat av',
+      value: `${data.name ? `**${data.name}**\n` : ''}📧 [${data.email}](mailto:${data.email})`,
+      inline: true,
+    },
+    {
+      name: '📍 Plats & Tid',
+      value: `**Var:** ${data.location || 'Ej angivet'}\n**När:** ${data.takenWhen || 'Ej angivet'}`,
+      inline: true,
+    },
+  ]
+
+  if (data.caption) {
+    fields.push({
+      name: '💬 Kommentar / Hälsning',
+      value: data.caption.length > 500 ? `${data.caption.substring(0, 500)}...` : data.caption,
+      inline: false,
+    })
+  }
+
+  if (adminUrl) {
+    fields.push({
+      name: '🔍 Granska bild i admin',
+      value: `[Klicka här för att godkänna eller avvisa fotot](${adminUrl})`,
+      inline: false,
+    })
+  }
+
+  return sendDiscordWebhook(webhookUrl, {
+    title: `📸 Ny fan-bild inskickad till Fan Central!`,
+    description: `En besökare har skickat in ett foto till korktavlan som väntar på godkännande i staging-kön.`,
+    color: 0xf5b041, // warm amber/gold
+    fields,
+    footerText: `Det 7:e Gunget Fan Central (ID: ${data.id})`,
+  })
+}
+

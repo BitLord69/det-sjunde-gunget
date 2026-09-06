@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const { getGoogleCalendarUrl, downloadIcsFile } = useCalendarExport()
 
 interface Gig {
@@ -59,7 +59,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
         </div>
         <div class="min-w-0">
           <span class="text-xs font-bold uppercase text-secondary block truncate">
-            {{ formatGigDate(gig.date).weekday }} • Kl {{ formatGigDate(gig.date).time }}
+            {{ formatGigDate(gig.date).weekday }} • {{ t('gigs.at_time') }} {{ formatGigDate(gig.date).time }}
           </span>
           <h3 class="text-xl font-heading text-primary font-bold leading-tight group-hover:text-secondary transition-colors truncate">
             {{ gig.venue }}
@@ -84,13 +84,13 @@ const formatGigDate = (dateVal: number | string | Date) => {
           rel="noopener noreferrer"
           class="btn btn-primary btn-sm rounded-full font-bold px-4 text-xs"
         >
-          {{ locale === 'en' ? 'Buy Tickets →' : 'Köp biljett →' }}
+          {{ t('gigs.buy_ticket') }} →
         </a>
         <span v-else-if="gig.status === 'free'" class="text-xs font-bold text-accent">
-          {{ locale === 'en' ? 'Free entry' : 'Fri entré' }}
+          {{ t('gigs.free_entry') }}
         </span>
         <span v-else class="text-xs font-medium text-base-content/60">
-          {{ locale === 'en' ? 'Door' : 'I dörren' }}
+          {{ t('gigs.door_ticket') }}
         </span>
 
         <!-- Calendar Dropdown -->
@@ -100,10 +100,10 @@ const formatGigDate = (dateVal: number | string | Date) => {
             role="button"
             type="button"
             class="btn btn-ghost btn-xs rounded-full font-mono text-[11px] font-bold border border-primary/20 hover:bg-primary/20 flex items-center gap-1 cursor-pointer"
-            title="Spara i kalender"
+            :title="t('gigs.calendar_save')"
           >
             <span>📅</span>
-            <span class="hidden sm:inline">{{ locale === 'en' ? 'Calendar' : 'Kalender' }}</span>
+            <span class="hidden sm:inline">{{ t('gigs.save_date') }}</span>
           </button>
           <ul tabindex="0" class="dropdown-content z-[20] menu p-2 shadow-2xl bg-base-200 rounded-box w-48 text-xs border border-primary/30 mb-1 space-y-1">
             <li>
@@ -114,7 +114,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 class="font-bold flex items-center gap-2"
               >
                 <span>📅</span>
-                <span>Google Kalender ↗</span>
+                <span>{{ t('gigs.google_calendar') }}</span>
               </a>
             </li>
             <li>
@@ -132,7 +132,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
       </div>
 
       <a href="#contact" class="text-xs font-bold text-secondary hover:text-primary transition-colors underline decoration-secondary/30">
-        {{ locale === 'en' ? 'Questions?' : 'Frågor om giget?' }}
+        {{ t('gigs.questions_about_gig') }}
       </a>
     </div>
   </div>

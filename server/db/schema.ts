@@ -291,6 +291,40 @@ export const voiceMemos = sqliteTable('voice_memos', {
   ...timestamps,
 })
 
+export const fanSubmissions = sqliteTable('fan_submissions', {
+  id: text('id').primaryKey(),
+  mediaUrl: text('media_url').notNull(),
+  caption: text('caption'),
+  location: text('location'),
+  takenWhen: text('taken_when'),
+  uploaderEmail: text('uploader_email').notNull(),
+  uploaderName: text('uploader_name'),
+  status: text('status', { enum: ['pending', 'approved', 'rejected'] })
+    .notNull()
+    .default('pending'),
+  rotation: integer('rotation').default(0),
+  fastenerType: text('fastener_type', { enum: ['pin', 'tape', 'paperclip'] }).default('pin'),
+  pinColor: text('pin_color').default('random'),
+  isMachineFan: integer('is_machine_fan', { mode: 'boolean' }).notNull().default(false),
+  reviewedAt: integer('reviewed_at', { mode: 'timestamp_ms' }),
+  ...timestamps,
+})
+
+export const bannedEmails = sqliteTable(
+  'banned_emails',
+  {
+    id: text('id').primaryKey(),
+    email: text('email').notNull(),
+    reason: text('reason'),
+    bannedBy: text('banned_by'),
+    bannedAt: integer('banned_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex('banned_emails_email_idx').on(table.email)],
+)
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),

@@ -2,8 +2,8 @@
 const { t } = useI18n()
 
 useSeoMeta({
-  title: 'Boka Oss & Kontakt | Det 7:e Gunget',
-  description: 'Boka Det 7:e Gunget till festival, pub, klubb eller privatfest. Kontaktformulär, teknisk rider och bokningsinfo.',
+  title: computed(() => `${t('contact.title')} | Det 7:e Gunget`),
+  description: computed(() => t('contact.desc')),
 })
 </script>
 
@@ -16,13 +16,13 @@ useSeoMeta({
       <!-- Left: Contact Details & Tech Rider -->
       <div class="space-y-8">
         <div class="rounded-2xl p-8 bg-gradient-to-b from-base-200/90 via-base-100 to-base-200 dark:from-[#2a1d15] dark:via-[#1a120c] dark:to-[#0d0907] border-4 border-primary/40 shadow-xl space-y-6">
-          <h2 class="font-heading text-2xl text-primary font-bold">Kontaktuppgifter</h2>
+          <h2 class="font-heading text-2xl text-primary font-bold">{{ t('contact.details_title') }}</h2>
           
           <div class="space-y-4 text-sm font-medium">
             <div class="flex items-start gap-3">
               <span class="text-xl">✉️</span>
               <div>
-                <span class="text-xs text-base-content/60 uppercase font-bold block">Bokningsmejl</span>
+                <span class="text-xs text-base-content/60 uppercase font-bold block">{{ t('contact.booking_email_label') }}</span>
                 <span class="text-primary font-bold">kontakt@det7egunget.se</span>
               </div>
             </div>
@@ -30,22 +30,22 @@ useSeoMeta({
             <div class="flex items-start gap-3">
               <span class="text-xl">📍</span>
               <div>
-                <span class="text-xs text-base-content/60 uppercase font-bold block">Område</span>
-                <span>Ängelholm & Skåne med omnejd (hela landet på förfrågan)</span>
+                <span class="text-xs text-base-content/60 uppercase font-bold block">{{ t('contact.area_label') }}</span>
+                <span>{{ t('contact.area_val') }}</span>
               </div>
             </div>
 
             <div class="flex items-start gap-3">
               <span class="text-xl">🎸</span>
               <div>
-                <span class="text-xs text-base-content/60 uppercase font-bold block">Sättning</span>
-                <span>4 musiker: sång/munspel, elgitarr, elbas, trummor</span>
+                <span class="text-xs text-base-content/60 uppercase font-bold block">{{ t('contact.lineup_label') }}</span>
+                <span>{{ t('contact.lineup_val') }}</span>
               </div>
             </div>
 
             <!-- Social channels -->
             <div class="pt-4 border-t border-primary/20">
-              <span class="text-xs text-base-content/60 uppercase font-bold block mb-2">Följ & Lyssna</span>
+              <span class="text-xs text-base-content/60 uppercase font-bold block mb-2">{{ t('contact.follow_listen') }}</span>
               <div class="flex items-center gap-2">
                 <a
                   href="https://www.facebook.com/Detsjundegunget"
@@ -68,7 +68,7 @@ useSeoMeta({
                   target="_blank"
                   rel="noopener noreferrer"
                   class="btn btn-xs btn-outline rounded-full gap-1 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10"
-                  title="Kommer snart på Spotify"
+                  :title="t('contact.spotify_soon')"
                 >
                   Spotify ↗
                 </a>
@@ -87,14 +87,14 @@ useSeoMeta({
 
         <!-- Technical rider teaser -->
         <div class="stage-card p-6 rounded-2xl border border-primary/20 space-y-3">
-          <h3 class="font-heading text-xl text-primary font-bold">Det enkla bandet utan primadonnor</h3>
+          <h3 class="font-heading text-xl text-primary font-bold">{{ t('contact.simple_band_title') }}</h3>
           <p class="text-xs text-base-content/80 leading-relaxed">
-            Vi har med oss full backline (förstärkare, trumset, mikrofoner) och kan även ta med eget PA-ljudsystem vid mindre tillställningar. Allt vi behöver är:
+            {{ t('contact.simple_band_desc') }}
           </p>
           <ul class="space-y-1.5 text-xs text-base-content/75 list-disc list-inside">
-            <li>230V jordat eluttag nära scenen</li>
-            <li>En scen eller yta på minst ca 4x3 meter</li>
-            <li>Kaffe, vatten och en trevlig stämning!</li>
+            <li>{{ t('contact.req_power') }}</li>
+            <li>{{ t('contact.req_stage') }}</li>
+            <li>{{ t('contact.req_vibe') }}</li>
           </ul>
         </div>
       </div>

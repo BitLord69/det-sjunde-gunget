@@ -1,9 +1,11 @@
 <script setup lang="ts">
+const { t } = useI18n()
+
 useSeoMeta({
-  title: 'Det 7:e Gunget | Blues och rock med glimt i ögat',
-  description: 'Fyra rutinerade herrar över 50. Blues, rock, egna låtar och precis lagom mycket oväsen.',
-  ogTitle: 'Det 7:e Gunget — Blues & Rock',
-  ogDescription: 'Fyra herrar över 50 som fortfarande tycker ett bra riff slår friskvård. Se våra gig och lyssna!',
+  title: () => `${t('seo.home_title')}`,
+  description: () => t('seo.home_desc'),
+  ogTitle: () => `${t('seo.home_og_title')}`,
+  ogDescription: () => t('seo.home_og_desc'),
   ogImage: '/media/og/og-share.jpg',
 })
 

@@ -142,7 +142,7 @@ const resetForm = () => {
         :class="formLoading ? 'loading' : ''"
         :disabled="formLoading"
       >
-        <span>{{ formLoading ? 'Skickar...' : t('contact.send_button') }}</span>
+        <span>{{ formLoading ? t('contact.submitting') : t('contact.send_button') }}</span>
       </button>
     </form>
 
@@ -150,10 +150,10 @@ const resetForm = () => {
       <span class="text-5xl">🎸</span>
       <h3 class="text-2xl font-heading text-primary font-bold">{{ t('contact.success_msg') }}</h3>
       <p class="text-xs text-base-content/75 max-w-sm mx-auto">
-        Tack för din förfrågan! Vi återkopplar så snart vi tagit av oss gitarrerna.
+        {{ t('contact.success_subtext') }}
       </p>
-      <button type="button" class="btn btn-outline btn-primary btn-sm rounded-full mt-2" @click="resetForm">
-        Skicka en till förfrågan
+      <button type="button" class="btn btn-outline btn-primary btn-sm rounded-full mt-2 cursor-pointer" @click="resetForm">
+        {{ t('contact.send_another') }}
       </button>
     </div>
   </div>

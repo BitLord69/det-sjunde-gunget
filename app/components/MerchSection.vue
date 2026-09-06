@@ -90,7 +90,7 @@ const displayedProducts = computed(() => {
             target="_blank"
             rel="noopener noreferrer"
             class="btn btn-xs btn-primary font-bold rounded-full px-2.5 flex-shrink-0 text-[11px]"
-            title="Köp på Spreadshop"
+            :title="locale === 'en' ? 'Buy on Spreadshop' : 'Köp på Spreadshop'"
           >
             <span>{{ locale === 'en' ? 'Buy' : 'Köp' }}</span>
             <span>↗</span>

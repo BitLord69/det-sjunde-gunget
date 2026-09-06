@@ -12,14 +12,14 @@ const { data: galleryItems } = await useFetch<any[]>('/api/gallery', {
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 pb-4 border-b border-primary/20 gap-4">
       <div>
-        <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">Scen, Svett & Rep</span>
+        <span class="text-xs font-bold uppercase tracking-[0.25em] text-secondary">{{ t('gallery.section_tag') }}</span>
         <h2 class="text-3xl sm:text-5xl font-heading text-primary mt-1 text-gritty pb-2">
-          Galleri
+          {{ t('gallery.title') }}
         </h2>
       </div>
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <p class="text-sm text-base-content/70 max-w-md">
-          Ögonblick från studion, replokalen och livescener runt om i landet.
+          {{ t('gallery.desc') }}
         </p>
         <NuxtLink :to="localePath('/gallery')" class="btn btn-outline btn-primary btn-sm rounded-full font-bold flex-shrink-0">
           {{ t('gallery.all_gallery') }} →

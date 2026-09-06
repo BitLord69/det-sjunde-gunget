@@ -91,48 +91,50 @@ const activeSong = computed(() => {
   return songsWithLyrics.value.find((s) => s.id === activeSongId.value) || songsWithLyrics.value[0] || null
 })
 
-// Format lyrics into stylized verse/chorus blocks
-const parseLyricsBlocks = (text: string | null) => {
+interface LyricBlock {
+  type: 'verse' | 'chorus' | 'bridge' | 'other'
+  label?: string
+  lines: string[]
+}
+
+const parseLyricsBlocks = (text: string | null): LyricBlock[] => {
   if (!text) return []
-  const lines = text.split('\n')
-  const blocks: { type: 'verse' | 'chorus' | 'bridge' | 'outro' | 'text'; label: string; lines: string[] }[] = []
-  let currentBlock: { type: 'verse' | 'chorus' | 'bridge' | 'outro' | 'text'; label: string; lines: string[] } = {
-    type: 'text',
-    label: '',
-    lines: [],
-  }
+  const rawBlocks = text.split(/\n\s*\n/)
+  const blocks: LyricBlock[] = []
 
-  for (const rawLine of lines) {
-    const line = rawLine.trim()
-    if (!line) {
-      if (currentBlock.lines.length > 0) {
-        blocks.push(currentBlock)
-        currentBlock = { type: 'text', label: '', lines: [] }
-      }
-      continue
-    }
+  for (const raw of rawBlocks) {
+    const lines = raw.split('\n').map((l) => l.trimEnd())
+    if (lines.length === 0 || (lines.length === 1 && !lines[0])) continue
 
-    const tagMatch = line.match(/^\[(.*?)\]$/)
-    if (tagMatch && tagMatch[1]) {
-      if (currentBlock.lines.length > 0) {
-        blocks.push(currentBlock)
-      }
-      const label = tagMatch[1]
-      let type: 'verse' | 'chorus' | 'bridge' | 'outro' | 'text' = 'text'
+    let firstLine = lines[0] || ''
+    let type: LyricBlock['type'] = 'verse'
+    let label: string | undefined
+
+    if (firstLine.startsWith('[') && firstLine.endsWith(']')) {
+      label = firstLine.slice(1, -1).trim()
+      lines.shift()
       const lower = label.toLowerCase()
       if (lower.includes('refräng') || lower.includes('chorus')) type = 'chorus'
-      else if (lower.includes('vers') || lower.includes('verse')) type = 'verse'
-      else if (lower.includes('stick') || lower.includes('bridge') || lower.includes('solo')) type = 'bridge'
-      else if (lower.includes('outro') || lower.includes('slut')) type = 'outro'
-
-      currentBlock = { type, label, lines: [] }
+      else if (lower.includes('stick') || lower.includes('bridge')) type = 'bridge'
+      else type = 'verse'
     } else {
-      currentBlock.lines.push(rawLine)
+      const lower = firstLine.toLowerCase()
+      if (lower.includes('refräng:') || lower.includes('chorus:')) {
+        type = 'chorus'
+        label = firstLine.replace(':', '').trim()
+        lines.shift()
+      } else if (lower.includes('stick:') || lower.includes('bridge:')) {
+        type = 'bridge'
+        label = firstLine.replace(':', '').trim()
+        lines.shift()
+      }
     }
-  }
 
-  if (currentBlock.lines.length > 0) {
-    blocks.push(currentBlock)
+    blocks.push({
+      type,
+      label,
+      lines: lines.filter((l) => l.length > 0),
+    })
   }
 
   return blocks
@@ -140,13 +142,13 @@ const parseLyricsBlocks = (text: string | null) => {
 </script>
 
 <template>
-  <div class="relative min-h-screen pb-24 overflow-hidden">
-    <!-- Atmospheric Stage & Rehearsal Room Background -->
-    <div class="absolute inset-0 -z-10 pointer-events-none">
+  <div class="relative min-h-screen pb-16">
+    <!-- Atmospheric subtle stage glow & background -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden -z-10">
       <NuxtImg
-        src="/media/brand/jukebox_diner_bg.webp"
-        alt="Rehearsal room atmosphere"
-        class="w-full h-full object-cover opacity-15 filter blur-sm scale-105"
+        src="/media/textures/stipple-mask.png"
+        alt=""
+        class="w-full h-full object-cover opacity-15 mix-blend-overlay"
         priority
       />
       <div class="absolute inset-0 bg-gradient-to-b from-base-100 via-base-100/90 to-base-100" />
@@ -156,8 +158,8 @@ const parseLyricsBlocks = (text: string | null) => {
     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-6 sm:space-y-8">
       <!-- HEADER: Centered with Eyebrow -->
       <PageHeader
-        title="Låttexter"
-        description="Sjung med i svänget! Här hittar du texterna till våra egna bluesrökare och tolkningar samt låthistorier direkt från replokalen."
+        :title="t('lyrics.title')"
+        :description="t('lyrics.desc')"
       />
 
       <!-- Quick Filter / Search Bar -->
@@ -166,7 +168,7 @@ const parseLyricsBlocks = (text: string | null) => {
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Sök efter låt eller textrad..."
+            :placeholder="t('lyrics.search_placeholder')"
             class="input input-bordered input-sm sm:input-md w-full rounded-full pl-10 pr-4 bg-base-200/90 text-xs sm:text-sm border-primary/30 focus:border-primary"
           />
           <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-base-content/50 pointer-events-none">🔍</span>
@@ -179,7 +181,7 @@ const parseLyricsBlocks = (text: string | null) => {
             :class="showChords ? 'btn-primary shadow-sm' : 'btn-outline border-primary/30 text-base-content/70'"
             @click="showChords = !showChords"
           >
-            🎸 {{ showChords ? 'Dölj ackord' : 'Visa ackord' }}
+            🎸 {{ showChords ? t('lyrics.hide_chords') : t('lyrics.show_chords') }}
           </button>
 
           <button
@@ -188,7 +190,7 @@ const parseLyricsBlocks = (text: string | null) => {
             :class="showEnglish ? 'btn-secondary shadow-sm' : 'btn-outline border-secondary/30 text-base-content/70'"
             @click="showEnglish = !showEnglish"
           >
-            🇬🇧 {{ showEnglish ? 'Svenska texter' : 'Engelsk översättning' }}
+            🇬🇧 {{ showEnglish ? t('lyrics.view_swedish') : t('lyrics.view_english') }}
           </button>
         </div>
       </div>
@@ -198,8 +200,8 @@ const parseLyricsBlocks = (text: string | null) => {
         <!-- LEFT: Spiral Song Index Sidebar -->
         <div class="stage-card p-5 rounded-3xl border border-primary/30 space-y-4 shadow-xl lg:sticky lg:top-24">
           <div class="flex items-center justify-between border-b border-primary/20 pb-3">
-            <span class="font-heading text-lg text-primary font-bold">Innehållsförteckning</span>
-            <span class="badge badge-primary font-mono text-xs font-bold">{{ filteredSongs.length }} låtar</span>
+            <span class="font-heading text-lg text-primary font-bold">{{ t('lyrics.index_title') }}</span>
+            <span class="badge badge-primary font-mono text-xs font-bold">{{ t('lyrics.songs_count', { count: filteredSongs.length }) }}</span>
           </div>
 
           <div class="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
@@ -224,7 +226,7 @@ const parseLyricsBlocks = (text: string | null) => {
                 class="badge badge-xs font-mono font-bold uppercase flex-shrink-0"
                 :class="activeSongId === song.id ? 'badge-neutral text-primary' : 'badge-primary badge-outline'"
               >
-                Egen
+                {{ t('lyrics.original_badge') }}
               </span>
             </button>
           </div>
@@ -232,7 +234,7 @@ const parseLyricsBlocks = (text: string | null) => {
           <!-- Jukebox Direct Link -->
           <div class="pt-4 border-t border-primary/20 text-center">
             <NuxtLink :to="localePath('/music')" class="btn btn-outline btn-secondary btn-sm w-full rounded-full font-bold">
-              🎵 Lyssna i Jukeboxen →
+              {{ t('lyrics.listen_jukebox') }}
             </NuxtLink>
           </div>
         </div>
@@ -250,8 +252,8 @@ const parseLyricsBlocks = (text: string | null) => {
               <div>
                 <div class="text-[10px] sm:text-xs font-mono font-black uppercase tracking-widest text-[#801b1c] flex items-center gap-2">
                   <span>★ DET 7:E GUNGET ★</span>
-                  <span v-if="activeSong.isOriginal" class="bg-[#ecd5c3] px-2 py-0.5 rounded text-[#731a1b] font-bold">ORIGINALKOMPOSITION</span>
-                  <span v-else class="text-[#634e3b]">Cover av {{ activeSong.originalArtist }}</span>
+                  <span v-if="activeSong.isOriginal" class="bg-[#ecd5c3] px-2 py-0.5 rounded text-[#731a1b] font-bold">{{ t('lyrics.original_composition') }}</span>
+                  <span v-else class="text-[#634e3b]">{{ t('lyrics.cover_of', { artist: activeSong.originalArtist }) }}</span>
                 </div>
 
                 <h2 class="font-heading font-black text-3xl sm:text-4xl lg:text-5xl text-[#1a1209] tracking-tight uppercase mt-1">
@@ -265,7 +267,7 @@ const parseLyricsBlocks = (text: string | null) => {
                   :to="localePath({ path: '/music', query: { song: activeSong.id } })"
                   class="btn btn-sm bg-[#912426] hover:bg-[#731a1b] text-[#faf6ed] border-none rounded-full font-bold shadow px-4 text-xs"
                 >
-                  ▶ Spela i Jukeboxen
+                  {{ t('lyrics.play_jukebox') }}
                 </NuxtLink>
               </div>
             </div>
@@ -273,13 +275,13 @@ const parseLyricsBlocks = (text: string | null) => {
             <!-- Chords / Key Sheet Info -->
             <div v-if="showChords && activeSong.chords" class="mt-4 p-3.5 rounded-xl bg-[#ede3d1] border border-[#d6c5aa] font-mono text-xs text-[#422e1b] space-y-1 shadow-inner">
               <div class="font-bold text-[#801b1c] flex items-center gap-1.5">
-                <span>🎸</span> ACKORD & STRUKTUR:
+                <span>🎸</span> {{ t('lyrics.chords_and_structure') }}
               </div>
               <pre class="font-mono text-xs whitespace-pre-wrap leading-relaxed">{{ activeSong.chords }}</pre>
             </div>
           </div>
 
-          <!-- Lyrics Body with Verse / Chorus Callouts -->
+          <!-- Lyrics Body -->
           <div class="space-y-6 text-sm sm:text-base leading-relaxed">
             <template v-if="!showEnglish || !activeSong.lyricsEn">
               <div
@@ -294,14 +296,13 @@ const parseLyricsBlocks = (text: string | null) => {
                       : 'bg-transparent'
                 "
               >
-                <!-- Block Label (e.g. [Refräng], [Vers 1]) -->
                 <div v-if="block.label" class="text-[11px] font-mono font-black uppercase tracking-wider mb-2"
                   :class="block.type === 'chorus' ? 'text-[#912426]' : 'text-[#6e5845]'"
                 >
                   {{ block.label }}
                 </div>
 
-                <div class="font-serif sm:font-sans font-medium text-[#1c150f] space-y-1 whitespace-pre-line text-sm sm:text-base">
+                <div class="font-medium text-[#1c150f] space-y-1 whitespace-pre-line text-sm sm:text-base">
                   <div v-for="(line, lIdx) in block.lines" :key="lIdx" class="leading-relaxed">
                     {{ line }}
                   </div>
@@ -312,7 +313,7 @@ const parseLyricsBlocks = (text: string | null) => {
             <!-- English Translation View -->
             <template v-else>
               <div class="p-3 rounded-lg bg-secondary/15 text-secondary text-xs font-mono font-bold mb-4">
-                🇬🇧 English lyric interpretation:
+                🇬🇧 {{ t('lyrics.english_interpretation') }}
               </div>
               <div
                 v-for="(block, bIdx) in parseLyricsBlocks(activeSong.lyricsEn)"
@@ -339,10 +340,10 @@ const parseLyricsBlocks = (text: string | null) => {
           <!-- Sheet Footer Band Stamp -->
           <div class="pt-6 border-t-2 border-dashed border-[#8c765c]/40 flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-[#735e47] gap-3">
             <div class="flex items-center gap-2">
-              <span>✍️ Text & Musik: Det 7:e Gunget</span>
+              <span>✍️ {{ t('lyrics.lyrics_and_music') }}</span>
             </div>
             <div class="font-bold text-[#801b1c]">
-              VOLYM: 11 ⚡ BLUES & ROCK
+              {{ t('lyrics.volume_stamp') }}
             </div>
           </div>
         </div>

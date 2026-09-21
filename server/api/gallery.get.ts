@@ -5,6 +5,15 @@ import { galleryItems } from '../db/schema'
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const category = query.category as 'photo' | 'video' | 'fan_central' | undefined
+  const epk = query.epk === 'true'
+
+  if (epk) {
+    return await db
+      .select()
+      .from(galleryItems)
+      .where(eq(galleryItems.isEpk, true))
+      .orderBy(desc(galleryItems.createdAt))
+  }
 
   if (category) {
     return await db

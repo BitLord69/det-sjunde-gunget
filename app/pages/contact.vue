@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 useSeoMeta({
   title: computed(() => `${t('contact.title')} | Det 7:e Gunget`),
@@ -11,6 +12,26 @@ useSeoMeta({
   <div class="mx-auto max-w-7xl px-6 pt-4 sm:pt-6 pb-12 lg:px-10 space-y-10 sm:space-y-12">
     <!-- Header -->
     <PageHeader :title="t('contact.title')" :description="t('contact.desc')" />
+
+    <!-- Promoter & Tech Rider Alert Banner -->
+    <div class="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-base-200 via-primary/10 to-base-200 border-2 border-primary/40 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl flex-shrink-0">🎛️</span>
+        <div>
+          <h2 class="font-heading text-base sm:text-lg text-primary font-bold">{{ t('contact.epk_banner_title') }}</h2>
+          <p class="text-xs text-base-content/80 mt-0.5">
+            {{ t('contact.epk_banner_desc') }}
+          </p>
+        </div>
+      </div>
+      <NuxtLink
+        :to="localePath('/epk')"
+        class="btn btn-sm btn-primary rounded-full font-bold gap-1 text-xs shadow self-stretch sm:self-auto flex-shrink-0"
+      >
+        <span>🎤</span>
+        <span>{{ t('contact.epk_banner_btn') }}</span>
+      </NuxtLink>
+    </div>
 
     <div class="grid lg:grid-cols-[1fr_1.1fr] gap-12 items-start">
       <!-- Left: Contact Details & Tech Rider -->
@@ -85,9 +106,12 @@ useSeoMeta({
           </div>
         </div>
 
-        <!-- Technical rider teaser -->
-        <div class="stage-card p-6 rounded-2xl border border-primary/20 space-y-3">
-          <h3 class="font-heading text-xl text-primary font-bold">{{ t('contact.simple_band_title') }}</h3>
+        <!-- Technical rider teaser with direct EPK Link -->
+        <div class="stage-card p-6 rounded-2xl border border-primary/20 space-y-4">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="font-heading text-xl text-primary font-bold">{{ t('contact.simple_band_title') }}</h3>
+            <span class="badge badge-sm badge-neutral border-primary/30 text-[10px] font-mono">STAGE RIDER</span>
+          </div>
           <p class="text-xs text-base-content/80 leading-relaxed">
             {{ t('contact.simple_band_desc') }}
           </p>
@@ -96,6 +120,17 @@ useSeoMeta({
             <li>{{ t('contact.req_stage') }}</li>
             <li>{{ t('contact.req_vibe') }}</li>
           </ul>
+
+          <div class="pt-3 border-t border-primary/15 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <span class="text-[11px] text-base-content/60 font-medium">Scenplot, kanallista & pressfoton för arrangörer:</span>
+            <NuxtLink
+              :to="localePath('/epk')"
+              class="btn btn-xs sm:btn-sm btn-primary rounded-full font-bold gap-1 text-xs shadow self-start sm:self-auto"
+            >
+              <span>🎤</span>
+              <span>Presskit & Rider (EPK) →</span>
+            </NuxtLink>
+          </div>
         </div>
       </div>
 

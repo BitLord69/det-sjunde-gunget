@@ -28,6 +28,10 @@ export default defineEventHandler(async (event) => {
         captionEn: body.captionEn || null,
         altTextSv: body.altTextSv || 'Det 7:e Gunget bild',
         altTextEn: body.altTextEn || 'Det 7:e Gunget photo',
+        isEpk: Boolean(body.isEpk),
+        epkTitleSv: body.epkTitleSv || null,
+        epkTitleEn: body.epkTitleEn || null,
+        epkResolution: body.epkResolution || null,
         updatedAt: now,
       })
       .where(eq(galleryItems.id, body.id))
@@ -44,6 +48,10 @@ export default defineEventHandler(async (event) => {
       captionEn: body.captionEn || null,
       altTextSv: body.altTextSv || 'Det 7:e Gunget bild',
       altTextEn: body.altTextEn || 'Det 7:e Gunget photo',
+      isEpk: Boolean(body.isEpk),
+      epkTitleSv: body.epkTitleSv || null,
+      epkTitleEn: body.epkTitleEn || null,
+      epkResolution: body.epkResolution || null,
       createdAt: now,
       updatedAt: now,
     })

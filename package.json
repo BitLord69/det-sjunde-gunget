@@ -33,6 +33,7 @@
     "@vercel/blob": "^2.8.0",
     "better-auth": "^1.6.29",
     "drizzle-orm": "^0.45.2",
+    "jszip": "^3.10.2",
     "nanoid": "^6.0.1",
     "nuxt": "^4.5.2",
     "sharp": "^0.35.3",
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
+    "@types/jszip": "^3.4.1",
     "autoprefixer": "^10.5.4",
     "daisyui": "^4.12.24",
     "dotenv": "^17.4.2",

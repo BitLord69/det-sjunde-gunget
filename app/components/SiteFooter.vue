@@ -114,6 +114,7 @@ const handleNewsletter = async () => {
           <li><NuxtLink :to="localePath('/about')" class="hover:text-primary transition-colors">{{ t('nav.band') }} →</NuxtLink></li>
           <li><NuxtLink :to="localePath('/gallery')" class="hover:text-primary transition-colors">{{ t('nav.gallery') }} →</NuxtLink></li>
           <li><NuxtLink :to="localePath('/fancentral')" class="hover:text-primary transition-colors">{{ t('nav.fan_central') }} →</NuxtLink></li>
+          <li><NuxtLink :to="localePath('/epk')" class="hover:text-primary transition-colors text-primary/90 font-medium">🎤 Presskit & Tech Rider →</NuxtLink></li>
           <li>
             <a
               href="https://det-7e-gunget.myspreadshop.se"
@@ -151,9 +152,13 @@ const handleNewsletter = async () => {
           <p><span class="text-secondary font-bold">{{ t('footer.email_label') }}:</span> kontakt@det7egunget.se</p>
           <p><span class="text-secondary font-bold">{{ t('footer.location_label') }}:</span> {{ t('footer.location_value') }}</p>
         </div>
-        <div class="mt-4">
+        <div class="mt-4 flex items-center gap-2 flex-wrap">
           <NuxtLink :to="localePath('/contact')" class="btn btn-outline btn-sm btn-primary rounded-full px-5">
             {{ t('contact.send_button') }}
+          </NuxtLink>
+          <NuxtLink :to="localePath('/epk')" class="btn btn-ghost btn-xs text-secondary hover:text-primary transition-colors flex items-center gap-1">
+            <span>🎤</span>
+            <span>Tech Rider & EPK →</span>
           </NuxtLink>
         </div>
       </div>

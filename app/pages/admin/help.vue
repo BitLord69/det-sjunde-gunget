@@ -218,6 +218,14 @@ const scrollTo = (id: string) => {
               </td>
             </tr>
             <tr class="hover:bg-base-100/50">
+              <td class="font-bold text-primary px-4 py-3">Presskit & Tech Rider (EPK)</td>
+              <td class="font-mono text-secondary px-4 py-3">/epk</td>
+              <td class="px-4 py-3">Dedikerad arrangörs- och pressresurs. Innehåller högupplösta pressfoton (300 DPI som styrs dynamiskt från bildgalleriet i CMS:en), logotyper, kort/lång presstext med 1-klicks kopiering, visuell scenplot, 13-kanalers patchlista (input list), hospitality rider, textfilsexport (.txt) och ren A4-utskrift (@media print).</td>
+              <td class="px-4 py-3 text-right">
+                <NuxtLink to="/epk" target="_blank" class="btn btn-ghost btn-xs text-primary underline">Öppna ↗</NuxtLink>
+              </td>
+            </tr>
+            <tr class="hover:bg-base-100/50">
               <td class="font-bold text-primary px-4 py-3">Kontakt & Bokning</td>
               <td class="font-mono text-secondary px-4 py-3">/contact</td>
               <td class="px-4 py-3">Bokningsförfrågningar för arrangörer samt kontaktformulär skyddat med antispam-filter.</td>
@@ -362,13 +370,13 @@ const scrollTo = (id: string) => {
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/gallery</span>
               <span class="text-xl">📷</span>
             </div>
-            <h3 class="font-heading text-lg font-bold text-primary">Galleri & Bilder</h3>
+            <h3 class="font-heading text-lg font-bold text-primary">Galleri, Presskit & Dokument</h3>
             <p class="text-xs text-base-content/80">
-              Ladda upp livefoton, bandbilder och fläktfoton. Välj ramstil och använd knappen (<strong>📱 Dela</strong>) på valfritt foto för att skicka fotot direkt till Facebook.
+              Ladda upp foton med ramstilar (Polaroid, tejp etc.) samt hantera officiellt arrangörsmaterial på <NuxtLink to="/epk" target="_blank" class="text-primary font-bold underline">/epk</NuxtLink>. Innehåller separata flikar för <strong>Alla bilder</strong>, <strong>Presskit / Foton</strong> (med 1-klicks <strong>⭐ EPK</strong> snabbknapp) och <strong>Arrangörsdokument / PDF</strong> (tryckfärdiga affischer, rider-bilagor och pressmeddelanden). Systemet läser dessutom av bilders pixelupplösning och filstorlek automatiskt (t.ex. <em>4240 × 2832 px • 4.3 MB • 300 DPI</em>). Innehåller även knappen (<strong>📱 Dela</strong>) för sociala medier.
             </p>
           </div>
           <NuxtLink to="/admin/gallery" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
-            Gå till Galleri →
+            Gå till Galleri & Presskit →
           </NuxtLink>
         </div>
 
@@ -602,6 +610,22 @@ const scrollTo = (id: string) => {
             <li>Här ser du bilden, vem som skickat in den, kommentar, var och när bilden togs. Du kan välja nålfärg och vinkel om du vill finslipa presentationen.</li>
             <li>Klicka på <strong>✓ Godkänn & Nåla upp</strong> för att publicera bilden på korktavlan direkt.</li>
             <li>Är bilden olämplig eller spam? Klicka på <strong>🚫 Spärra e-post</strong>. Detta avvisar bilden och spärrar e-postadressen så personen inte kan ladda upp mer. Du kan när som helst se eller häva spärrar under fliken <strong>Spärrade e-postadresser</strong>.</li>
+          </ol>
+        </div>
+
+        <!-- Scenario F -->
+        <div class="bg-base-200/60 p-5 rounded-2xl border border-primary/20 space-y-2">
+          <div class="flex items-center gap-2 font-bold text-primary">
+            <span class="badge badge-primary badge-sm">Scenario F</span>
+            <h3 class="font-heading text-base">"En arrangör eller festival ber om presskit, scenplot eller teknisk rider!"</h3>
+          </div>
+          <ol class="list-decimal list-inside text-xs sm:text-sm text-base-content/90 space-y-1.5 pl-2">
+            <li>Hänvisa arrangören eller ljudteknikern direkt till <NuxtLink to="/epk" target="_blank" class="text-primary font-bold underline">det7egunget.se/epk</NuxtLink>. Den finns även länkad i sidfoten och på boknings-/kontaktsidan.</li>
+            <li><strong>Komplett ZIP-paket med 1 klick:</strong> Arrangören kan klicka på <strong>📦 Komplett Presskit (.zip)</strong> för att ladda ner ett färdigt arkiv med samtliga högupplösta pressfoton (300 DPI), logotyper, PDF-affischmallar och en tydlig instruktionstext (README).</li>
+            <li><strong>Presstext & Logotyper:</strong> Arrangören kan med ett klick kopiera både kort och lång officiell presstext till programblad och festivalprogram, samt ladda ner logotyper och enskilda foton.</li>
+            <li><strong>Hantera pressbilder & PDF-dokument:</strong> Gå till <NuxtLink to="/admin/gallery" class="text-primary font-bold underline">Galleri (/admin/gallery)</NuxtLink>. Under fliken <strong>⭐ Presskit / Foton</strong> växlar du med ett klick vilka bilder som ingår. Under fliken <strong>📄 Arrangörsdokument / PDF</strong> kan ni ladda upp tryckfärdiga affischer (A3), avtalsbilagor eller pressmeddelanden som omedelbart blir nedladdningsbara för arrangören.</li>
+            <li><strong>Ljudtekniker:</strong> Under fliken <em>Teknisk Rider & Scenplot</em> finns en visuell scenöversikt (placering av de 4 musikerna, monitorer och 230V strömuttag) samt en komplett 13-kanalers patchlista (input list).</li>
+            <li><strong>Utskrift & mejl:</strong> Klicka på <strong>Ladda ner Tech Rider (.txt)</strong> för att snabbt mejla en ren textfil till arrangören, eller <strong>Skriv ut (A4)</strong> för en bläckbesparande svartvit utskrift direkt till mixerbordet.</li>
           </ol>
         </div>
       </div>

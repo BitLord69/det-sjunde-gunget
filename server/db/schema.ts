@@ -165,6 +165,10 @@ export const galleryItems = sqliteTable('gallery_items', {
   altTextSv: text('alt_text_sv').notNull(),
   altTextEn: text('alt_text_en'),
   takenAt: integer('taken_at', { mode: 'timestamp_ms' }),
+  isEpk: integer('is_epk', { mode: 'boolean' }).notNull().default(false),
+  epkTitleSv: text('epk_title_sv'),
+  epkTitleEn: text('epk_title_en'),
+  epkResolution: text('epk_resolution'),
   ...timestamps,
 })
 
@@ -324,6 +328,21 @@ export const bannedEmails = sqliteTable(
   },
   (table) => [uniqueIndex('banned_emails_email_idx').on(table.email)],
 )
+
+export const epkDocuments = sqliteTable('epk_documents', {
+  id: text('id').primaryKey(),
+  titleSv: text('title_sv').notNull(),
+  titleEn: text('title_en'),
+  descriptionSv: text('description_sv'),
+  descriptionEn: text('description_en'),
+  fileUrl: text('file_url').notNull(),
+  fileType: text('file_type').notNull().default('pdf'),
+  fileSize: text('file_size'),
+  category: text('category').default('poster'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  ...timestamps,
+})
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),

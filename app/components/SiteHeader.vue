@@ -340,6 +340,14 @@ const nextGig = computed(() => gigsData.value?.upcoming?.[0] || null)
               <span class="text-xs text-base-content/40">↗</span>
             </a>
             <NuxtLink
+              :to="localePath('/epk')"
+              class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
+              @click="isMobileMenuOpen = false"
+            >
+              <span>🎤 Presskit & Rider (EPK)</span>
+              <span class="text-xs text-base-content/40">›</span>
+            </NuxtLink>
+            <NuxtLink
               :to="localePath('/contact')"
               class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-secondary"
               :title="t('nav.hints.book')"

@@ -76,10 +76,27 @@ async function runMigration() {
       alt_text_sv text NOT NULL,
       alt_text_en text,
       taken_at integer,
+      is_epk integer DEFAULT 0 NOT NULL,
+      epk_title_sv text,
+      epk_title_en text,
+      epk_resolution text,
       created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
       updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
     )
   `)
+
+  try {
+    await remoteClient.execute('ALTER TABLE gallery_items ADD COLUMN is_epk integer DEFAULT 0 NOT NULL')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE gallery_items ADD COLUMN epk_title_sv text')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE gallery_items ADD COLUMN epk_title_en text')
+  } catch {}
+  try {
+    await remoteClient.execute('ALTER TABLE gallery_items ADD COLUMN epk_resolution text')
+  } catch {}
 
   // 4. Songs table
   await remoteClient.execute(`
@@ -344,9 +361,24 @@ async function runMigration() {
     )
   `)
 
-  try {
-    await remoteClient.execute('ALTER TABLE banned_emails ADD COLUMN banned_by text')
-  } catch {}
+  // 16. EPK Documents table
+  await remoteClient.execute(`
+    CREATE TABLE IF NOT EXISTS epk_documents (
+      id text PRIMARY KEY NOT NULL,
+      title_sv text NOT NULL,
+      title_en text,
+      description_sv text,
+      description_en text,
+      file_url text NOT NULL,
+      file_type text DEFAULT 'pdf' NOT NULL,
+      file_size text,
+      category text DEFAULT 'poster',
+      sort_order integer DEFAULT 0 NOT NULL,
+      is_active integer DEFAULT 1 NOT NULL,
+      created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+      updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+    )
+  `)
 
   console.log('✓ All database tables & columns successfully verified in Turso Cloud!')
 
@@ -378,11 +410,17 @@ async function runMigration() {
       localBanned = await localClient.execute('SELECT * FROM banned_emails')
     } catch {}
 
+    let localDocs = { rows: [] }
+    try {
+      localDocs = await localClient.execute('SELECT * FROM epk_documents')
+    } catch {}
+
     console.log(`\nSyncing data from local database:`)
     console.log(`- ${localAdmins.rows.length} admins`)
     console.log(`- ${localGigs.rows.length} gigs`)
     console.log(`- ${localMembers.rows.length} band members`)
     console.log(`- ${localGallery.rows.length} gallery items`)
+    console.log(`- ${localDocs.rows.length} EPK documents`)
     console.log(`- ${localSongs.rows.length} songs`)
     console.log(`- ${localHashtags.rows.length} social hashtags`)
     console.log(`- ${localSetlist.rows.length} setlist tracks`)
@@ -398,6 +436,7 @@ async function runMigration() {
       { sql: 'DELETE FROM merch_products', args: [] },
       { sql: 'DELETE FROM fan_submissions', args: [] },
       { sql: 'DELETE FROM banned_emails', args: [] },
+      { sql: 'DELETE FROM epk_documents', args: [] },
       { sql: 'DELETE FROM admin_sessions', args: [] },
       { sql: 'DELETE FROM admins', args: [] },
       { sql: 'DELETE FROM gigs', args: [] },
@@ -424,8 +463,12 @@ async function runMigration() {
         args: [row.id, row.name, row.role, row.bio_sv, row.bio_en, row.photo_url, row.gear_sv, row.gear_en, row.favorite_chord, row.weakness_sv, row.coffee_consumption, row.sort_order, row.created_at, row.updated_at],
       })),
       ...localGallery.rows.map((row) => ({
-        sql: `INSERT INTO gallery_items (id, category, media_url, frame_style, rotation, caption_sv, caption_en, alt_text_sv, alt_text_en, taken_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [row.id, row.category, row.media_url, row.frame_style, row.rotation, row.caption_sv, row.caption_en, row.alt_text_sv, row.alt_text_en, row.taken_at, row.created_at, row.updated_at],
+        sql: `INSERT INTO gallery_items (id, category, media_url, frame_style, rotation, caption_sv, caption_en, alt_text_sv, alt_text_en, is_epk, epk_title_sv, epk_title_en, epk_resolution, taken_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.category, row.media_url, row.frame_style, row.rotation, row.caption_sv, row.caption_en, row.alt_text_sv, row.alt_text_en, row.is_epk ?? 0, row.epk_title_sv || null, row.epk_title_en || null, row.epk_resolution || null, row.taken_at, row.created_at, row.updated_at],
+      })),
+      ...localDocs.rows.map((row) => ({
+        sql: `INSERT INTO epk_documents (id, title_sv, title_en, description_sv, description_en, file_url, file_type, file_size, category, sort_order, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [row.id, row.title_sv, row.title_en, row.description_sv, row.description_en, row.file_url, row.file_type, row.file_size, row.category, row.sort_order, row.is_active, row.created_at, row.updated_at],
       })),
       ...localSongs.rows.map((row) => ({
         sql: `INSERT INTO songs (id, title, is_original, original_artist, embed_provider, embed_url, audio_url, cover_image, duration, lyrics, lyrics_en, chords, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,

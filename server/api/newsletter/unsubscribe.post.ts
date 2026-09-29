@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     console.error('[Newsletter] Unsubscribe error:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Kunde inte avregistrera. Kontakta kontakt@det7egunget.se för manuell hjälp.',
+      statusMessage: 'Kunde inte avregistrera. Kontakta info@det7egunget.se för manuell hjälp.',
     })
   }
 })

@@ -344,7 +344,7 @@ const formatTime = (secs: number) => {
 
                     <!-- Record Center Label (Perfect Circle) -->
                     <div class="w-20 h-20 sm:w-24 sm:h-24 aspect-square flex-shrink-0 rounded-full bg-gradient-to-tr from-secondary via-primary to-secondary text-neutral p-1.5 shadow-md flex flex-col items-center justify-center text-center">
-                      <span class="text-[7px] sm:text-[8px] font-mono font-bold tracking-tighter uppercase">DET 7:E GUNGET</span>
+                      <span class="text-[7px] sm:text-[8px] font-mono font-bold tracking-tighter">DET 7<span class="lowercase">:e</span> GUNGET</span>
                       <span class="text-[9px] sm:text-[10px] font-heading font-black truncate max-w-[65px] leading-none my-0.5">
                         {{ currentSong ? currentSong.title : '45 RPM' }}
                       </span>
@@ -762,7 +762,7 @@ const formatTime = (secs: number) => {
               >
                 <span class="flex items-center gap-1.5">
                   <span class="opacity-70">★</span>
-                  <span>DET 7:E GUNGET</span>
+                  <span>DET 7<span class="lowercase">:e</span> GUNGET</span>
                   <span class="opacity-70">★</span>
                 </span>
                 <span class="opacity-90 font-mono tracking-wider">SIDE {{ song.side }} • 45 RPM</span>

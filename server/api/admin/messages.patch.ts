@@ -12,10 +12,18 @@ export default defineEventHandler(async (event) => {
   }
 
   const updateData: Record<string, any> = {}
-  if (body.status) {
+  if (body.status !== undefined) {
     updateData.status = body.status
+    if (body.status === 'unread') {
+      updateData.readAt = null
+    } else {
+      updateData.readAt = new Date()
+    }
   }
-  if (body.read !== undefined) {
+  if (body.adminNotes !== undefined) {
+    updateData.adminNotes = typeof body.adminNotes === 'string' ? body.adminNotes.trim() : null
+  }
+  if (body.read !== undefined && body.status === undefined) {
     updateData.readAt = body.read ? new Date() : null
     updateData.status = body.read ? 'read' : 'unread'
   }

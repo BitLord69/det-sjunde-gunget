@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const localePath = useLocalePath()
+const { contactEmail } = useSiteSettings()
 
 useSeoMeta({
   title: computed(() => `${t('contact.title')} | Det 7:e Gunget`),
@@ -44,7 +45,7 @@ useSeoMeta({
               <span class="text-xl">✉️</span>
               <div>
                 <span class="text-xs text-base-content/60 uppercase font-bold block">{{ t('contact.booking_email_label') }}</span>
-                <span class="text-primary font-bold">kontakt@det7egunget.se</span>
+                <a :href="`mailto:${contactEmail}`" class="text-primary font-bold hover:underline">{{ contactEmail }}</a>
               </div>
             </div>
 

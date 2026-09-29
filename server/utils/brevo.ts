@@ -19,7 +19,7 @@ interface AddSubscriberParams {
 
 export async function sendTransactionalEmail(params: SendEmailParams) {
   const apiKey = process.env.BREVO_API_KEY
-  const senderEmail = process.env.BREVO_CONTACT_EMAIL || 'kontakt@det7egunget.se'
+  const senderEmail = process.env.BREVO_CONTACT_EMAIL || 'info@det7egunget.se'
 
   if (!apiKey) {
     console.warn('[Brevo] No BREVO_API_KEY configured. Skipping email dispatch.')

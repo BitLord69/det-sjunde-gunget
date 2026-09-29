@@ -83,13 +83,13 @@ export default defineEventHandler(async (event) => {
     settingsMap[s.key] = s.value
   }
 
-  const rawBandEmails = settingsMap.notification_email || process.env.BREVO_CONTACT_EMAIL || 'kontakt@det7egunget.se'
+  const rawBandEmails = settingsMap.notification_email || process.env.BREVO_CONTACT_EMAIL || 'info@det7egunget.se'
   const recipientEmails = rawBandEmails
     .split(/[,;\s]+/)
     .map((e) => e.trim())
     .filter((e) => e.length > 0 && e.includes('@'))
 
-  const bandEmail = recipientEmails[0] || 'kontakt@det7egunget.se'
+  const bandEmail = recipientEmails[0] || 'info@det7egunget.se'
   const bandRecipients = recipientEmails.length > 0
     ? recipientEmails.map((email) => ({ email, name: 'Det 7:e Gunget' }))
     : [{ email: bandEmail, name: 'Det 7:e Gunget' }]

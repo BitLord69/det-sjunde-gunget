@@ -214,9 +214,10 @@ export const messages = sqliteTable('messages', {
   city: text('city'),
   location: text('location'),
   body: text('body').notNull(),
-  status: text('status', { enum: ['unread', 'read', 'archived'] })
+  status: text('status', { enum: ['unread', 'pending', 'accepted', 'declined', 'archived', 'read'] })
     .notNull()
     .default('unread'),
+  adminNotes: text('admin_notes'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
     .notNull()
     .default(sql`(unixepoch() * 1000)`),

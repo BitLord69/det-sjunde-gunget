@@ -251,7 +251,7 @@ const parseLyricsBlocks = (text: string | null): LyricBlock[] => {
             <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
               <div>
                 <div class="text-[10px] sm:text-xs font-mono font-black uppercase tracking-widest text-[#801b1c] flex items-center gap-2">
-                  <span>★ DET 7:E GUNGET ★</span>
+                  <span>★ DET 7<span class="lowercase">:e</span> GUNGET ★</span>
                   <span v-if="activeSong.isOriginal" class="bg-[#ecd5c3] px-2 py-0.5 rounded text-[#731a1b] font-bold">{{ t('lyrics.original_composition') }}</span>
                   <span v-else class="text-[#634e3b]">{{ t('lyrics.cover_of', { artist: activeSong.originalArtist }) }}</span>
                 </div>

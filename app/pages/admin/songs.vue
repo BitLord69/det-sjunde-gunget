@@ -218,6 +218,16 @@ const aiPromptMode = ref<'standard' | 'custom'>('standard')
 const aiCustomPrompt = ref('')
 const aiEngineHealth = ref<{ engine: string; available: boolean; message: string } | null>(null)
 const isCheckingEngine = ref(false)
+const generatedCoverResult = ref<{
+  success: boolean
+  url: string
+  coverUrl?: string
+  engine?: string
+  styleName?: string
+  title?: string
+  prompt?: string
+} | null>(null)
+const aiGenerationError = ref<string | null>(null)
 
 const checkEngineHealth = async () => {
   isCheckingEngine.value = true
@@ -236,21 +246,34 @@ const checkEngineHealth = async () => {
 }
 
 const openAiCoverGenerator = () => {
+  generatedCoverResult.value = null
+  aiGenerationError.value = null
   showAiCoverModal.value = true
   checkEngineHealth()
 }
 
 const generateCoverWithAi = async () => {
   isGeneratingCover.value = true
+  aiGenerationError.value = null
   aiCoverProgressStep.value = 1
+
   const stepTimer = setInterval(() => {
-    if (aiCoverProgressStep.value < 3) {
+    if (aiCoverProgressStep.value < 4) {
       aiCoverProgressStep.value++
     }
-  }, 3500)
+  }, 2200)
 
   try {
-    const res = await $fetch<{ success: boolean; coverUrl: string; source: string; engine: string; styleName: string; usedPrompt?: string }>('/api/admin/songs/generate-cover', {
+    const res = await $fetch<{
+      success: boolean
+      coverUrl: string
+      url: string
+      source: string
+      engine: string
+      styleName: string
+      title?: string
+      prompt?: string
+    }>('/api/admin/songs/generate-cover', {
       method: 'POST',
       body: {
         title: songForm.title || 'Det 7:e Gunget Singel',
@@ -267,18 +290,33 @@ const generateCoverWithAi = async () => {
     })
 
     clearInterval(stepTimer)
-    if (res.success && res.coverUrl) {
-      songForm.coverImage = res.coverUrl
-      showAiCoverModal.value = false
-      showToast(`✓ Nytt omslag skapat med ${res.engine === 'gemini' ? 'Google Gemini' : 'Vinyl Graphic Engine'}!`)
+    const coverResultUrl = res.coverUrl || res.url
+    if (res.success && coverResultUrl) {
+      generatedCoverResult.value = {
+        ...res,
+        url: coverResultUrl,
+        coverUrl: coverResultUrl,
+      }
+      showToast('✓ Singelomslaget har skapats! Granska i förhandsvisningen till höger.')
+    } else {
+      aiGenerationError.value = 'Inget bildresultat returnerades från servern.'
     }
   } catch (err: any) {
     clearInterval(stepTimer)
     const errMsg = err?.data?.statusMessage || err?.data?.message || err?.message || 'Ett fel uppstod vid bildgenerering.'
+    aiGenerationError.value = errMsg
     showToast(`⚠️ ${errMsg}`)
   } finally {
     isGeneratingCover.value = false
-    aiCoverProgressStep.value = 1
+  }
+}
+
+const applyGeneratedCover = () => {
+  const chosenUrl = generatedCoverResult.value?.coverUrl || generatedCoverResult.value?.url
+  if (chosenUrl) {
+    songForm.coverImage = chosenUrl
+    showAiCoverModal.value = false
+    showToast('✓ Omslaget har valts för låten! Kom ihåg att spara låten när du är klar.')
   }
 }
 
@@ -511,7 +549,7 @@ onBeforeRouteLeave((to, from, next) => {
 
             <!-- Live Cover Preview in Edit Form -->
             <div v-if="songForm.coverImage" class="flex items-center gap-4 pt-2">
-              <NuxtImg
+              <img
                 :src="songForm.coverImage"
                 alt="Förhandsgranskning"
                 class="w-16 h-16 object-cover rounded-lg border border-primary/40 shadow"
@@ -819,120 +857,277 @@ onBeforeRouteLeave((to, from, next) => {
     <!-- AI SINGLE COVER GENERATOR MODAL -->
     <div
       v-if="showAiCoverModal"
-      class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-hidden"
     >
-      <div class="stage-card max-w-2xl w-full p-6 sm:p-8 rounded-3xl border border-primary/50 space-y-6 shadow-2xl relative overflow-hidden bg-base-100 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-start justify-between gap-4 border-b border-primary/20 pb-4">
-          <div>
+      <div class="stage-card max-w-4xl w-full max-h-[92vh] flex flex-col rounded-3xl border-2 border-primary/40 shadow-2xl bg-base-100 relative overflow-hidden">
+        <!-- 1. Header -->
+        <div class="flex items-start justify-between gap-4 border-b border-primary/20 p-4 sm:p-5 flex-shrink-0 bg-base-100">
+          <div class="space-y-0.5">
             <div class="flex items-center gap-2">
-              <span class="text-2xl">✨</span>
-              <h3 class="font-heading text-2xl text-primary font-bold">
-                AI Single Cover Studio
+              <span class="text-2xl animate-pulse">✨</span>
+              <h3 class="font-heading text-lg sm:text-xl text-primary font-black">
+                Singelomslag-Studio (7"-singel)
               </h3>
             </div>
-            <p class="text-xs text-base-content/70 mt-1">
+            <p class="text-[11px] text-base-content/70">
               Skapa autentiskt vinylsingelomslag för <strong class="text-primary font-bold">{{ songForm.title || 'låten' }}</strong>.
             </p>
           </div>
-          <button
-            type="button"
-            class="btn btn-sm btn-circle btn-ghost cursor-pointer"
-            :disabled="isGeneratingCover"
-            @click="showAiCoverModal = false"
-          >
-            ✕
-          </button>
+
+          <div class="flex items-center gap-2">
+            <!-- Engine Indicator -->
+            <div
+              v-if="aiEngineHealth"
+              class="badge badge-sm gap-1.5 font-mono py-2.5 px-3 border shadow-sm"
+              :class="aiEngineHealth.available ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300' : 'bg-amber-500/15 border-amber-500/40 text-amber-300'"
+              :title="aiEngineHealth.message"
+            >
+              <span class="w-2 h-2 rounded-full" :class="aiEngineHealth.available ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'" />
+              <span class="font-bold text-[10px]">{{ aiEngineHealth.available ? 'Google Gemini AI' : 'Lokal Grafikmotor' }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-sm btn-circle btn-ghost text-lg cursor-pointer"
+              :disabled="isGeneratingCover"
+              @click="showAiCoverModal = false"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
-        <div class="space-y-4 text-xs">
-          <!-- Generation Source Selection -->
-          <div class="p-4 bg-base-200/80 rounded-2xl border border-primary/30 space-y-3">
-            <label class="block text-xs font-bold text-secondary">Välj omslagstyp:</label>
-            <div class="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                class="p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between gap-2"
-                :class="aiCoverSource === 'photo' ? 'border-primary bg-primary/10 shadow' : 'border-base-content/20 hover:border-primary/50'"
-                @click="aiCoverSource = 'photo'"
-              >
-                <div class="flex items-center gap-2">
-                  <span class="text-xl">📸</span>
-                  <span class="font-bold text-sm text-primary">Bandfoto som bas</span>
+        <!-- 2. Body (2-Column Grid) -->
+        <div class="p-4 sm:p-6 overflow-y-auto flex-1">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+            <!-- LEFT COLUMN: Inställningar -->
+            <div class="md:col-span-7 space-y-4 text-xs">
+              <!-- Song Info -->
+              <div class="p-3 bg-base-200/80 rounded-xl border border-primary/20 flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] uppercase font-bold text-secondary tracking-wider block">Låt som illustreras</span>
+                  <span class="font-heading font-black text-primary text-sm sm:text-base">{{ songForm.title || 'Namnlös låt' }}</span>
+                  <span v-if="!songForm.isOriginal && songForm.originalArtist" class="text-base-content/70 ml-1.5 font-mono text-[11px]">
+                    (Original av {{ songForm.originalArtist }})
+                  </span>
                 </div>
-                <p class="text-[11px] text-base-content/70 leading-tight">
-                  Använder bandets livefoto och applicerar autentisk Sonet/Stax 70-tals typografi och ram.
-                </p>
-              </button>
+                <span class="badge badge-sm font-mono" :class="songForm.isOriginal ? 'badge-primary font-bold' : 'badge-outline border-secondary text-secondary'">
+                  {{ songForm.isOriginal ? 'A-sida (Egen låt)' : 'B-sida (Cover)' }}
+                </span>
+              </div>
 
-              <button
-                type="button"
-                class="p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between gap-2"
-                :class="aiCoverSource === 'ai' ? 'border-primary bg-primary/10 shadow' : 'border-base-content/20 hover:border-primary/50'"
-                @click="aiCoverSource = 'ai'"
-              >
-                <div class="flex items-center gap-2">
-                  <span class="text-xl">🤖</span>
-                  <span class="font-bold text-sm text-primary">Google Gemini AI</span>
+              <!-- Välj omslagstyp -->
+              <div class="space-y-1.5">
+                <span class="text-[11px] font-bold text-secondary flex items-center gap-1.5">
+                  <span>🎨</span> Välj bildkälla:
+                </span>
+                <div class="grid grid-cols-2 gap-2 bg-base-200 p-1 rounded-2xl border border-white/5 font-bold font-mono">
+                  <button
+                    type="button"
+                    class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer text-xs"
+                    :class="aiCoverSource === 'photo' ? 'bg-primary text-neutral font-black shadow' : 'text-base-content/70 hover:text-primary'"
+                    :disabled="isGeneratingCover"
+                    @click="aiCoverSource = 'photo'"
+                  >
+                    <span>📸</span>
+                    <span>Vårt bandfoto</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer text-xs"
+                    :class="aiCoverSource === 'ai' ? 'bg-primary text-neutral font-black shadow' : 'text-base-content/70 hover:text-primary'"
+                    :disabled="isGeneratingCover"
+                    @click="aiCoverSource = 'ai'"
+                  >
+                    <span>🤖</span>
+                    <span>Google Gemini AI</span>
+                  </button>
                 </div>
-                <p class="text-[11px] text-base-content/70 leading-tight">
-                  Genererar unik vintage bluesrock-grafik baserat på låttitel, text och vald tidsperiod.
+              </div>
+
+              <!-- Era & Style Presets -->
+              <div class="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-secondary mb-1">Tidsperiod & känsla:</label>
+                  <select v-model="aiEra" :disabled="isGeneratingCover" class="select select-bordered w-full bg-base-200 select-sm text-xs">
+                    <option value="70s">Autentiskt 70-tal (Skandinavisk Bluesrock)</option>
+                    <option value="60s">Rått 60-tal (Chicago Blues Sound)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-secondary mb-1">Skivbolagsstil & Färg:</label>
+                  <select v-model="aiStylePreset" :disabled="isGeneratingCover" class="select select-bordered w-full bg-base-200 select-sm text-xs">
+                    <option value="auto">🎲 Auto (Baserat på låten)</option>
+                    <option value="sonet_gold">🟡 Sonet Grammofon (Guld & Svart)</option>
+                    <option value="chess_crimson">🔴 Chess Records (Djupröd & Kräm)</option>
+                    <option value="stax_amber">🟠 Stax / Volt (Bärnsten & Rost)</option>
+                    <option value="bluenote_navy">🔵 Blue Note (Nattblå & Guld)</option>
+                    <option value="vintage_cream">⚪ Minimalistisk Vintage (Kräm & Brunt)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Engine Status Notice -->
+              <div v-if="aiEngineHealth" class="p-2.5 bg-base-200/90 rounded-xl border border-primary/20 flex items-center justify-between text-[11px]">
+                <span class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full" :class="aiEngineHealth.available ? 'bg-emerald-400' : 'bg-amber-400'" />
+                  <span>{{ aiEngineHealth.message }}</span>
+                </span>
+                <span class="font-mono text-[10px] text-base-content/60 uppercase">Motor: {{ aiEngineHealth.engine }}</span>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Live Förhandsgranskning -->
+            <div class="md:col-span-5 flex flex-col items-center justify-center p-4 bg-black/50 rounded-2xl border border-primary/30 min-h-[300px] relative overflow-hidden">
+              <!-- STATE 1: Genererar -->
+              <div v-if="isGeneratingCover" class="py-6 flex flex-col items-center justify-center text-center space-y-4">
+                <div class="relative w-28 h-28 flex items-center justify-center">
+                  <div class="absolute inset-0 rounded-full bg-primary/20 animate-ping opacity-60 pointer-events-none" />
+                  <div class="absolute inset-1 rounded-full border-2 border-primary/40 animate-spin opacity-80" style="animation-duration: 4s;" />
+                  <div class="w-24 h-24 rounded-full bg-[#0d0b0a] border-2 border-amber-900/60 shadow-2xl flex items-center justify-center relative overflow-hidden animate-spin" style="animation-duration: 2.5s;">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-secondary via-primary to-secondary flex flex-col items-center justify-center p-0.5 text-[6px] font-black text-neutral shadow-inner">
+                      <span>7:e GUNGET</span>
+                      <span>45 RPM</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="space-y-1.5 max-w-xs">
+                  <h4 class="text-xs font-heading font-black text-primary animate-pulse">
+                    {{
+                      aiCoverProgressStep === 1
+                        ? '1/4 Förbereder komposition...'
+                        : aiCoverProgressStep === 2
+                        ? '2/4 Applicerar analog färgton & korn...'
+                        : aiCoverProgressStep === 3
+                        ? '3/4 Målar vintage vinyltypografi...'
+                        : '4/4 Färdigställer högupplöst singelfodral...'
+                    }}
+                  </h4>
+                  <div class="w-full bg-base-300 rounded-full h-1.5 overflow-hidden border border-primary/20 mt-1">
+                    <div
+                      class="bg-gradient-to-r from-secondary to-primary h-full transition-all duration-700 rounded-full"
+                      :style="{ width: `${aiCoverProgressStep * 25}%` }"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- STATE 2: Färdigt resultat -->
+              <div v-else-if="generatedCoverResult" class="space-y-3 w-full flex flex-col items-center">
+                <div class="relative w-48 sm:w-52 aspect-square flex-shrink-0 group">
+                  <!-- Vinyl Disc Peek -->
+                  <div class="absolute -top-2 -right-2 w-44 h-44 rounded-full bg-[#0d0b0a] border border-white/10 shadow-xl flex items-center justify-center animate-spin" style="animation-duration: 12s;">
+                    <div class="w-10 h-10 rounded-full bg-primary text-neutral text-[7px] font-black flex items-center justify-center">
+                      45 RPM
+                    </div>
+                  </div>
+
+                  <!-- Main Cover Image -->
+                  <div class="relative z-10 w-full h-full rounded-lg overflow-hidden border-2 border-amber-900/50 shadow-2xl bg-[#140e0a]">
+                    <img
+                      :src="generatedCoverResult.coverUrl || generatedCoverResult.url"
+                      :alt="generatedCoverResult.title || 'Skivomslag'"
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+
+                <div class="text-center space-y-1">
+                  <span class="px-2.5 py-0.5 rounded bg-emerald-800 text-emerald-100 font-mono text-[10px] font-bold">
+                    ✓ OMSLAG KLART
+                  </span>
+                  <p class="text-[11px] text-base-content/80 font-semibold">
+                    7"-singelfodral för <strong>{{ songForm.title }}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <!-- STATE 3: Initialt (Tomt) -->
+              <div v-else class="py-6 flex flex-col items-center justify-center text-center space-y-3">
+                <div class="w-32 h-32 rounded-2xl border-2 border-dashed border-primary/40 bg-base-200/50 flex flex-col items-center justify-center text-primary/60 space-y-1">
+                  <span class="text-3xl">💿</span>
+                  <span class="text-[10px] font-mono text-base-content/60">Förhandsgranskning</span>
+                </div>
+                <p class="text-[11px] text-base-content/60 max-w-xs">
+                  Klicka på <strong class="text-primary">"Generera singelomslag"</strong> nedan för att skapa och granska omslaget här.
                 </p>
-              </button>
+              </div>
+
+              <!-- Error Alert if any -->
+              <div v-if="aiGenerationError" class="p-2.5 mt-2 bg-error/15 border border-error/40 rounded-xl text-center text-xs text-error font-bold w-full">
+                ⚠️ {{ aiGenerationError }}
+              </div>
             </div>
           </div>
+        </div>
 
-          <!-- Era & Style Presets -->
-          <div class="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-secondary mb-1">Tidsperiod & känsla:</label>
-              <select v-model="aiEra" class="select select-bordered w-full bg-base-200 select-sm text-xs">
-                <option value="70s">Autentiskt 70-tal (Vintage Skandinavisk Bluesrock)</option>
-                <option value="60s">Rått 60-tal (Brittisk Bluesboom & Chicago Sound)</option>
-              </select>
-            </div>
+        <!-- 3. Action Footer -->
+        <div class="border-t border-primary/20 p-3.5 sm:p-4 bg-base-200/95 backdrop-blur-md flex-shrink-0 flex items-center justify-between gap-2">
+          <!-- Initial Mode -->
+          <template v-if="!isGeneratingCover && !generatedCoverResult">
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm rounded-full cursor-pointer"
+              @click="showAiCoverModal = false"
+            >
+              Avbryt
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm rounded-full font-bold px-6 shadow-lg shadow-primary/30 flex items-center gap-2 cursor-pointer"
+              @click="generateCoverWithAi"
+            >
+              <span>{{ aiCoverSource === 'photo' ? '📷' : '✨' }}</span>
+              <span>{{ aiCoverSource === 'photo' ? 'Skapa från bandfoto' : 'Generera med AI' }}</span>
+            </button>
+          </template>
 
-            <div>
-              <label class="block text-xs font-bold text-secondary mb-1">Färgpalett & Skivbolagsstil:</label>
-              <select v-model="aiStylePreset" class="select select-bordered w-full bg-base-200 select-sm text-xs">
-                <option value="auto">🎲 Auto-välj baserat på låten</option>
-                <option value="sonet_gold">🟡 Sonet Grammofon (Guld & Svart)</option>
-                <option value="chess_crimson">🔴 Chess Records (Djupröd & Kräm)</option>
-                <option value="stax_amber">🟠 Stax / Volt (Bärnsten & Rost)</option>
-                <option value="bluenote_navy">🔵 Blue Note (Nattblå & Guld)</option>
-                <option value="vintage_cream">⚪ Minimalistisk Vintage (Kräm & Brunt)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Engine Status Alert -->
-          <div v-if="aiEngineHealth" class="p-3 bg-base-200 rounded-xl border border-primary/20 flex items-center justify-between text-xs">
-            <span class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full" :class="aiEngineHealth.available ? 'bg-emerald-400' : 'bg-amber-400'" />
-              <span>{{ aiEngineHealth.message }}</span>
+          <!-- Generating Mode -->
+          <template v-else-if="isGeneratingCover">
+            <span class="text-xs text-primary font-mono animate-pulse flex items-center gap-1.5">
+              <span>⏳</span> Skapar singelomslag...
             </span>
-            <span class="font-mono text-[10px] text-base-content/60 uppercase">Motor: {{ aiEngineHealth.engine }}</span>
-          </div>
-        </div>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm rounded-full text-xs cursor-pointer"
+              @click="showAiCoverModal = false"
+            >
+              Avbryt
+            </button>
+          </template>
 
-        <div class="flex items-center justify-end gap-3 pt-4 border-t border-primary/20">
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm rounded-full cursor-pointer"
-            :disabled="isGeneratingCover"
-            @click="showAiCoverModal = false"
-          >
-            Avbryt
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary btn-sm rounded-full font-bold px-8 shadow-lg shadow-primary/30 flex items-center gap-2 cursor-pointer"
-            :disabled="isGeneratingCover"
-            @click="generateCoverWithAi"
-          >
-            <span v-if="isGeneratingCover" class="loading loading-spinner loading-xs" />
-            <span v-else>✨</span>
-            <span>{{ isGeneratingCover ? `Skapar omslag (Steg ${aiCoverProgressStep}/3)...` : 'Generera singelomslag' }}</span>
-          </button>
+          <!-- Finished Result Mode: User can preview, re-generate or accept -->
+          <template v-else-if="generatedCoverResult">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm rounded-full gap-1.5 font-bold text-xs cursor-pointer"
+              :disabled="isGeneratingCover"
+              @click="generateCoverWithAi"
+            >
+              <span>🔄</span>
+              <span>Generera om / Ny variant</span>
+            </button>
+
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm rounded-full text-xs cursor-pointer"
+                @click="showAiCoverModal = false"
+              >
+                Avbryt
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary btn-sm rounded-full font-bold px-5 shadow-lg shadow-primary/30 text-xs sm:text-sm cursor-pointer"
+                @click="applyGeneratedCover"
+              >
+                ✓ Använd detta omslag
+              </button>
+            </div>
+          </template>
         </div>
       </div>
     </div>

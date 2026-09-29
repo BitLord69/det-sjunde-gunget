@@ -3,7 +3,7 @@ import path from 'node:path'
 import { eq } from 'drizzle-orm'
 import JSZip from 'jszip'
 import { db } from '../../db/client'
-import { epkDocuments, galleryItems } from '../../db/schema'
+import { epkDocuments, galleryItems, siteSettings } from '../../db/schema'
 
 export default defineEventHandler(async (event) => {
   const zip = new JSZip()
@@ -19,6 +19,16 @@ export default defineEventHandler(async (event) => {
     .select()
     .from(epkDocuments)
     .where(eq(epkDocuments.isActive, true))
+
+  // 3. Fetch notification email from site_settings
+  let contactEmail = 'info@det7egunget.se'
+  try {
+    const settingsList = await db.select().from(siteSettings)
+    const emailSetting = settingsList.find(s => s.key === 'notification_email')?.value
+    if (emailSetting) {
+      contactEmail = emailSetting.split(/[,;]/)[0]?.trim() || contactEmail
+    }
+  } catch (_) {}
 
   // Folders inside the zip
   const photosFolder = zip.folder('Pressfoton-HighRes')
@@ -88,12 +98,12 @@ export default defineEventHandler(async (event) => {
 
   // Add README text file
   const readmeContent = `=====================================================
-DET 7:E GUNGET — OFFICIELLT ARRANGÖRS- & PRESSKIT (EPK)
+DET 7:e GUNGET — OFFICIELLT ARRANGÖRS- & PRESSKIT (EPK)
 =====================================================
 
 Webbplats: https://det7egunget.se
 Arrangörssida: https://det7egunget.se/epk
-Bokning & Kontakt: kontakt@det7egunget.se
+Bokning & Kontakt: ${contactEmail}
 
 OM BANDET:
 Det 7:e Gunget levererar tung gungande bluesrock med svängig soul,

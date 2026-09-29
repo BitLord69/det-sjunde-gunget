@@ -145,7 +145,7 @@ const gigSocialPreview = computed(() => {
   const cityTag = gigForm.city ? `#${gigForm.city.replace(/\s+/g, '')}Blues` : ''
   const tagsStr = selectedGigTags.value.length > 0 ? selectedGigTags.value.join(' ') : '#DetSjundeGunget #BluesRock'
 
-  return `🎸 NYTT GIG MED DET 7:E GUNGET! 🎸
+  return `🎸 NYTT GIG MED DET 7:e GUNGET! 🎸
 
 📍 Spelplats: ${gigForm.venue || '[Spelplats]'}, ${gigForm.city || '[Stad]'}
 📅 Datum: ${dateStr}${gigForm.notesSv ? `\n\n"${gigForm.notesSv}"` : ''}

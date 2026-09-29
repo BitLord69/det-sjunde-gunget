@@ -5,9 +5,7 @@ const { t } = useI18n()
 const localePath = useLocalePath()
 const { openSettings: openCookieSettings } = useCookieConsent()
 
-const { data: siteSettingsData } = await useFetch<{ newsletterEnabled: boolean }>('/api/settings', {
-  default: () => ({ newsletterEnabled: false }),
-})
+const { settingsData: siteSettingsData, contactEmail } = useSiteSettings()
 
 // Newsletter subscription in footer
 const newsletterEmail = ref('')
@@ -149,7 +147,7 @@ const handleNewsletter = async () => {
           {{ t('contact.desc') }}
         </p>
         <div class="space-y-1.5 text-sm font-medium">
-          <p><span class="text-secondary font-bold">{{ t('footer.email_label') }}:</span> kontakt@det7egunget.se</p>
+          <p><span class="text-secondary font-bold">{{ t('footer.email_label') }}:</span> <a :href="`mailto:${contactEmail}`" class="hover:underline hover:text-primary transition-colors">{{ contactEmail }}</a></p>
           <p><span class="text-secondary font-bold">{{ t('footer.location_label') }}:</span> {{ t('footer.location_value') }}</p>
         </div>
         <div class="mt-4 flex items-center gap-2 flex-wrap">

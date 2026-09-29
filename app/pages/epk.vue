@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+const { contactEmail } = useSiteSettings()
 
 useSeoMeta({
   title: computed(() => `${t('epk.page_title')} | Det 7:e Gunget`),
@@ -157,10 +158,10 @@ const exportTechRiderAsTxt = () => {
   })
 
   let output = '============================================================\r\n'
-  output += 'DET 7:E GUNGET — TEKNISK RIDER & SCENPLOT\r\n'
+  output += 'DET 7:e GUNGET — TEKNISK RIDER & SCENPLOT\r\n'
   output += `Genererad: ${dateStr}\r\n`
   output += 'Webb: https://www.det7egunget.se/epk\r\n'
-  output += 'Bokningskontakt: kontakt@det7egunget.se\r\n'
+  output += `Bokningskontakt: ${contactEmail.value}\r\n`
   output += '============================================================\r\n\r\n'
 
   output += '1. SNABBFAKTA\r\n'
@@ -918,8 +919,8 @@ const exportTechRiderAsTxt = () => {
       <!-- Print Header -->
       <div class="border-b-2 border-black pb-4 flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold uppercase tracking-wide">DET 7:E GUNGET — TEKNISK RIDER & SCENPLOT</h1>
-          <p class="text-xs text-gray-700">4 musiker • Äkta Chicagoblues & Träskrock • www.det7egunget.se • kontakt@det7egunget.se</p>
+          <h1 class="text-2xl font-bold tracking-wide">DET 7<span class="lowercase">:e</span> GUNGET — TEKNISK RIDER & SCENPLOT</h1>
+          <p class="text-xs text-gray-700">4 musiker • Äkta Chicagoblues & Träskrock • www.det7egunget.se • {{ contactEmail }}</p>
         </div>
         <div class="text-right text-[10px] text-gray-600 font-mono">
           Utskriftsdatum: {{ new Date().toLocaleDateString('sv-SE') }}
@@ -1004,7 +1005,7 @@ const exportTechRiderAsTxt = () => {
         </div>
         <div>
           <strong class="block mb-1">Hospitality & Tider:</strong>
-          <p>Ankomst ca 2h före dörröppning. Varm mat för 4 personer, kaffe och vatten i låsbar loge. Kontakt: kontakt@det7egunget.se</p>
+          <p>Ankomst ca 2h före dörröppning. Varm mat för 4 personer, kaffe och vatten i låsbar loge. Kontakt: {{ contactEmail }}</p>
         </div>
       </div>
     </div>

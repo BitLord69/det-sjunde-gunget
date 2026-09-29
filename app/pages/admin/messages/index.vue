@@ -23,6 +23,42 @@ const { data: messagesData, refresh: refreshMessages } = await useFetch<any[]>('
 })
 
 const selectedMessage = ref<any | null>(null)
+const activeStatusFilter = ref<string>('all')
+const adminNotesInput = ref('')
+const isSavingNotes = ref(false)
+const notesSavedFeedback = ref(false)
+const copiedEmail = ref(false)
+
+const copyEmailToClipboard = async (email: string) => {
+  if (!email) return
+  try {
+    await navigator.clipboard.writeText(email)
+    copiedEmail.value = true
+    setTimeout(() => {
+      copiedEmail.value = false
+    }, 2500)
+    showToast('✓ E-postadressen kopierades till urklipp!')
+  } catch (_) {
+    showToast('⚠️ Kunde inte kopiera automatiskt.')
+  }
+}
+
+const statusOptions: Array<{ value: string; label: string; icon: string; badgeClass: string }> = [
+  { value: 'unread', label: 'Oläst', icon: '📬', badgeClass: 'bg-primary/20 text-primary border-primary/40' },
+  { value: 'pending', label: 'Väntar på svar', icon: '⏳', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
+  { value: 'accepted', label: 'Accepterad', icon: '✓', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
+  { value: 'declined', label: 'Avböjd', icon: '✕', badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
+  { value: 'archived', label: 'Arkiverad', icon: '📁', badgeClass: 'bg-base-content/10 text-base-content/60 border-base-content/20' },
+]
+
+const getStatusMeta = (status: string) => {
+  return statusOptions.find((o) => o.value === status) || {
+    value: status,
+    label: status === 'read' ? 'Läst' : status,
+    icon: '•',
+    badgeClass: 'badge-ghost',
+  }
+}
 
 const openMessageFromRoute = () => {
   const targetId = (route.query.msg || route.query.messageId || route.query.id) as string
@@ -42,17 +78,66 @@ watch(
   { immediate: true },
 )
 
+watch(selectedMessage, (newVal) => {
+  if (newVal) {
+    adminNotesInput.value = newVal.adminNotes || ''
+    notesSavedFeedback.value = false
+  }
+})
+
 onMounted(() => {
   openMessageFromRoute()
 })
 
-const markMessageStatus = async (msg: any, status: 'read' | 'unread' | 'archived') => {
+const filteredMessages = computed(() => {
+  const list = messagesData.value || []
+  if (activeStatusFilter.value === 'all') return list
+  return list.filter((m: any) => m.status === activeStatusFilter.value)
+})
+
+const getStatusCount = (statusKey: string) => {
+  const list = messagesData.value || []
+  if (statusKey === 'all') return list.length
+  return list.filter((m: any) => m.status === statusKey).length
+}
+
+const updateMessageStatus = async (msg: any, newStatus: string) => {
   await $fetch('/api/admin/messages', {
     method: 'PATCH',
-    body: { id: msg.id, status, read: status === 'read' },
+    body: { id: msg.id, status: newStatus },
   })
+  msg.status = newStatus
+  if (selectedMessage.value?.id === msg.id) {
+    selectedMessage.value.status = newStatus
+  }
   await refreshMessages()
-  showToast(`✓ Meddelandet markerades som ${status === 'read' ? 'läst' : status === 'archived' ? 'arkiverat' : 'oläst'}.`)
+  const meta = getStatusMeta(newStatus)
+  showToast(`✓ Status ändrades till "${meta.label}".`)
+}
+
+const saveAdminNotes = async () => {
+  if (!selectedMessage.value) return
+  isSavingNotes.value = true
+  try {
+    await $fetch('/api/admin/messages', {
+      method: 'PATCH',
+      body: {
+        id: selectedMessage.value.id,
+        adminNotes: adminNotesInput.value,
+      },
+    })
+    selectedMessage.value.adminNotes = adminNotesInput.value
+    await refreshMessages()
+    notesSavedFeedback.value = true
+    setTimeout(() => {
+      notesSavedFeedback.value = false
+    }, 3000)
+    showToast('✓ Intern anteckning sparades!')
+  } catch (err: any) {
+    showToast(`⚠️ Kunde inte spara anteckning: ${err?.data?.message || err?.message || 'Fel'}`)
+  } finally {
+    isSavingNotes.value = false
+  }
 }
 
 const deleteMessage = async (id: string) => {
@@ -91,6 +176,32 @@ const deleteMessage = async (id: string) => {
         </button>
       </div>
 
+      <!-- Filter Tabs -->
+      <div class="flex flex-wrap gap-2 items-center">
+        <button
+          type="button"
+          class="btn btn-xs rounded-full cursor-pointer font-bold transition-all gap-1.5"
+          :class="activeStatusFilter === 'all' ? 'btn-primary shadow' : 'btn-ghost border border-primary/20 text-base-content/70'"
+          @click="activeStatusFilter = 'all'"
+        >
+          <span>Alla</span>
+          <span class="badge badge-xs font-mono">{{ getStatusCount('all') }}</span>
+        </button>
+
+        <button
+          v-for="opt in statusOptions"
+          :key="opt.value"
+          type="button"
+          class="btn btn-xs rounded-full cursor-pointer font-bold transition-all gap-1.5"
+          :class="activeStatusFilter === opt.value ? 'btn-primary shadow' : 'btn-ghost border border-primary/20 text-base-content/70'"
+          @click="activeStatusFilter = opt.value"
+        >
+          <span>{{ opt.icon }}</span>
+          <span>{{ opt.label }}</span>
+          <span class="badge badge-xs font-mono">{{ getStatusCount(opt.value) }}</span>
+        </button>
+      </div>
+
       <!-- Messages Table -->
       <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
         <table class="table table-zebra w-full text-xs">
@@ -107,7 +218,7 @@ const deleteMessage = async (id: string) => {
           </thead>
           <tbody>
             <tr
-              v-for="msg in messagesData || []"
+              v-for="msg in filteredMessages"
               :key="msg.id"
               class="cursor-pointer hover:bg-base-200/60 transition-colors"
               :class="msg.status === 'unread' ? 'font-bold bg-primary/5' : ''"
@@ -116,7 +227,18 @@ const deleteMessage = async (id: string) => {
               <td class="font-mono text-[11px] whitespace-nowrap">
                 {{ new Date(msg.createdAt).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }}
               </td>
-              <td class="font-bold text-primary">{{ msg.name }}</td>
+              <td class="font-bold text-primary">
+                <div class="flex items-center gap-1.5">
+                  <span>{{ msg.name }}</span>
+                  <span
+                    v-if="msg.adminNotes"
+                    class="tooltip tooltip-right text-amber-400 font-bold cursor-help"
+                    :data-tip="'Anteckning: ' + msg.adminNotes"
+                  >
+                    📝
+                  </span>
+                </div>
+              </td>
               <td class="font-mono text-[11px]">
                 <div>{{ msg.email }}</div>
                 <div v-if="msg.phone" class="text-base-content/60">{{ msg.phone }}</div>
@@ -133,10 +255,11 @@ const deleteMessage = async (id: string) => {
               </td>
               <td>
                 <span
-                  class="badge badge-xs font-bold uppercase text-[9px]"
-                  :class="msg.status === 'unread' ? 'badge-accent' : msg.status === 'read' ? 'badge-success' : 'badge-ghost'"
+                  class="badge badge-sm font-bold gap-1 text-[10px] border shadow-xs"
+                  :class="getStatusMeta(msg.status).badgeClass"
                 >
-                  {{ msg.status === 'unread' ? 'Oläst' : msg.status === 'read' ? 'Läst' : 'Arkiverad' }}
+                  <span>{{ getStatusMeta(msg.status).icon }}</span>
+                  <span>{{ getStatusMeta(msg.status).label }}</span>
                 </span>
               </td>
               <td class="text-right space-x-2" @click.stop>
@@ -156,9 +279,9 @@ const deleteMessage = async (id: string) => {
                 </button>
               </td>
             </tr>
-            <tr v-if="!messagesData || messagesData.length === 0">
+            <tr v-if="!filteredMessages || filteredMessages.length === 0">
               <td colspan="7" class="text-center py-8 text-base-content/60 italic">
-                Inga meddelanden har inkommit ännu.
+                Inga förfrågningar matchar det valda filtret.
               </td>
             </tr>
           </tbody>
@@ -186,7 +309,18 @@ const deleteMessage = async (id: string) => {
             </div>
             <div>
               <span class="text-[10px] uppercase font-bold text-secondary block">E-post</span>
-              <a :href="`mailto:${selectedMessage.email}`" class="text-primary font-bold hover:underline">{{ selectedMessage.email }}</a>
+              <div class="flex items-center gap-2 mt-0.5">
+                <a :href="`mailto:${selectedMessage.email}`" class="text-primary font-bold hover:underline truncate">{{ selectedMessage.email }}</a>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-xs px-2 py-0.5 h-auto min-h-0 text-[11px] font-mono border border-primary/20 hover:border-primary rounded-lg text-base-content/80 hover:text-primary transition-colors cursor-pointer gap-1"
+                  :title="copiedEmail ? 'Kopierad!' : 'Kopiera e-postadress'"
+                  @click="copyEmailToClipboard(selectedMessage.email)"
+                >
+                  <span>{{ copiedEmail ? '✓' : '📋' }}</span>
+                  <span>{{ copiedEmail ? 'Kopierad' : 'Kopiera' }}</span>
+                </button>
+              </div>
             </div>
             <div>
               <span class="text-[10px] uppercase font-bold text-secondary block">Telefon</span>
@@ -231,40 +365,65 @@ const deleteMessage = async (id: string) => {
             </div>
           </div>
 
+          <!-- Status Selector in Modal -->
+          <div class="p-4 bg-base-200/90 rounded-2xl border border-primary/20 space-y-2">
+            <span class="text-xs uppercase font-bold text-secondary block">Ändra bokningsstatus:</span>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="opt in statusOptions"
+                :key="opt.value"
+                type="button"
+                class="btn btn-xs rounded-full cursor-pointer transition-all gap-1.5"
+                :class="selectedMessage.status === opt.value ? opt.badgeClass + ' font-black shadow ring-1 ring-primary' : 'btn-ghost border border-primary/20 text-base-content/70'"
+                @click="updateMessageStatus(selectedMessage, opt.value)"
+              >
+                <span>{{ opt.icon }}</span>
+                <span>{{ opt.label }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Internal Admin Notes (Gage, Overenskommelse, Orsak) -->
+          <div class="space-y-2 p-4 bg-base-200/90 rounded-2xl border border-primary/30">
+            <div class="flex items-center justify-between">
+              <label class="text-xs uppercase font-bold text-secondary flex items-center gap-1.5">
+                <span>📝</span>
+                <span>Bandets interna anteckningar (gage, villkor, avböjningsorsak etc.)</span>
+              </label>
+              <span v-if="isSavingNotes" class="text-[11px] text-primary animate-pulse font-mono">Sparar...</span>
+              <span v-else-if="notesSavedFeedback" class="text-[11px] text-emerald-400 font-bold font-mono">✓ Sparad!</span>
+            </div>
+            <textarea
+              v-model="adminNotesInput"
+              rows="3"
+              placeholder="Skriv vad ni kommit överens om (t.ex. 'Gage 15 000:-, PA ingår, ljudkoll kl 18') eller varför bokningen avböjts..."
+              class="textarea textarea-bordered w-full bg-base-100 text-xs text-base-content/90 font-sans leading-relaxed focus:border-primary"
+            />
+            <div class="flex justify-end">
+              <button
+                type="button"
+                class="btn btn-xs btn-primary font-bold rounded-lg cursor-pointer"
+                :disabled="isSavingNotes"
+                @click="saveAdminNotes"
+              >
+                <span>💾</span>
+                <span>Spara anteckning</span>
+              </button>
+            </div>
+          </div>
+
           <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-primary/20">
             <div class="flex items-center gap-2">
-              <button
-                v-if="selectedMessage.status === 'unread'"
-                type="button"
-                class="btn btn-sm btn-outline btn-success rounded-full cursor-pointer"
-                @click="markMessageStatus(selectedMessage, 'read')"
-              >
-                ✓ Markera som läst
-              </button>
-              <button
-                v-else
-                type="button"
-                class="btn btn-sm btn-outline btn-ghost rounded-full cursor-pointer"
-                @click="markMessageStatus(selectedMessage, 'unread')"
-              >
-                Markera som oläst
-              </button>
               <button
                 type="button"
                 class="btn btn-sm btn-outline btn-error rounded-full cursor-pointer"
                 @click="deleteMessage(selectedMessage.id)"
               >
-                Ta bort
+                Ta bort förfrågan
               </button>
             </div>
 
             <div class="flex items-center gap-2">
-              <a
-                :href="`mailto:${selectedMessage.email}?subject=${encodeURIComponent('Svar angående bokningsförfrågan - Det 7:e Gunget')}`"
-                class="btn btn-sm btn-primary rounded-full font-bold px-5"
-              >
-                ✉️ Svara via e-post
-              </a>
               <button type="button" class="btn btn-sm btn-ghost rounded-full cursor-pointer" @click="selectedMessage = null">
                 Stäng
               </button>

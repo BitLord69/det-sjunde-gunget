@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     discordNotifyBookings: map.discord_notify_bookings !== 'false',
     discordNotifyFanPhotos: map.discord_notify_fan_photos === 'true',
     discordNotifyGuestbook: map.discord_notify_guestbook === 'true',
-    notificationEmail: map.notification_email || process.env.BREVO_CONTACT_EMAIL || 'kontakt@det7egunget.se',
+    notificationEmail: map.notification_email || process.env.BREVO_CONTACT_EMAIL || 'info@det7egunget.se',
     socialMockMode: map.social_mock_mode !== undefined ? map.social_mock_mode === 'true' : isMockDefault,
     settings: map,
   }

@@ -62,7 +62,7 @@ const previewText = computed(() => {
           day: 'numeric',
         })
       : ''
-    return `🎸 NYTT GIG MED DET 7:E GUNGET! 🎸\n\n📍 Spelplats: ${venue}, ${city}\n📅 Datum: ${dateStr}${customNotes.value ? `\n\n"${customNotes.value}"` : ''}\n\n${props.item.ticketUrl ? `🎟️ Biljetter: ${props.item.ticketUrl}` : '👉 Mer info: https://det7egunget.se/gigs'}\n\nKom och sväng med oss! 🎶\n${tagsStr}`
+    return `🎸 NYTT GIG MED DET 7:e GUNGET! 🎸\n\n📍 Spelplats: ${venue}, ${city}\n📅 Datum: ${dateStr}${customNotes.value ? `\n\n"${customNotes.value}"` : ''}\n\n${props.item.ticketUrl ? `🎟️ Biljetter: ${props.item.ticketUrl}` : '👉 Mer info: https://det7egunget.se/gigs'}\n\nKom och sväng med oss! 🎶\n${tagsStr}`
   }
 
   if (props.type === 'gallery') {

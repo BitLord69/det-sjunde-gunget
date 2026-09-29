@@ -86,7 +86,7 @@ const exportGigSetlistAsTxt = () => {
   })
 
   let output = '============================================================\r\n'
-  output += `DET 7:E GUNGET — SETLISTA @ ${props.gig.venue.toUpperCase()} (${props.gig.city.toUpperCase()})\r\n`
+  output += `DET 7:e GUNGET — SETLISTA @ ${props.gig.venue.toUpperCase()} (${props.gig.city.toUpperCase()})\r\n`
   output += `Speldatum: ${dateStr}\r\n`
   output += 'Webb: https://www.det7egunget.se\r\n'
   output += '============================================================\r\n\r\n'
@@ -243,7 +243,7 @@ const exportGigSetlistAsTxt = () => {
             class="font-mono text-[10px] tracking-wider"
             :class="isTorn ? 'text-base-content/40' : 'text-stone-400'"
           >
-            {{ ticketSerial }} • DET 7:E GUNGET • ADMIT ONE
+            {{ ticketSerial }} • DET 7:e GUNGET • ADMIT ONE
           </div>
 
           <!-- Action Buttons -->

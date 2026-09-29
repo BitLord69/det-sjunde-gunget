@@ -43,7 +43,7 @@ async function generateMissingCovers() {
       </text>
     </g>
     <text x="${width / 2}" y="76" font-family="'Impact', 'Arial Black', sans-serif" font-size="50" font-weight="900" fill="url(#goldText)" text-anchor="middle" letter-spacing="4" filter="url(#textShadow)">
-      DET 7:E GUNGET
+      DET 7:e GUNGET
     </text>
     <text x="${width / 2}" y="104" font-family="'Courier New', monospace" font-size="12" font-weight="700" fill="#38bdf8" text-anchor="middle" letter-spacing="4">
       ★ TEXAS BLUES • 45 RPM ★
@@ -104,7 +104,7 @@ async function generateMissingCovers() {
       </text>
     </g>
     <text x="${width / 2}" y="76" font-family="'Impact', 'Arial Black', sans-serif" font-size="50" font-weight="900" fill="url(#goldText)" text-anchor="middle" letter-spacing="4" filter="url(#textShadow)">
-      DET 7:E GUNGET
+      DET 7:e GUNGET
     </text>
     <text x="${width / 2}" y="104" font-family="'Courier New', monospace" font-size="12" font-weight="700" fill="#fef08a" text-anchor="middle" letter-spacing="4">
       ★ SKANDINAVISK BLUESROCK ★

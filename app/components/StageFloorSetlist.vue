@@ -43,7 +43,7 @@ const exportSetlistAsTxt = () => {
   })
 
   let output = '============================================================\r\n'
-  output += 'DET 7:E GUNGET — AKTUELL SCENSETLISTA\r\n'
+  output += 'DET 7:e GUNGET — AKTUELL SCENSETLISTA\r\n'
   output += `Genererad: ${dateStr}\r\n`
   output += 'Webb: https://www.det7egunget.se\r\n'
   output += '============================================================\r\n\r\n'
@@ -174,8 +174,8 @@ const printSetlist = () => {
           <div class="text-[10px] font-mono font-bold tracking-widest uppercase text-[#735e47]">
             LIVE PÅ SCEN • AKTUELL SETLISTA
           </div>
-          <h3 class="font-heading font-black text-2xl sm:text-3xl text-[#1a1209] tracking-tight uppercase mt-0.5 setlist-handwritten">
-            DET 7:E GUNGET
+          <h3 class="font-heading font-black text-2xl sm:text-3xl text-[#1a1209] tracking-tight mt-0.5 setlist-handwritten">
+            DET 7<span class="lowercase text-xl sm:text-2xl font-bold">:e</span> GUNGET
           </h3>
           <div class="text-[11px] font-mono text-[#8a725b] mt-1 italic">
             Blues, rock & sväng i lagom doser • 2x45 min + extranummer

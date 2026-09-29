@@ -45,7 +45,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
     const cityTag = params.city ? `#${params.city.replace(/\s+/g, '')}Blues` : ''
 
     const fbLines = [
-      `🎸 NYTT GIG MED DET 7:E GUNGET! 🎸`,
+      `🎸 NYTT GIG MED DET 7:e GUNGET! 🎸`,
       '',
       `📍 Spelplats: ${params.venue || 'TBA'}, ${params.city || ''}`,
       formattedDate ? `📅 Datum: ${formattedDate}` : '',
@@ -106,7 +106,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
 
   // Default news/general update
   const defaultText = [
-    `📢 NYHET FRÅN DET 7:E GUNGET!`,
+    `📢 NYHET FRÅN DET 7:e GUNGET!`,
     '',
     params.title,
     params.notes || '',

@@ -3,6 +3,7 @@ import { useCookieConsent } from '~/composables/useCookieConsent'
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+const { contactEmail } = useSiteSettings()
 
 useSeoMeta({
   title: computed(() => `${t('privacy.seo_title')} | Det 7:e Gunget`),
@@ -134,7 +135,7 @@ const toggleMediaConsent = () => {
         </p>
         <div class="p-4 rounded-2xl bg-base-200/60 border border-primary/20 font-mono text-xs space-y-1">
           <p><strong class="text-primary">{{ t('privacy.controller_name') }}:</strong> Det 7:e Gunget</p>
-          <p><strong class="text-primary">{{ t('footer.email_label') }}:</strong> kontakt@det7egunget.se</p>
+          <p><strong class="text-primary">{{ t('footer.email_label') }}:</strong> <a :href="`mailto:${contactEmail}`" class="hover:underline text-primary">{{ contactEmail }}</a></p>
           <p><strong class="text-primary">{{ t('footer.location_label') }}:</strong> {{ t('footer.location_value') }}</p>
         </div>
       </section>

@@ -55,15 +55,19 @@ export default defineEventHandler(async (event) => {
   }
 
   let imageBuffer: Buffer | null = null
+  let usedEngine = 'vinyl'
+  let chosenStyle = stylePreset || 'auto'
 
   // ----------------------------------------------------
   // BRANCH A: Direct Photo-to-Vinyl from Photoshoot
   // ----------------------------------------------------
-  if (source === 'photo' && photoPath) {
+  if (source === 'photo') {
     try {
-      const cleanRel = photoPath.replace(/^\/+/, '')
+      const chosenPhoto = photoPath || 'media/band/21..7de Gunget photoshoot1 21-6 26-3.jpg'
+      const cleanRel = chosenPhoto.replace(/^\/+/, '')
       const absPath = path.resolve(process.cwd(), 'public', cleanRel)
       imageBuffer = await fs.readFile(absPath)
+      usedEngine = 'vinyl'
     } catch (photoErr) {
       console.error('[GenerateCover] Failed to read band photo:', photoErr)
       throw createError({
@@ -137,7 +141,7 @@ The only 4 band members on stage:
 
       let textInstr = 'CRITICAL: DO NOT render any text, logos, or words anywhere in the image (leave clean margin for cover jacket typography).'
       if (textRenderer === 'ai_native') {
-        textInstr = `Typography on record cover: Authentic 1970s vintage vinyl single cover typography featuring band name 'DET 7:E GUNGET' and song title '${(title || '').toUpperCase()}'. Let the typography be artistically styled and positioned anywhere on the cover where it naturally fits the visual composition (such as stylized header, diagonal retro banner, vintage stamp, integrated club signage, or subtle corner letterpress).`
+        textInstr = `Typography on record cover: Authentic 1970s vintage vinyl single cover typography featuring band name 'DET 7:e GUNGET' and song title '${(title || '').toUpperCase()}'. Let the typography be artistically styled and positioned anywhere on the cover where it naturally fits the visual composition (such as stylized header, diagonal retro banner, vintage stamp, integrated club signage, or subtle corner letterpress).`
       }
 
       prompt = `Square format 1970s vintage album cover photo artwork. ${subject} Style: ${eraStyle} ${textInstr} Lighting: Warm tungsten spotlights, atmospheric haze, authentic 35mm film grain, analog color grading, masterpiece quality.`
@@ -173,6 +177,7 @@ The only 4 band members on stage:
           const part = data.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData?.data)
           if (part?.inlineData?.data) {
             imageBuffer = Buffer.from(part.inlineData.data, 'base64')
+            usedEngine = 'gemini'
           }
         }
       } catch (gErr) {
@@ -191,6 +196,7 @@ The only 4 band members on stage:
         if (pollRes.ok) {
           const arrayBuf = await pollRes.arrayBuffer()
           imageBuffer = Buffer.from(arrayBuf)
+          usedEngine = 'fallback'
         }
       } catch (pollErr) {
         console.error('[GenerateCover] Fallback generator failed:', pollErr)
@@ -214,7 +220,7 @@ The only 4 band members on stage:
     const height = 800
 
     if (source === 'photo' || textRenderer === 'theme') {
-      const cleanBand = 'DET 7:E GUNGET'
+      const cleanBand = 'DET 7:e GUNGET'
       const rawTitle = (title || 'Det 7:e Gunget').toUpperCase()
       const cleanTitle = rawTitle.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
       
@@ -223,7 +229,6 @@ The only 4 band members on stage:
 
       // Choose style preset (randomize if 'auto')
       const styles = ['sonet_gold', 'chess_crimson', 'stax_amber', 'bluenote_navy', 'vintage_cream']
-      let chosenStyle = stylePreset
       if (!chosenStyle || chosenStyle === 'auto') {
         const hash = (title || 'det-7e-gunget').split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
         chosenStyle = styles[hash % styles.length]
@@ -509,16 +514,24 @@ The only 4 band members on stage:
   }
 
   if (!publicUrl) {
-    const recordsDir = path.resolve(process.cwd(), 'public/images/records')
-    await fs.mkdir(recordsDir, { recursive: true })
-    const filePath = path.join(recordsDir, fileName)
-    await fs.writeFile(filePath, imageBuffer)
-    publicUrl = `/images/records/${fileName}`
+    try {
+      const recordsDir = path.resolve(process.cwd(), 'public/images/records')
+      await fs.mkdir(recordsDir, { recursive: true })
+      const filePath = path.join(recordsDir, fileName)
+      await fs.writeFile(filePath, imageBuffer)
+      publicUrl = `/images/records/${fileName}`
+    } catch (fsErr) {
+      console.warn('[GenerateCover] Local disk write failed (serverless environment), falling back to base64 data URL:', fsErr)
+      publicUrl = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`
+    }
   }
 
   return {
     success: true,
     url: publicUrl,
+    coverUrl: publicUrl,
+    engine: usedEngine,
+    styleName: chosenStyle,
     title: title || 'Det 7:e Gunget',
     prompt: source === 'photo' ? 'Skapat från Det 7:e Gungets photoshoot' : 'AI-genererad bluesrock-illustration',
   }

@@ -412,6 +412,7 @@ const tables = [
         location text,
         body text NOT NULL,
         status text DEFAULT 'unread' NOT NULL,
+        admin_notes text,
         created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
         read_at integer
       )
@@ -429,6 +430,7 @@ const tables = [
       { name: 'location', definition: 'text' },
       { name: 'body', definition: 'text NOT NULL DEFAULT ""' },
       { name: 'status', definition: 'text DEFAULT "unread" NOT NULL' },
+      { name: 'admin_notes', definition: 'text' },
       { name: 'created_at', definition: 'integer DEFAULT (unixepoch() * 1000) NOT NULL' },
       { name: 'read_at', definition: 'integer' },
     ],

@@ -423,7 +423,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Bokningar & Meddelanden</h3>
             <p class="text-xs text-base-content/80">
-              Inkorg för alla inkommande förfrågningar från kontaktformuläret (kontaktperson, datum, evenemangstyp samt spelställe, gatuadress, postnummer och ort med direktlänk till Google Maps). Markera som lästa, arkivera och svara arrangörer.
+              Inkorg för alla inkommande förfrågningar från kontaktformuläret (kontaktperson, datum, typ, spelställe & adress med Google Maps-länk). Hantera bokningsstatus (<strong>Oläst</strong>, <strong>Väntar på svar</strong>, <strong>Accepterad</strong>, <strong>Avböjd</strong>, <strong>Arkiverad</strong>), filtrera listan samt för interna anteckningar om överenskommelser (t.ex. gage, tider eller orsak till avböjning). Arrangörens e-postadress kopieras enkelt med knappen <strong>📋 Kopiera</strong>.
             </p>
           </div>
           <NuxtLink to="/admin/messages" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -491,7 +491,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Inställningar & Notiser</h3>
             <p class="text-xs text-base-content/80">
-              Ställ in Discord-aviseringar, kontakt-e-post, startsidans innehåll samt slå på/av testläge (Mock Mode) för Facebook och Instagram!
+              Ställ in Discord-aviseringar, officiell kontakt-e-post (styr dynamiskt e-postadressen i sidfot, kontaktsida, integritetspolicy och EPK), Google Gemini API-nyckel för AI-skivomslag, startsidans innehåll samt slå på/av testläge (Mock Mode) för sociala medier!
             </p>
           </div>
           <NuxtLink to="/admin/settings" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">

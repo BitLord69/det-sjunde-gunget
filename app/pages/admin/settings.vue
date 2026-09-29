@@ -43,7 +43,7 @@ const settingsForm = reactive({
   discordNotifyBookings: true,
   discordNotifyFanPhotos: false,
   discordNotifyGuestbook: false,
-  notificationEmail: 'kontakt@det7egunget.se',
+  notificationEmail: 'info@det7egunget.se',
   socialMockMode: false,
 })
 
@@ -60,7 +60,7 @@ watch(
       settingsForm.discordNotifyBookings = newVal.discordNotifyBookings ?? true
       settingsForm.discordNotifyFanPhotos = newVal.discordNotifyFanPhotos ?? false
       settingsForm.discordNotifyGuestbook = newVal.discordNotifyGuestbook ?? false
-      settingsForm.notificationEmail = newVal.notificationEmail || 'kontakt@det7egunget.se'
+      settingsForm.notificationEmail = newVal.notificationEmail || 'info@det7egunget.se'
       settingsForm.socialMockMode = newVal.socialMockMode ?? false
     }
   },
@@ -80,7 +80,7 @@ const isSettingsDirty = computed(() => {
     settingsForm.discordNotifyBookings !== (orig.discordNotifyBookings ?? true) ||
     settingsForm.discordNotifyFanPhotos !== (orig.discordNotifyFanPhotos ?? false) ||
     settingsForm.discordNotifyGuestbook !== (orig.discordNotifyGuestbook ?? false) ||
-    settingsForm.notificationEmail !== (orig.notificationEmail || 'kontakt@det7egunget.se') ||
+    settingsForm.notificationEmail !== (orig.notificationEmail || 'info@det7egunget.se') ||
     settingsForm.socialMockMode !== (orig.socialMockMode ?? false)
   )
 })
@@ -377,7 +377,7 @@ const saveSettings = async () => {
               <input
                 v-model="settingsForm.notificationEmail"
                 type="text"
-                placeholder="kontakt@det7egunget.se, janis@example.com"
+                placeholder="info@det7egunget.se, janis@example.com"
                 class="input input-bordered input-sm w-full bg-base-200 font-mono text-xs"
               />
               <p class="text-[10px] text-base-content/60 mt-1">

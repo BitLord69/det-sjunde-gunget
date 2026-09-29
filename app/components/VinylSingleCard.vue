@@ -72,7 +72,7 @@ const getSongCover = (song: Song) => {
           <div class="absolute inset-4 rounded-full border border-white/10" />
           <!-- Circular 45 RPM Center Label -->
           <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-secondary via-primary to-secondary text-neutral flex flex-col items-center justify-center text-center p-0.5 shadow-md flex-shrink-0">
-            <span class="text-[5px] font-mono font-black uppercase tracking-tighter">7:E GUNGET</span>
+            <span class="text-[5px] font-mono font-black tracking-tighter">7<span class="lowercase">:e</span> GUNGET</span>
             <span class="text-[6px] font-heading font-black truncate max-w-[36px] leading-tight">45 RPM</span>
           </div>
         </div>
@@ -116,8 +116,8 @@ const getSongCover = (song: Song) => {
           class="relative z-10 flex items-center justify-between border-b pb-1"
           :class="song.isOriginal ? 'border-black/20' : 'border-white/15'"
         >
-          <span class="text-[10px] font-heading font-black tracking-wider uppercase">
-            DET 7:E GUNGET
+          <span class="text-[10px] font-heading font-black tracking-wider">
+            DET 7<span class="lowercase">:e</span> GUNGET
           </span>
           <span
             class="text-[8px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"

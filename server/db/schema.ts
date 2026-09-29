@@ -208,6 +208,10 @@ export const messages = sqliteTable('messages', {
   phone: text('phone'),
   eventType: text('event_type'),
   eventDate: text('event_date'),
+  venue: text('venue'),
+  streetAddress: text('street_address'),
+  postalCode: text('postal_code'),
+  city: text('city'),
   location: text('location'),
   body: text('body').notNull(),
   status: text('status', { enum: ['unread', 'read', 'archived'] })

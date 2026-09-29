@@ -89,11 +89,23 @@ export async function sendDiscordBookingAlert(
     phone?: string | null
     eventType?: string | null
     eventDate?: string | null
+    venue?: string | null
+    streetAddress?: string | null
+    postalCode?: string | null
+    city?: string | null
     location?: string | null
     message: string
   },
   adminUrl?: string,
 ): Promise<{ success: boolean; error?: string }> {
+  const addressParts = [
+    data.venue ? `**Lokal:** ${data.venue}` : null,
+    data.streetAddress ? `**Adress:** ${data.streetAddress}` : null,
+    [data.postalCode, data.city].filter(Boolean).length > 0 ? `**Ort:** ${[data.postalCode, data.city].filter(Boolean).join(' ')}` : null,
+  ].filter(Boolean)
+
+  const placeStr = addressParts.length > 0 ? addressParts.join('\n') : (data.location ? `**Plats:** ${data.location}` : 'Ej specificerat')
+
   const fields: DiscordEmbedField[] = [
     {
       name: '👤 Kontaktperson',
@@ -102,7 +114,7 @@ export async function sendDiscordBookingAlert(
     },
     {
       name: '📅 Eventdetaljer',
-      value: `**Typ:** ${data.eventType || 'Ej specificerat'}\n**Datum:** ${data.eventDate || 'Ej specificerat'}\n**Plats:** ${data.location || 'Ej specificerat'}`,
+      value: `**Typ:** ${data.eventType || 'Ej specificerat'}\n**Datum:** ${data.eventDate || 'Ej specificerat'}\n${placeStr}`,
       inline: true,
     },
     {

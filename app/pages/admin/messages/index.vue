@@ -123,9 +123,13 @@ const deleteMessage = async (id: string) => {
               </td>
               <td><span class="badge badge-sm font-bold text-[10px]">{{ msg.eventType || 'Allmänt' }}</span></td>
               <td class="text-xs">
-                <div v-if="msg.eventDate" class="font-bold">{{ msg.eventDate }}</div>
-                <div v-if="msg.location" class="text-base-content/60">{{ msg.location }}</div>
-                <div v-if="!msg.eventDate && !msg.location" class="text-base-content/40">—</div>
+                <div v-if="msg.eventDate" class="font-bold text-primary">{{ msg.eventDate }}</div>
+                <div v-if="msg.venue" class="font-semibold text-base-content/90">{{ msg.venue }}</div>
+                <div v-if="msg.city || msg.streetAddress" class="text-base-content/70">
+                  {{ [msg.streetAddress, [msg.postalCode, msg.city].filter(Boolean).join(' ')].filter(Boolean).join(', ') }}
+                </div>
+                <div v-else-if="msg.location" class="text-base-content/60">{{ msg.location }}</div>
+                <div v-if="!msg.eventDate && !msg.venue && !msg.location && !msg.city" class="text-base-content/40">—</div>
               </td>
               <td>
                 <span
@@ -175,7 +179,11 @@ const deleteMessage = async (id: string) => {
             <button type="button" class="btn btn-sm btn-circle btn-ghost cursor-pointer" @click="selectedMessage = null">✕</button>
           </div>
 
-          <div class="grid sm:grid-cols-2 gap-4 text-sm bg-base-200/80 p-4 rounded-xl border border-primary/20">
+          <div class="grid sm:grid-cols-2 gap-4 text-sm bg-base-200/80 p-5 rounded-2xl border border-primary/20">
+            <div>
+              <span class="text-[10px] uppercase font-bold text-secondary block">Kontaktperson</span>
+              <span class="font-bold text-base-content">{{ selectedMessage.name }}</span>
+            </div>
             <div>
               <span class="text-[10px] uppercase font-bold text-secondary block">E-post</span>
               <a :href="`mailto:${selectedMessage.email}`" class="text-primary font-bold hover:underline">{{ selectedMessage.email }}</a>
@@ -189,8 +197,30 @@ const deleteMessage = async (id: string) => {
               <span>{{ selectedMessage.eventType || 'Ej angivet' }}</span>
             </div>
             <div>
-              <span class="text-[10px] uppercase font-bold text-secondary block">Önskat datum & Plats</span>
-              <span>{{ selectedMessage.eventDate || 'Inget datum' }} • {{ selectedMessage.location || 'Ingen plats' }}</span>
+              <span class="text-[10px] uppercase font-bold text-secondary block">Önskat datum</span>
+              <span class="font-bold text-primary">{{ selectedMessage.eventDate || 'Inget datum specificerat' }}</span>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase font-bold text-secondary block">Lokal / Spelställe</span>
+              <span class="font-bold">{{ selectedMessage.venue || 'Ej angivet' }}</span>
+            </div>
+            <div class="sm:col-span-2 pt-2 border-t border-primary/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span class="text-[10px] uppercase font-bold text-secondary block">Adress</span>
+                <span class="text-xs sm:text-sm text-base-content/90">
+                  {{ [selectedMessage.streetAddress, [selectedMessage.postalCode, selectedMessage.city].filter(Boolean).join(' ')].filter(Boolean).join(', ') || selectedMessage.location || 'Ej angiven' }}
+                </span>
+              </div>
+              <a
+                v-if="selectedMessage.venue || selectedMessage.streetAddress || selectedMessage.city"
+                :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([selectedMessage.venue, selectedMessage.streetAddress, selectedMessage.postalCode, selectedMessage.city].filter(Boolean).join(', '))"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-xs btn-outline btn-primary rounded-full font-bold self-start sm:self-auto gap-1"
+              >
+                <span>📍</span>
+                <span>Öppna i Google Maps ↗</span>
+              </a>
             </div>
           </div>
 

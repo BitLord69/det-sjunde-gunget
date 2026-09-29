@@ -81,6 +81,18 @@ async function pullDatabase() {
   for (const table of tablesResult.rows) {
     const tableName = table.name
     try {
+      // Synka eventuella saknade kolumner till local.db
+      try {
+        const remoteInfo = await remoteClient.execute(`PRAGMA table_info("${tableName}")`)
+        const localInfo = await localClient.execute(`PRAGMA table_info("${tableName}")`)
+        const localCols = new Set(localInfo.rows.map(r => r.name))
+        for (const rCol of remoteInfo.rows) {
+          if (!localCols.has(rCol.name)) {
+            await localClient.execute(`ALTER TABLE "${tableName}" ADD COLUMN "${rCol.name}" ${rCol.type || 'TEXT'}`)
+          }
+        }
+      } catch {}
+
       const remoteData = await remoteClient.execute(`SELECT * FROM "${tableName}"`)
       const rows = remoteData.rows
 

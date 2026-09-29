@@ -7,12 +7,16 @@ import { sendDiscordBookingAlert } from '../utils/discord'
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Namn måste vara minst 2 tecken'),
-  email: z.string().email('Ogiltig e-postadress'),
+  email: z.string().email('Vänligen ange en giltig e-postadress'),
   phone: z.string().optional().default(''),
   eventType: z.string().optional().default('Klubb / Pub'),
   date: z.string().optional().default(''),
+  venue: z.string().optional().default(''),
+  streetAddress: z.string().optional().default(''),
+  postalCode: z.string().optional().default(''),
+  city: z.string().optional().default(''),
   location: z.string().optional().default(''),
-  message: z.string().min(5, 'Meddelandet måste vara minst 5 tecken'),
+  message: z.string().min(3, 'Meddelandet måste innehålla minst 3 tecken'),
   honeypot: z.string().optional().default(''),
 })
 
@@ -21,14 +25,17 @@ export default defineEventHandler(async (event) => {
   const parseResult = contactSchema.safeParse(body)
 
   if (!parseResult.success) {
+    const flattened = parseResult.error.flatten()
+    const firstErrorMessage = Object.values(flattened.fieldErrors).flat()[0] || 'Vänligen kontrollera de ifyllda uppgifterna'
     throw createError({
       statusCode: 400,
-      statusMessage: 'Valideringsfel',
-      data: parseResult.error.flatten(),
+      statusMessage: firstErrorMessage,
+      message: firstErrorMessage,
+      data: flattened,
     })
   }
 
-  const { name, email, phone, eventType, date, location, message, honeypot } = parseResult.data
+  const { name, email, phone, eventType, date, venue, streetAddress, postalCode, city, location, message, honeypot } = parseResult.data
 
   // Spam bot trap: if honeypot is filled, return success without saving or sending
   if (honeypot && honeypot.trim().length > 0) {
@@ -39,6 +46,10 @@ export default defineEventHandler(async (event) => {
   const id = `msg-${nanoid(10)}`
   const now = new Date()
 
+  // Bygg en sammanfattande platssträng för bakåtkompatibilitet
+  const locationParts = [venue, [streetAddress, postalCode, city].filter(Boolean).join(', ')].filter(Boolean)
+  const combinedLocation = locationParts.length > 0 ? locationParts.join(' • ') : (location || null)
+
   // 1. Store in Database
   try {
     await db.insert(messages).values({
@@ -48,7 +59,11 @@ export default defineEventHandler(async (event) => {
       phone: phone || null,
       eventType: eventType || null,
       eventDate: date || null,
-      location: location || null,
+      venue: venue || null,
+      streetAddress: streetAddress || null,
+      postalCode: postalCode || null,
+      city: city || null,
+      location: combinedLocation,
       body: message,
       status: 'unread',
       createdAt: now,
@@ -94,7 +109,11 @@ export default defineEventHandler(async (event) => {
           phone,
           eventType,
           eventDate: date,
-          location,
+          venue,
+          streetAddress,
+          postalCode,
+          city,
+          location: combinedLocation,
           message,
         },
         `https://det7egunget.se/admin/messages/${id}`,
@@ -117,7 +136,9 @@ export default defineEventHandler(async (event) => {
           <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Telefon:</td><td>${escapeHtml(phone || 'Ej angivet')}</td></tr>
           <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Typ av event:</td><td>${escapeHtml(eventType || 'Ej angivet')}</td></tr>
           <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Önskat datum:</td><td>${escapeHtml(date || 'Ej angivet')}</td></tr>
-          <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Plats / stad:</td><td>${escapeHtml(location || 'Ej angivet')}</td></tr>
+          <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Lokal / Ställe:</td><td>${escapeHtml(venue || 'Ej angivet')}</td></tr>
+          <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Gatuadress:</td><td>${escapeHtml(streetAddress || 'Ej angiven')}</td></tr>
+          <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Postnr & Ort:</td><td>${escapeHtml([postalCode, city].filter(Boolean).join(' ') || 'Ej angivet')}</td></tr>
         </table>
       </div>
 

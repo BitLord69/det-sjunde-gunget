@@ -10,9 +10,9 @@ console.log('Testing booking message & subscriber database operations...')
 // Test message insert
 const msgId = `test-msg-${Date.now()}`
 await client.execute({
-  sql: `INSERT INTO messages (id, name, email, phone, event_type, event_date, location, body, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  args: [msgId, 'Test Beställare', 'test@exempel.se', '070-112233', 'Klubb / Pub', '2026-10-10', 'Ängelholm', 'Vi vill gärna boka bandet för en helkväll!', 'unread', Date.now()],
+  sql: `INSERT INTO messages (id, name, email, phone, event_type, event_date, venue, street_address, postal_code, city, location, body, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  args: [msgId, 'Test Beställare', 'test@exempel.se', '070-112233', 'Klubb / Pub', '2026-10-10', 'Kulturhuset', 'Storgatan 12', '252 20', 'Helsingborg', 'Kulturhuset • Helsingborg', 'Vi vill gärna boka bandet för en helkväll!', 'unread', Date.now()],
 })
 
 const msgCheck = await client.execute({

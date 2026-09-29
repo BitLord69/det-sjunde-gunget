@@ -423,7 +423,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Bokningar & Meddelanden</h3>
             <p class="text-xs text-base-content/80">
-              Inkorg för alla inkommande förfrågningar från kontaktformuläret. Markera som lästa, arkivera och svara arrangörer.
+              Inkorg för alla inkommande förfrågningar från kontaktformuläret (kontaktperson, datum, evenemangstyp samt spelställe, gatuadress, postnummer och ort med direktlänk till Google Maps). Markera som lästa, arkivera och svara arrangörer.
             </p>
           </div>
           <NuxtLink to="/admin/messages" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">

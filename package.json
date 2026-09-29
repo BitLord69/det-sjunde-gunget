@@ -11,6 +11,8 @@
     "db:check": "node scripts/check-db.mjs",
     "db:seed": "node scripts/seed-db.mjs",
     "db:migrate-remote": "node scripts/sync-database.mjs",
+    "db:pull-remote": "node scripts/pull-database.mjs",
+    "db:sync-merch": "node scripts/sync-merch.mjs",
     "test:auth": "node scripts/test-auth.mjs",
     "typecheck": "nuxt typecheck",
     "lint": "eslint .",

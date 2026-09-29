@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(galleryItems.id, body.id))
     .limit(1)
 
-  if (!existing || existing.length === 0) {
+  if (!existing || existing.length === 0 || !existing[0]) {
     throw createError({ statusCode: 404, message: 'Gallery item not found' })
   }
 

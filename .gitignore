@@ -9,13 +9,10 @@ node_modules
 .pnpm-store
 
 # Local Database & SQLite files
-local.db
-local.db-journal
-local.db-wal
-local.db-shm
+local.db*
 *.sqlite
 *.sqlite3
-*.db
+*.db*
 
 # Environment variables
 .env

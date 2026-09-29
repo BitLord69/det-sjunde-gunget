@@ -30,12 +30,19 @@ const isSyncingMerch = ref(false)
 const triggerMerchSync = async () => {
   isSyncingMerch.value = true
   try {
-    const res = await $fetch<{ success: boolean; count: number }>('/api/cron/sync-merch')
+    const res = await $fetch<{ success: boolean; count?: number; totalItems?: number; error?: string }>(
+      '/api/admin/merch/sync',
+      { method: 'POST' },
+    )
     await refreshMerch()
     await refreshSettings()
-    showToast(`✓ Synkronisering klar! ${res.count || 0} artiklar uppdaterade.`)
+    if (res.success) {
+      showToast(`✓ Synkronisering klar! ${res.totalItems ?? res.count ?? 0} artiklar uppdaterade.`)
+    } else {
+      showToast(`⚠️ Synkronisering misslyckades: ${res.error || 'Kunde inte hämta från butiken'}`)
+    }
   } catch (err: any) {
-    showToast(`⚠️ Synkronisering misslyckades: ${err?.data?.message || err?.message || 'Fel'}`)
+    showToast(`⚠️ Synkronisering misslyckades: ${err?.data?.message || err?.message || 'Nätverksfel'}`)
   } finally {
     isSyncingMerch.value = false
   }

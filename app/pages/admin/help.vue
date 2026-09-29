@@ -457,7 +457,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Merch & Produkter</h3>
             <p class="text-xs text-base-content/80">
-              Hantera visning av bandets t-shirts, kepsar och muggar med länkar till bandets Spreadshirt-webbutik.
+              Hantera visning av bandets t-shirts, kepsar och muggar. Klicka på "Synka nu" för att direkt hämta in aktuella artiklar, priser och direktlänkar från Spreadshop. Synkroniseringen sker även automatiskt i bakgrunden.
             </p>
           </div>
           <NuxtLink to="/admin/merch" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -644,6 +644,8 @@ const scrollTo = (id: string) => {
         </p>
         <ul class="space-y-2 list-disc list-inside text-base-content/85">
           <li><strong>Databas & Säkerhet:</strong> Drivs av Turso (krypterad SQLite i molnet). Ändringar sparas omedelbart och är skyddade med säker inloggning.</li>
+          <li><strong>Garanterad Dataintegritet (Prod-skydd):</strong> Produktionsdatabasen på Vercel/Turso kan aldrig skrivas över eller rensas vid driftsättning. Schemauppdateringar (nya tabeller och fält) sker icke-destruktivt, och befintliga rader bevaras alltid 100%.</li>
+          <li><strong>Säker Utveckling & Backup (Pull):</strong> Utvecklare kan ladda ner skarp produktionsdata till lokal utveckling med <code class="text-secondary font-mono text-xs">pnpm db:pull-remote</code> (skapar automatisk lokal säkerhetskopia). För schemauppdateringar används <code class="text-secondary font-mono text-xs">pnpm db:migrate-remote</code> helt utan risk för dataförlust.</li>
           <li><strong>Hosting:</strong> Sidan driftas på Vercels globala servrar med automatisk SSL-kryptering (HTTPS) och automatisk optimering av alla bilder.</li>
           <li><strong>Nyhetsbrev & E-post:</strong> Formulär på sajten skickar bekräftelser och sparar prenumeranter via Brevo.</li>
           <li><strong>Ingen kod i vardagen:</strong> Allt innehåll uppdateras via detta administrationsgränssnitt!</li>

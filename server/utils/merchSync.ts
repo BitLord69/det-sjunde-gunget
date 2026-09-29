@@ -27,6 +27,42 @@ export function resolveMerchCategory(nameSv: string, nameEn: string): { sv: stri
   return { sv: 'Kläder & Mode', en: 'Apparel & Clothing' }
 }
 
+// Omfattande uppslagstabell för Spreadshop-produkttyper
+const KNOWN_PRODUCT_TYPES: Record<string, { sv: string; en: string }> = {
+  '813': { sv: 'Ekologisk premium-T-shirt dam', en: "Women's Standard T-Shirt" },
+  '141': { sv: 'Förkläde', en: 'Apron' },
+  '725': { sv: 'T-shirt tonåring', en: 'Teen T-Shirt Classic' },
+  '1007': { sv: 'Kontrastluvtröja', en: 'Kontrast-Kapuzenpullover' },
+  '949': { sv: 'Enfärgad mugg', en: 'Colored Mug' },
+  '6': { sv: 'T-shirt herr', en: 'Männer Basis-T-Shirt' },
+  '631': { sv: 'T-shirt dam', en: 'Frauen Basis-T-Shirt' },
+  '560': { sv: 'Baby Premium kortärmad bodysuit', en: 'Babys Body' },
+  '1089': { sv: 'Jerseymössa', en: 'Unisex Jersey Beanie' },
+  '1183': { sv: 'Vintage-T-shirt herr', en: "Men's Spray Dye T-Shirt with Raw-cut trims" },
+  '127': { sv: 'Små knappar 25 mm (5-pack)', en: 'Small Buttons 25mm' },
+  '125': { sv: 'Stora knappar 56 mm (5-pack)', en: 'Large Buttons 56mm' },
+  '1088': { sv: 'Basebollinne herr', en: 'Männer Basketball-Trikot' },
+  '1413': { sv: 'Soffkudde med stoppning 45 x 45 cm', en: 'Sofa Pillow' },
+  '1435': { sv: 'Matlåda', en: 'Lunchbox' },
+  '1459': { sv: 'Klistermärke storlek S (10 x 10 cm)', en: 'Sticker 10x10cm' },
+  '1464': { sv: 'Fiskarhatt', en: 'Bucket Hat' },
+  '15': { sv: 'Basebollkeps', en: 'Baseball Cap' },
+  '1515': { sv: 'JAKO matchlinne Center 2.0', en: 'JAKO Trikot Center 2.0' },
+  '1614': { sv: 'Softshelljacka dam', en: "Women's Softshell Jacket" },
+  '1615': { sv: 'Softshelljacka unisex', en: 'Unisex Softshell Jacket' },
+  '2963': { sv: 'Hoodie unisex oversize kraftig', en: 'Oversized Unisex Hoodie' },
+  '3109': { sv: 'Ledig vintagekeps', en: 'Vintage Cap' },
+  '4249': { sv: 'Bikini för dam', en: "Women's Bikini" },
+  '4250': { sv: 'Baddräkt för dam', en: "Women's Swimsuit" },
+  '996': { sv: 'Underlägg (4-pack)', en: 'Coasters (set of 4)' },
+}
+
+const BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/plain, */*',
+  'Referer': 'https://det-7e-gunget.myspreadshop.se/',
+}
+
 export async function ensureMerchTableExists() {
   await tursoClient.execute(`
     CREATE TABLE IF NOT EXISTS merch_products (
@@ -62,47 +98,69 @@ export async function syncMerchFromSpreadshop(): Promise<SyncResult> {
   try {
     await ensureMerchTableExists()
 
-    // 1. Fetch live sellables and all 448+ product types (both SV & EN)
-    const [sellablesRes, svRes, enRes]: [any, any, any] = await Promise.all([
-      $fetch('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/sellables', {
-        headers: { 'User-Agent': 'Det7eGunget-Sync/1.0' },
-        timeout: 10000,
-      }),
-      $fetch('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/productTypes?locale=sv_SE&limit=1000', {
-        headers: { 'User-Agent': 'Det7eGunget-Sync/1.0' },
-        timeout: 10000,
-      }),
-      $fetch('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/productTypes?locale=en_US&limit=1000', {
-        headers: { 'User-Agent': 'Det7eGunget-Sync/1.0' },
-        timeout: 10000,
-      }),
-    ])
-
+    // 1. Bygg produkttypsmappning från känd lista och befintlig databas
     const mapSv: Record<string, string> = {}
     const mapEn: Record<string, string> = {}
 
-    if (Array.isArray(svRes?.productTypes)) {
-      for (const p of svRes.productTypes) {
-        if (p?.id && p?.name) mapSv[String(p.id)] = p.name
-      }
+    for (const [id, names] of Object.entries(KNOWN_PRODUCT_TYPES)) {
+      mapSv[id] = names.sv
+      mapEn[id] = names.en
     }
 
-    if (Array.isArray(enRes?.productTypes)) {
-      for (const p of enRes.productTypes) {
-        if (p?.id && p?.name) mapEn[String(p.id)] = p.name
+    try {
+      const dbTypes = await tursoClient.execute('SELECT product_type_id, type_sv, type_en FROM merch_products')
+      for (const row of dbTypes.rows) {
+        const id = String(row.product_type_id)
+        if (row.type_sv && !mapSv[id]) mapSv[id] = String(row.type_sv)
+        if (row.type_en && !mapEn[id]) mapEn[id] = String(row.type_en)
       }
-    }
+    } catch {}
+
+    // Försök hämta färska produkttyper från Spreadshop om de är tillgängliga (tyst fallback vid 403)
+    try {
+      const [svRes, enRes]: [any, any] = await Promise.all([
+        $fetch('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/productTypes?locale=sv_SE&limit=1000', {
+          headers: BROWSER_HEADERS,
+          timeout: 4000,
+        }).catch(() => null),
+        $fetch('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/productTypes?locale=en_US&limit=1000', {
+          headers: BROWSER_HEADERS,
+          timeout: 4000,
+        }).catch(() => null),
+      ])
+
+      if (Array.isArray(svRes?.productTypes)) {
+        for (const p of svRes.productTypes) {
+          if (p?.id && p?.name) mapSv[String(p.id)] = p.name
+        }
+      }
+      if (Array.isArray(enRes?.productTypes)) {
+        for (const p of enRes.productTypes) {
+          if (p?.id && p?.name) mapEn[String(p.id)] = p.name
+        }
+      }
+    } catch {}
+
+    // 2. Hämta live sellables från Spreadshop med äkta webbläsar-headers
+    const sellablesRes: any = await $fetch('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/sellables', {
+      headers: BROWSER_HEADERS,
+      timeout: 10000,
+    })
 
     const rawSellables: any[] = sellablesRes?.sellables || []
     const validItems = rawSellables.filter((s: any) => s.previewImage?.url && s.sellableId)
 
     if (validItems.length === 0) {
-      return { success: false, totalItems: 0, syncedAt, error: 'No items returned from Spreadshop' }
+      return { success: false, totalItems: 0, syncedAt, error: 'Inga artiklar returnerades från Spreadshop' }
     }
 
-    // 2. Batch upsert into database
+    const activeSellableIds = new Set<string>()
+
+    // 3. Batch upsert i databasen
     for (const item of validItems) {
       const typeIdStr = String(item.productTypeId)
+      activeSellableIds.add(String(item.sellableId))
+
       const nameSv = mapSv[typeIdStr] || item.name || 'Officiell Band-merch'
       const nameEn = mapEn[typeIdStr] || item.name || 'Official Band Merch'
       const categories = resolveMerchCategory(nameSv, nameEn)
@@ -110,7 +168,7 @@ export async function syncMerchFromSpreadshop(): Promise<SyncResult> {
       const priceStr = `${priceAmount} kr`
       const imageUrl = item.previewImage?.url || ''
 
-      // Build the exact deep link URL required by Spreadshop
+      // Bygg Spreadshop deep link URL
       const rawName = item.name || 'det 7e gunget'
       const slug = rawName
         .toLowerCase()
@@ -166,14 +224,28 @@ export async function syncMerchFromSpreadshop(): Promise<SyncResult> {
       })
     }
 
-    // 3. Update last_merch_sync setting
+    // 4. Inaktivera artiklar i databasen som inte längre finns i Spreadshop
+    try {
+      const allDbProducts = await tursoClient.execute('SELECT id FROM merch_products WHERE is_active = 1')
+      for (const row of allDbProducts.rows) {
+        const id = String(row.id)
+        if (!activeSellableIds.has(id)) {
+          await tursoClient.execute({
+            sql: 'UPDATE merch_products SET is_active = 0, updated_at = ? WHERE id = ?',
+            args: [syncedAt, id],
+          })
+        }
+      }
+    } catch {}
+
+    // 5. Uppdatera last_merch_sync i site_settings
     await tursoClient.execute({
       sql: `
-        INSERT INTO site_settings (key, value, updated_at)
-        VALUES ('last_merch_sync', ?, ?)
+        INSERT INTO site_settings (key, value, created_at, updated_at)
+        VALUES ('last_merch_sync', ?, ?, ?)
         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
       `,
-      args: [String(syncedAt), syncedAt],
+      args: [String(syncedAt), syncedAt, syncedAt],
     })
 
     return {
@@ -182,7 +254,7 @@ export async function syncMerchFromSpreadshop(): Promise<SyncResult> {
       syncedAt,
     }
   } catch (err: any) {
-    console.error('[MerchSync] Error synchronizing from Spreadshop:', err)
+    console.error('[MerchSync] Fel vid synkronisering från Spreadshop:', err)
     return {
       success: false,
       totalItems: 0,

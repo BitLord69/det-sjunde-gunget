@@ -304,7 +304,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Spelningar & Gigs</h3>
             <p class="text-xs text-base-content/80">
-              Lägg till nya spelningar, uppdatera tider, spelställe, ort och biljettlänkar. Innehåller autopost samt en direktknapp (<strong>📱 Dela</strong>) för att publicera valfritt sparat gig direkt till Facebook & Instagram med valbara hashtags och förhandsgranskning.
+              Lägg till nya spelningar, uppdatera tider, spelställe, ort och biljettlänkar. Spelningar genererar automatiskt strukturerad data (Schema.org Event) för Google Rich Results. Innehåller även autopost samt en direktknapp (<strong>📱 Dela</strong>) för att publicera valfritt sparat gig direkt till Facebook & Instagram med valbara hashtags och förhandsgranskning.
             </p>
           </div>
           <NuxtLink to="/admin/gigs" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -389,7 +389,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Fan Central & Moderering</h3>
             <p class="text-xs text-base-content/80">
-              Granska besökarnas inskickade bilder i <strong>Granskningskön (Staging)</strong>. Godkänn foton för anslagstavlan, anpassa nålfärg och vinkel, eller avvisa och spärra olämpliga e-postadresser.
+              Granska besökarnas inskickade bilder i <strong>Granskningskön (Staging)</strong>. Systemet kontrollerar automatiskt filformat och storlek (max 10 MB, godkända bildformat .jpg, .png, .webp, .avif) samt skyddar mot spam via IP-frekvensbegränsning (max 5 uppladdningar per 10 minuter). Godkänn foton för anslagstavlan, anpassa nålfärg och vinkel, eller avvisa och spärra olämpliga e-postadresser.
             </p>
           </div>
           <NuxtLink to="/admin/fancentral" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -423,7 +423,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Bokningar & Meddelanden</h3>
             <p class="text-xs text-base-content/80">
-              Inkorg för alla inkommande förfrågningar från kontaktformuläret (kontaktperson, datum, typ, spelställe & adress med Google Maps-länk). Hantera bokningsstatus (<strong>Oläst</strong>, <strong>Väntar på svar</strong>, <strong>Accepterad</strong>, <strong>Avböjd</strong>, <strong>Arkiverad</strong>), filtrera listan samt för interna anteckningar om överenskommelser (t.ex. gage, tider eller orsak till avböjning). Arrangörens e-postadress kopieras enkelt med knappen <strong>📋 Kopiera</strong>.
+              Inkorg för alla inkommande förfrågningar från kontaktformuläret (kontaktperson, datum, typ, spelställe, adress med Google Maps-länk samt arrangörens webbadress/länk). Formuläret är skyddat mot spam och massutskick via både osynlig bot-fälla och automatisk IP-frekvensbegränsning (max 5 förfrågningar per 10 minuter). Hantera bokningsstatus (<strong>Oläst</strong>, <strong>Väntar på svar</strong>, <strong>Accepterad</strong>, <strong>Avböjd</strong>, <strong>Arkiverad</strong>), filtrera listan samt för interna anteckningar om överenskommelser (t.ex. gage, tider eller orsak till avböjning). Arrangörens e-postadress kopieras enkelt med knappen <strong>📋 Kopiera</strong>.
             </p>
           </div>
           <NuxtLink to="/admin/messages" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -440,7 +440,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Nyhetsbrevsprenumeranter</h3>
             <p class="text-xs text-base-content/80">
-              Lista på alla fans som registrerat sig för nyhetsbrevet. Synkroniseras automatiskt med e-postplattformen Brevo.
+              Lista på alla fans som registrerat sig för nyhetsbrevet. Skyddad med IP-frekvensbegränsning och bot-fälla, och synkroniseras automatiskt med e-postplattformen Brevo.
             </p>
           </div>
           <NuxtLink to="/admin/subscribers" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">

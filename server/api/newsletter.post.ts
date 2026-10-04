@@ -11,13 +11,23 @@ const newsletterSchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  // Rate limiting: Maximum 5 newsletter subscriptions per 10 minutes per IP
+  enforceRateLimit(event, {
+    scope: 'newsletter',
+    maxRequests: 5,
+    windowMs: 10 * 60 * 1000,
+    errorMessage: 'För många anmälningar på kort tid. Vänligen vänta några minuter innan du försöker igen.',
+  })
+
   const body = await readBody(event)
   const parseResult = newsletterSchema.safeParse(body)
 
   if (!parseResult.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Ogiltig e-postadress',
+      statusMessage: 'Bad Request',
+      message: 'Ogiltig e-postadress',
+      data: { code: 'INVALID_EMAIL' },
     })
   }
 
@@ -72,11 +82,13 @@ export default defineEventHandler(async (event) => {
       success: true,
       message: 'Tack för att du prenumererar! Du missar inte en enda spelning framöver.',
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Newsletter] Error registering subscriber:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Kunde inte spara prenumerationen. Försök igen senare.',
+      statusMessage: 'Internal Server Error',
+      message: 'Kunde inte spara prenumerationen. Försök igen senare.',
+      data: { code: 'NEWSLETTER_SAVE_FAILED' },
     })
   }
 })

@@ -17,7 +17,16 @@ const showToast = (msg: string) => {
   }, 4000)
 }
 
-const { data: subscribersData, refresh: refreshSubscribers } = await useFetch<any[]>('/api/admin/subscribers', {
+interface SubscriberItem {
+  id: string
+  email: string
+  status?: string | null
+  source?: string | null
+  subscribedAt: string | number | Date
+  createdAt?: string | number | Date
+}
+
+const { data: subscribersData, refresh: refreshSubscribers } = await useFetch<SubscriberItem[]>('/api/admin/subscribers', {
   default: () => [],
 })
 
@@ -40,7 +49,7 @@ const toggleNewsletterSetting = async () => {
     })
     await refreshSettings()
     showToast(nextVal ? '✓ Nyhetsbrev aktiverat på sajten!' : '✓ Nyhetsbrev pausat på sajten!')
-  } catch (err: any) {
+  } catch {
     showToast('⚠️ Kunde inte uppdatera inställning.')
   } finally {
     isSavingSettings.value = false
@@ -76,7 +85,8 @@ const toggleNewsletterSetting = async () => {
       </div>
 
       <!-- MASTER SETTING: Enable/Pause Newsletter on Site -->
-      <div class="p-6 rounded-2xl border stage-card shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+      <div
+class="p-6 rounded-2xl border stage-card shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
         :class="newsletterEnabledSetting ? 'border-emerald-500/40 bg-emerald-950/20' : 'border-amber-500/40 bg-amber-950/20'"
       >
         <div class="space-y-1.5 max-w-2xl">

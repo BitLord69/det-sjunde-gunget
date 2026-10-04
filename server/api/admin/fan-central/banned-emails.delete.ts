@@ -11,7 +11,8 @@ export default defineEventHandler(async (event) => {
   if (!id && !email) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'ID eller e-post krävs för att häva spärr.',
+      statusMessage: 'Bad Request',
+      message: 'ID eller e-post krävs för att häva spärr.',
     })
   }
 

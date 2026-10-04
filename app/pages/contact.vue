@@ -4,8 +4,11 @@ const localePath = useLocalePath()
 const { contactEmail } = useSiteSettings()
 
 useSeoMeta({
-  title: computed(() => `${t('contact.title')} | Det 7:e Gunget`),
-  description: computed(() => t('contact.desc')),
+  title: () => `${t('seo.contact_title')}`,
+  description: () => t('seo.contact_desc'),
+  ogTitle: () => `${t('seo.contact_og_title')}`,
+  ogDescription: () => t('seo.contact_og_desc'),
+  ogImage: '/media/og/og-share.jpg',
 })
 </script>
 
@@ -50,7 +53,7 @@ useSeoMeta({
             </div>
 
             <div class="flex items-start gap-3">
-              <span class="text-xl">📍</span>
+              <IconMapPin class="w-6 h-6 text-primary shrink-0 mt-0.5" />
               <div>
                 <span class="text-xs text-base-content/60 uppercase font-bold block">{{ t('contact.area_label') }}</span>
                 <span>{{ t('contact.area_val') }}</span>

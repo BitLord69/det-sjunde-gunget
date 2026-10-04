@@ -55,7 +55,7 @@ const nextGig = computed(() => gigsData.value?.upcoming?.[0] || null)
 </script>
 
 <template>
-  <div>
+  <div class="contents">
     <!-- Top Announcement / Next Gig Ticker Bar (Seamless with Header background) -->
     <div class="bg-base-100/95 text-xs text-base-content/75 border-b border-primary/10 py-2 px-4 sm:px-8 relative z-50">
       <div class="mx-auto max-w-7xl flex items-center justify-between gap-4">

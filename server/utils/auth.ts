@@ -3,7 +3,7 @@ import type { H3Event } from 'h3'
 import { eq, and, gt } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { tursoClient, db } from '../db/client'
-import { admins, adminSessions, adminAccounts } from '../db/schema'
+import { admins, adminSessions } from '../db/schema'
 
 export async function ensureAdminAccountsTable() {
   try {
@@ -21,7 +21,7 @@ export async function ensureAdminAccountsTable() {
         updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
       )
     `)
-  } catch (err) {
+  } catch {
     // Ignore if table exists
   }
 }

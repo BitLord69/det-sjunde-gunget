@@ -1,4 +1,4 @@
-import { db, tursoClient } from '../db/client'
+import { db } from '../db/client'
 import { merchProducts } from '../db/schema'
 import { eq } from 'drizzle-orm'
 import { syncMerchFromSpreadshop, ensureMerchTableExists } from '../utils/merchSync'
@@ -16,17 +16,18 @@ interface MerchProduct {
 }
 
 // Server in-memory cache to prevent frequent round-trips to the cloud database
-let serverDbCache: { timestamp: number; items: any[] } | null = null
+let serverDbCache: { timestamp: number; items: (typeof merchProducts.$inferSelect)[] } | null = null
 const DB_CACHE_TTL_MS = 15 * 60 * 1000 // 15 minutes
 
 export function invalidateMerchServerCache() {
   serverDbCache = null
 }
 
-export default defineEventHandler(async (): Promise<MerchProduct[]> => {
+export default defineEventHandler(async (event): Promise<MerchProduct[]> => {
+  setHeader(event, 'Cache-Control', 'public, max-age=120, s-maxage=600, stale-while-revalidate=1200')
   try {
     const now = Date.now()
-    let items: any[] = []
+    let items: (typeof merchProducts.$inferSelect)[] = []
 
     if (serverDbCache && now - serverDbCache.timestamp < DB_CACHE_TTL_MS && serverDbCache.items.length > 0) {
       items = serverDbCache.items
@@ -56,7 +57,7 @@ export default defineEventHandler(async (): Promise<MerchProduct[]> => {
       const shuffled = [...items].sort(() => Math.random() - 0.5)
 
       // Ensure distinct product types first
-      const selected: any[] = []
+      const selected: (typeof merchProducts.$inferSelect)[] = []
       const usedTypes = new Set<string>()
 
       for (const item of shuffled) {
@@ -85,7 +86,7 @@ export default defineEventHandler(async (): Promise<MerchProduct[]> => {
         url: item.productUrl,
       }))
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[MerchAPI] Error querying merch_products table:', err)
   }
 

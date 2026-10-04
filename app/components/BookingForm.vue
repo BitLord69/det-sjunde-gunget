@@ -19,6 +19,7 @@ const form = reactive({
   streetAddress: '',
   postalCode: '',
   city: '',
+  website: '',
   message: '',
   honeypot: '',
 })
@@ -74,7 +75,14 @@ const submitBooking = async () => {
       }
     }
 
-    formError.value = err?.data?.statusMessage || err?.data?.message || 'Kontrollera de ifyllda uppgifterna och försök igen.'
+    const errCode = err?.data?.data?.code
+    if (errCode === 'RATE_LIMIT_EXCEEDED') {
+      formError.value = t('contact.error_rate_limit')
+    } else if (errCode === 'BOOKING_SAVE_FAILED') {
+      formError.value = t('contact.error_failed')
+    } else {
+      formError.value = err?.data?.message || t('contact.error_validation')
+    }
   } finally {
     formLoading.value = false
   }
@@ -90,6 +98,7 @@ const resetForm = () => {
   form.streetAddress = ''
   form.postalCode = ''
   form.city = ''
+  form.website = ''
   form.message = ''
   form.honeypot = ''
   formSubmitted.value = false
@@ -102,7 +111,7 @@ const resetForm = () => {
   <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-base-300/80 via-base-200/90 to-base-300/80 dark:from-[#140e0b] dark:to-[#0a0705] border-2 border-primary/35 shadow-xl">
     <form v-if="!formSubmitted" class="space-y-4" @submit.prevent="submitBooking">
       <!-- Honeypot (bot trap) -->
-      <input v-model="form.honeypot" type="text" class="hidden" tabindex="-1" autocomplete="off" />
+      <input v-model="form.honeypot" type="text" class="hidden" tabindex="-1" autocomplete="off" >
 
       <!-- Error Alert -->
       <div v-if="formError" class="p-3.5 bg-error/15 border-2 border-error/50 text-error text-xs rounded-xl flex items-center gap-2 font-bold shadow-lg">
@@ -123,7 +132,7 @@ const resetForm = () => {
           class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner transition-colors"
           :class="{ '!border-error focus:!border-error ring-1 ring-error/50': fieldErrors.name }"
           @input="clearFieldError('name')"
-        />
+        >
         <p v-if="fieldErrors.name" class="text-error text-xs font-semibold mt-1 flex items-center gap-1">
           <span>⚠️</span> {{ fieldErrors.name }}
         </p>
@@ -139,11 +148,11 @@ const resetForm = () => {
             v-model="form.email"
             type="email"
             required
-            placeholder="namn@exempel.se"
+            :placeholder="t('contact.email_placeholder')"
             class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner transition-colors"
             :class="{ '!border-error focus:!border-error ring-1 ring-error/50': fieldErrors.email }"
             @input="clearFieldError('email')"
-          />
+          >
           <p v-if="fieldErrors.email" class="text-error text-xs font-semibold mt-1 flex items-center gap-1">
             <span>⚠️</span> {{ fieldErrors.email }}
           </p>
@@ -159,7 +168,7 @@ const resetForm = () => {
             class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner transition-colors"
             :class="{ '!border-error focus:!border-error ring-1 ring-error/50': fieldErrors.phone }"
             @input="clearFieldError('phone')"
-          />
+          >
           <p v-if="fieldErrors.phone" class="text-error text-xs font-semibold mt-1 flex items-center gap-1">
             <span>⚠️</span> {{ fieldErrors.phone }}
           </p>
@@ -186,15 +195,16 @@ const resetForm = () => {
           <input
             v-model="form.date"
             type="date"
+            :placeholder="t('contact.date_placeholder')"
             class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner"
-          />
+          >
         </div>
       </div>
 
       <!-- Adresssektion: Lokal / Ställe & Gatuadress -->
       <div class="pt-2 border-t border-primary/20 space-y-3">
         <span class="text-[11px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-          <span>📍</span> Spelplats & Adress
+          <IconMapPin class="w-4 h-4 text-primary" /> {{ t('contact.address_section_title') }}
         </span>
 
         <div>
@@ -208,7 +218,7 @@ const resetForm = () => {
             class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner transition-colors"
             :class="{ '!border-error focus:!border-error ring-1 ring-error/50': fieldErrors.venue }"
             @input="clearFieldError('venue')"
-          />
+          >
           <p v-if="fieldErrors.venue" class="text-error text-xs font-semibold mt-1 flex items-center gap-1">
             <span>⚠️</span> {{ fieldErrors.venue }}
           </p>
@@ -225,7 +235,7 @@ const resetForm = () => {
             class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner transition-colors"
             :class="{ '!border-error focus:!border-error ring-1 ring-error/50': fieldErrors.streetAddress }"
             @input="clearFieldError('streetAddress')"
-          />
+          >
           <p v-if="fieldErrors.streetAddress" class="text-error text-xs font-semibold mt-1 flex items-center gap-1">
             <span>⚠️</span> {{ fieldErrors.streetAddress }}
           </p>
@@ -244,7 +254,7 @@ const resetForm = () => {
               class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner transition-colors"
               :class="{ '!border-error focus:!border-error ring-1 ring-error/50': fieldErrors.postalCode }"
               @input="clearFieldError('postalCode')"
-            />
+            >
             <p v-if="fieldErrors.postalCode" class="text-error text-xs font-semibold mt-1 flex items-center gap-1">
               <span>⚠️</span> {{ fieldErrors.postalCode }}
             </p>
@@ -260,12 +270,30 @@ const resetForm = () => {
               class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner transition-colors"
               :class="{ '!border-error focus:!border-error ring-1 ring-error/50': fieldErrors.city }"
               @input="clearFieldError('city')"
-            />
+            >
             <p v-if="fieldErrors.city" class="text-error text-xs font-semibold mt-1 flex items-center gap-1">
               <span>⚠️</span> {{ fieldErrors.city }}
             </p>
           </div>
         </div>
+      </div>
+
+      <!-- Webbadress / URL -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-secondary mb-1">
+          {{ t('contact.website_label') }}
+        </label>
+        <input
+          v-model="form.website"
+          type="text"
+          :placeholder="t('contact.website_placeholder')"
+          class="input input-bordered w-full bg-base-100/95 dark:bg-black/80 border-primary/40 focus:border-primary text-sm shadow-inner transition-colors"
+          :class="{ '!border-error focus:!border-error ring-1 ring-error/50': fieldErrors.website }"
+          @input="clearFieldError('website')"
+        >
+        <p v-if="fieldErrors.website" class="text-error text-xs font-semibold mt-1 flex items-center gap-1">
+          <span>⚠️</span> {{ fieldErrors.website }}
+        </p>
       </div>
 
       <!-- Meddelande -->

@@ -118,7 +118,7 @@ onMounted(() => {
               required
               placeholder="namn@det7egunget.se"
               class="input input-bordered w-full bg-base-100 text-sm focus:border-primary text-base-content font-mono"
-            />
+            >
           </div>
 
           <button
@@ -153,7 +153,7 @@ onMounted(() => {
               autocomplete="username"
               placeholder="janis / janis@det7egunget.se"
               class="input input-bordered w-full bg-base-100 text-sm focus:border-primary text-base-content"
-            />
+            >
           </div>
 
           <div>
@@ -174,7 +174,7 @@ onMounted(() => {
               autocomplete="current-password"
               placeholder="••••••••"
               class="input input-bordered w-full bg-base-100 text-sm focus:border-primary text-base-content"
-            />
+            >
           </div>
 
           <button

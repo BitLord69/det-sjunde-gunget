@@ -132,28 +132,17 @@ const openEditGig = (gig: any) => {
   editingGig.value = gig.id
 }
 
+const { formatGigSocialPost } = useSocialSharePost()
+
 const gigSocialPreview = computed(() => {
-  const dateStr = gigForm.date
-    ? new Date(gigForm.date).toLocaleDateString('sv-SE', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : '[Datum]'
-
-  const cityTag = gigForm.city ? `#${gigForm.city.replace(/\s+/g, '')}Blues` : ''
-  const tagsStr = selectedGigTags.value.length > 0 ? selectedGigTags.value.join(' ') : '#DetSjundeGunget #BluesRock'
-
-  return `🎸 NYTT GIG MED DET 7:e GUNGET! 🎸
-
-📍 Spelplats: ${gigForm.venue || '[Spelplats]'}, ${gigForm.city || '[Stad]'}
-📅 Datum: ${dateStr}${gigForm.notesSv ? `\n\n"${gigForm.notesSv}"` : ''}
-
-${gigForm.ticketUrl ? `🎟️ Biljetter: ${gigForm.ticketUrl}` : '👉 Mer info: https://det7egunget.se/gigs'}
-
-Kom och sväng med oss! 🎶
-${tagsStr} ${cityTag}`.trim()
+  return formatGigSocialPost({
+    venue: gigForm.venue,
+    city: gigForm.city,
+    date: gigForm.date,
+    notes: gigForm.notesSv,
+    ticketUrl: gigForm.ticketUrl,
+    tags: selectedGigTags.value,
+  })
 })
 
 const saveGig = async () => {
@@ -307,23 +296,23 @@ onBeforeRouteLeave((to, from, next) => {
         <div class="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Spelplats / lokal *</label>
-            <input v-model="gigForm.venue" type="text" placeholder="T.ex. Kulturhuset Svängen" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="gigForm.venue" type="text" placeholder="T.ex. Kulturhuset Svängen" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Stad *</label>
-            <input v-model="gigForm.city" type="text" placeholder="T.ex. Ängelholm" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="gigForm.city" type="text" placeholder="T.ex. Ängelholm" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Datum *</label>
-            <input v-model="gigForm.date" type="date" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="gigForm.date" type="date" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Tid</label>
-            <input v-model="gigForm.time" type="time" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="gigForm.time" type="time" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Biljettlänk (valfritt)</label>
-            <input v-model="gigForm.ticketUrl" type="url" placeholder="https://billetto.se/..." class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="gigForm.ticketUrl" type="url" placeholder="https://billetto.se/..." class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Status</label>
@@ -408,19 +397,19 @@ onBeforeRouteLeave((to, from, next) => {
                   type="text"
                   placeholder="Låttitel..."
                   class="input input-bordered input-xs flex-grow bg-base-200"
-                />
+                >
                 <input
                   v-model="track.artist"
                   type="text"
                   placeholder="Artist / Original..."
                   class="input input-bordered input-xs w-32 bg-base-200"
-                />
+                >
                 <input
                   v-model="track.notes"
                   type="text"
                   placeholder="Notering / Cue..."
                   class="input input-bordered input-xs w-28 bg-base-200"
-                />
+                >
                 <select
                   v-model="track.setName"
                   class="select select-bordered select-xs w-28 bg-base-200 text-[10px]"
@@ -460,7 +449,7 @@ onBeforeRouteLeave((to, from, next) => {
                   Skapar ett färdigt socialt inlägg i kön när du sparar giget.
                 </p>
               </div>
-              <input v-model="gigForm.postToSocials" type="checkbox" class="toggle toggle-primary toggle-sm" />
+              <input v-model="gigForm.postToSocials" type="checkbox" class="toggle toggle-primary toggle-sm" >
             </div>
 
             <!-- Hashtag Selector for this Gig Post -->

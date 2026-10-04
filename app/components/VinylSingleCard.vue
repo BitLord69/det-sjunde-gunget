@@ -90,10 +90,13 @@ const getSongCover = (song: Song) => {
       @click="$emit('togglePlay', song)"
     >
       <!-- A. Custom Full-Bleed Artwork Image -->
-      <img
+      <NuxtImg
         v-if="getSongCover(song)"
         :src="getSongCover(song)!"
         :alt="song.title"
+        width="400"
+        height="400"
+        format="webp"
         class="w-full h-full object-cover rounded-sm select-none"
         loading="lazy"
       />

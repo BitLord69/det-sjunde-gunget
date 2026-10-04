@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     await ensureAdminAccountsTable()
 
     // 1. Exchange code for access token
-    const tokenResponse: any = await $fetch('https://github.com/login/oauth/access_token', {
+    const tokenResponse = await $fetch<{ access_token: string }>('https://github.com/login/oauth/access_token', {
       method: 'POST',
       body: {
         client_id: clientId,
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     const accessToken = tokenResponse.access_token
 
     // 2. Fetch GitHub user profile
-    const githubUser: any = await $fetch('https://api.github.com/user', {
+    const githubUser = await $fetch<{ id: number; name?: string; login?: string; email?: string; avatar_url?: string }>('https://api.github.com/user', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'User-Agent': 'Det-Sjunde-Gunget-App',
@@ -54,13 +54,13 @@ export default defineEventHandler(async (event) => {
     let email = githubUser.email
 
     if (!email) {
-      const emails: any = await $fetch('https://api.github.com/user/emails', {
+      const emails = await $fetch<Array<{ email: string; primary: boolean; verified: boolean }>>('https://api.github.com/user/emails', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'User-Agent': 'Det-Sjunde-Gunget-App',
         },
       })
-      const primary = emails.find((e: any) => e.primary && e.verified)
+      const primary = emails.find((e) => e.primary && e.verified)
       email = primary ? primary.email : emails[0]?.email
     }
 
@@ -120,7 +120,7 @@ export default defineEventHandler(async (event) => {
       )
       .limit(1)
 
-    let targetAdmin: any = null
+    let targetAdmin: typeof admins.$inferSelect | null = null
     const firstLinked = linkedAccounts[0]
 
     if (firstLinked) {
@@ -129,7 +129,7 @@ export default defineEventHandler(async (event) => {
         .from(admins)
         .where(eq(admins.id, firstLinked.adminId))
         .limit(1)
-      targetAdmin = adminRows[0]
+      targetAdmin = adminRows[0] || null
     }
 
     // 2. If not found in admin_accounts, check admins by email or username
@@ -140,12 +140,12 @@ export default defineEventHandler(async (event) => {
         .where(
           or(
             normalizedEmail ? sql`lower(${admins.email}) = ${normalizedEmail}` : sql`1=0`,
-            sql`lower(${admins.username}) = ${githubUser.login.toLowerCase()}`
+            sql`lower(${admins.username}) = ${(githubUser.login || '').toLowerCase()}`
           )
         )
         .limit(1)
 
-      if (matchingAdmins.length > 0) {
+      if (matchingAdmins[0]) {
         targetAdmin = matchingAdmins[0]
 
         // Link to admin_accounts for future logins
@@ -195,7 +195,7 @@ export default defineEventHandler(async (event) => {
       })
 
       const newlyCreated = await db.select().from(admins).where(eq(admins.id, id)).limit(1)
-      targetAdmin = newlyCreated[0]
+      targetAdmin = newlyCreated[0] || null
     }
 
     if (!targetAdmin) {
@@ -205,7 +205,7 @@ export default defineEventHandler(async (event) => {
     // 4. Create session and redirect to admin dashboard
     await createAdminSession(targetAdmin.id, event)
     return sendRedirect(event, '/admin')
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('GitHub OAuth Callback Error:', err)
     return sendRedirect(event, `/admin/login?error=github_auth_failed`)
   }

@@ -15,12 +15,21 @@ const contactSchema = z.object({
   streetAddress: z.string().optional().default(''),
   postalCode: z.string().optional().default(''),
   city: z.string().optional().default(''),
+  website: z.string().optional().default(''),
   location: z.string().optional().default(''),
   message: z.string().min(3, 'Meddelandet måste innehålla minst 3 tecken'),
   honeypot: z.string().optional().default(''),
 })
 
 export default defineEventHandler(async (event) => {
+  // 0. Rate limiting: Maximum 5 booking inquiries per 10 minutes per IP
+  enforceRateLimit(event, {
+    scope: 'contact',
+    maxRequests: 5,
+    windowMs: 10 * 60 * 1000,
+    errorMessage: 'För många bokningsförfrågningar på kort tid. Vänligen vänta några minuter innan du försöker igen.',
+  })
+
   const body = await readBody(event)
   const parseResult = contactSchema.safeParse(body)
 
@@ -29,13 +38,16 @@ export default defineEventHandler(async (event) => {
     const firstErrorMessage = Object.values(flattened.fieldErrors).flat()[0] || 'Vänligen kontrollera de ifyllda uppgifterna'
     throw createError({
       statusCode: 400,
-      statusMessage: firstErrorMessage,
+      statusMessage: 'Bad Request',
       message: firstErrorMessage,
-      data: flattened,
+      data: {
+        code: 'VALIDATION_ERROR',
+        ...flattened,
+      },
     })
   }
 
-  const { name, email, phone, eventType, date, venue, streetAddress, postalCode, city, location, message, honeypot } = parseResult.data
+  const { name, email, phone, eventType, date, venue, streetAddress, postalCode, city, website, location, message, honeypot } = parseResult.data
 
   // Spam bot trap: if honeypot is filled, return success without saving or sending
   if (honeypot && honeypot.trim().length > 0) {
@@ -63,16 +75,19 @@ export default defineEventHandler(async (event) => {
       streetAddress: streetAddress || null,
       postalCode: postalCode || null,
       city: city || null,
+      website: website || null,
       location: combinedLocation,
       body: message,
       status: 'unread',
       createdAt: now,
     })
-  } catch (dbError: any) {
+  } catch (dbError: unknown) {
     console.error('[Contact] Error saving message to database:', dbError)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Kunde inte spara bokningsförfrågan i databasen.',
+      statusMessage: 'Internal Server Error',
+      message: 'Kunde inte spara bokningsförfrågan i databasen.',
+      data: { code: 'BOOKING_SAVE_FAILED' },
     })
   }
 
@@ -113,6 +128,7 @@ export default defineEventHandler(async (event) => {
           streetAddress,
           postalCode,
           city,
+          website,
           location: combinedLocation,
           message,
         },
@@ -139,6 +155,7 @@ export default defineEventHandler(async (event) => {
           <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Lokal / Ställe:</td><td>${escapeHtml(venue || 'Ej angivet')}</td></tr>
           <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Gatuadress:</td><td>${escapeHtml(streetAddress || 'Ej angiven')}</td></tr>
           <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Postnr & Ort:</td><td>${escapeHtml([postalCode, city].filter(Boolean).join(' ') || 'Ej angivet')}</td></tr>
+          <tr><td style="padding: 6px 0; color: #e2bd72; font-weight: bold;">Webbadress:</td><td>${website ? `<a href="${escapeHtml(website.startsWith('http') ? website : `https://${website}`)}" style="color: #fca311; text-decoration: underline;" target="_blank">${escapeHtml(website)}</a>` : 'Ej angiven'}</td></tr>
         </table>
       </div>
 

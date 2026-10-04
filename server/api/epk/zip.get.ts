@@ -28,7 +28,9 @@ export default defineEventHandler(async (event) => {
     if (emailSetting) {
       contactEmail = emailSetting.split(/[,;]/)[0]?.trim() || contactEmail
     }
-  } catch (_) {}
+  } catch {
+    // Ignore settings read error
+  }
 
   // Folders inside the zip
   const photosFolder = zip.folder('Pressfoton-HighRes')
@@ -49,8 +51,8 @@ export default defineEventHandler(async (event) => {
       const cleanPath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl
       const localPath = path.resolve(process.cwd(), 'public', cleanPath)
       return await fs.readFile(localPath)
-    } catch (err: any) {
-      console.warn(`[EPK Zip] Could not read file ${fileUrl}:`, err?.message)
+    } catch (err: unknown) {
+      console.warn(`[EPK Zip] Could not read file ${fileUrl}:`, err instanceof Error ? err.message : String(err))
       return null
     }
   }

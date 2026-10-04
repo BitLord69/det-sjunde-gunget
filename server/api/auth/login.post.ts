@@ -1,9 +1,17 @@
-import { eq, or, sql } from 'drizzle-orm'
+import { or, sql } from 'drizzle-orm'
 import { db } from '../../db/client'
 import { admins } from '../../db/schema'
 import { createAdminSession, verifyPassword } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
+  // Rate limiting: Maximum 5 login attempts per 15 minutes per IP
+  enforceRateLimit(event, {
+    scope: 'login',
+    maxRequests: 5,
+    windowMs: 15 * 60 * 1000,
+    errorMessage: 'För många inloggningsförsök från denna IP-adress. Vänligen vänta 15 minuter innan du försöker igen.',
+  })
+
   const body = await readBody(event)
 
   const identifier = (body.identifier || '').trim().toLowerCase()

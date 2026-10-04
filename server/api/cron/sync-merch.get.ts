@@ -9,7 +9,8 @@ export default defineEventHandler(async (event) => {
     // Return 401 if CRON_SECRET is provided but invalid
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthorized cron trigger',
+      statusMessage: 'Unauthorized',
+      message: 'Unauthorized cron trigger',
     })
   }
 

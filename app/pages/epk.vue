@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { GalleryItem } from '~/types'
+
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const { contactEmail } = useSiteSettings()
@@ -88,9 +90,21 @@ const defaultPressPhotos = [
   },
 ]
 
+interface EpkDocument {
+  id: string
+  titleSv: string
+  titleEn?: string | null
+  descriptionSv?: string | null
+  descriptionEn?: string | null
+  fileUrl: string
+  fileType?: string | null
+  fileSize?: string | null
+  category?: string | null
+}
+
 // Dynamic EPK resources from database (CMS managed)
-const { data: dbEpkPhotos } = await useFetch<any[]>('/api/gallery?epk=true')
-const { data: dbDocuments } = await useFetch<any[]>('/api/epk/documents')
+const { data: dbEpkPhotos } = await useFetch<GalleryItem[]>('/api/gallery?epk=true')
+const { data: dbDocuments } = await useFetch<EpkDocument[]>('/api/epk/documents')
 
 const displayPressPhotos = computed(() => {
   if (dbEpkPhotos.value && dbEpkPhotos.value.length > 0) {

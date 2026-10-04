@@ -65,7 +65,7 @@ onUnmounted(() => {
             :src="activePhoto.mediaUrl"
             :alt="activePhoto.caption || t('fan_central.alt_photo')"
             class="max-h-[65vh] max-w-full object-contain rounded-lg shadow-2xl"
-          />
+          >
 
           <!-- Left arrow button -->
           <button
@@ -113,7 +113,7 @@ onUnmounted(() => {
             <div class="space-y-2.5 pt-3 border-t border-base-content/10 text-xs font-mono">
               <div>
                 <span class="text-secondary font-bold block text-[10px] uppercase">{{ t('fan_central.lightbox_location_label') }}:</span>
-                <span class="text-base-content/85">📍 {{ activePhoto.location || t('fan_central.unknown_location') }}</span>
+                <span class="text-base-content/85 flex items-center gap-1.5"><IconMapPin class="w-3.5 h-3.5 text-primary shrink-0" /> {{ activePhoto.location || t('fan_central.unknown_location') }}</span>
               </div>
               <div>
                 <span class="text-secondary font-bold block text-[10px] uppercase">{{ t('fan_central.lightbox_when_label') }}:</span>

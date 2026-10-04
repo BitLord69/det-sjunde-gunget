@@ -374,7 +374,7 @@ const saveAdminPhoto = async () => {
               alt="Inskickad fan-bild"
               class="max-h-56 max-w-full object-contain rounded-lg shadow-md transition-transform"
               :style="{ transform: `rotate(${item.rotation || 0}deg)` }"
-            />
+            >
             <span class="absolute top-3 left-3 badge badge-warning badge-sm font-bold shadow">
               ⏳ Väntar på granskning
             </span>
@@ -435,12 +435,12 @@ const saveAdminPhoto = async () => {
                 </div>
                 <div>
                   <label class="text-[10px] text-base-content/60 block">Vinkel (-4° till 4°):</label>
-                  <input v-model.number="item.rotation" type="number" min="-6" max="6" class="input input-bordered input-xs w-full font-mono bg-base-200" />
+                  <input v-model.number="item.rotation" type="number" min="-6" max="6" class="input input-bordered input-xs w-full font-mono bg-base-200" >
                 </div>
               </div>
 
               <label class="flex items-center gap-2 cursor-pointer mt-1">
-                <input v-model="item.isMachineFan" type="checkbox" class="checkbox checkbox-xs checkbox-primary" />
+                <input v-model="item.isMachineFan" type="checkbox" class="checkbox checkbox-xs checkbox-primary" >
                 <span class="text-[11px] text-base-content/80">
                   Markera som maskinfläkt (elektrisk bordsfläkt)
                 </span>
@@ -456,7 +456,7 @@ const saveAdminPhoto = async () => {
               :disabled="isProcessingId === item.id"
               @click="approveItem(item)"
             >
-              <span v-if="isProcessingId === item.id" class="loading loading-spinner loading-xs"></span>
+              <span v-if="isProcessingId === item.id" class="loading loading-spinner loading-xs"/>
               <span>✓ Godkänn & Nåla upp</span>
             </button>
 
@@ -507,7 +507,7 @@ const saveAdminPhoto = async () => {
               alt="Publicerad bild"
               class="max-h-44 max-w-full object-contain rounded-lg shadow-sm"
               :style="{ transform: `rotate(${item.rotation || 0}deg)` }"
-            />
+            >
             <span
               v-if="item.isMachineFan"
               class="absolute top-2 right-2 badge badge-secondary badge-xs font-bold"
@@ -523,7 +523,7 @@ const saveAdminPhoto = async () => {
             </p>
 
             <div class="text-[11px] font-mono text-base-content/65 space-y-0.5 pt-2 border-t border-base-content/10">
-              <div class="truncate">📍 {{ item.location || 'Plats okänd' }}</div>
+              <div class="truncate flex items-center gap-1"><IconMapPin class="w-3 h-3 text-primary shrink-0" /> {{ item.location || 'Plats okänd' }}</div>
               <div class="truncate">📅 {{ item.takenWhen || 'Tidpunkt okänd' }}</div>
               <div class="truncate text-[10px] text-base-content/50">Inskickat av: {{ item.uploaderEmail }}</div>
             </div>
@@ -566,7 +566,7 @@ const saveAdminPhoto = async () => {
               type="email"
               placeholder="troll@example.com"
               class="input input-bordered input-sm w-full bg-base-200 font-mono"
-            />
+            >
           </div>
           <div>
             <label class="block font-bold text-secondary mb-1">Orsak (valfritt)</label>
@@ -575,7 +575,7 @@ const saveAdminPhoto = async () => {
               type="text"
               placeholder="Spam eller olämpligt innehåll"
               class="input input-bordered input-sm w-full bg-base-200"
-            />
+            >
           </div>
         </div>
 
@@ -652,7 +652,7 @@ const saveAdminPhoto = async () => {
             v-model="banEmailModal.reason"
             type="text"
             class="input input-bordered input-sm w-full bg-base-200"
-          />
+          >
         </div>
 
         <div class="modal-action flex items-center justify-end gap-2">

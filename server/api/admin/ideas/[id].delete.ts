@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   await requireAdminAuth(event)
   const id = getRouterParam(event, 'id')
   if (!id) {
-    throw createError({ statusCode: 400, statusMessage: 'ID saknas.' })
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'ID saknas.' })
   }
 
   try {
@@ -17,11 +17,12 @@ export default defineEventHandler(async (event) => {
       success: true,
       id,
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Ideas API] Error deleting voice memo:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Kunde inte radera röstmemot.',
+      statusMessage: 'Internal Server Error',
+      message: 'Kunde inte radera röstmemot.',
     })
   }
 })

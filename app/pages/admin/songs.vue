@@ -17,11 +17,27 @@ const showToast = (msg: string) => {
   }, 4000)
 }
 
-const { data: songsData, refresh: refreshSongs } = await useFetch<any[]>('/api/songs', {
+import type { Song } from '~/types'
+
+interface AdminHashtag {
+  id: string
+  tag: string
+  category?: string | null
+  isActive?: boolean | number | null
+}
+
+interface SongStatEntry {
+  songId?: string | null
+  title?: string | null
+  count?: number
+  gigs?: Array<{ id: string; venue: string; city: string; date: string | number }>
+}
+
+const { data: songsData, refresh: refreshSongs } = await useFetch<Song[]>('/api/songs', {
   default: () => [],
 })
-const { data: hashtagsData } = await useFetch<any[]>('/api/admin/hashtags', { default: () => [] })
-const { data: songsStatsData } = await useFetch<{ stats: any[]; lookupById: Record<string, number>; lookupByTitle: Record<string, number> }>('/api/admin/songs/stats')
+const { data: hashtagsData } = await useFetch<AdminHashtag[]>('/api/admin/hashtags', { default: () => [] })
+const { data: songsStatsData } = await useFetch<{ stats: SongStatEntry[]; lookupById: Record<string, number>; lookupByTitle: Record<string, number> }>('/api/admin/songs/stats')
 
 const isUploading = ref(false)
 const uploadFile = async (event: Event, targetCallback: (url: string) => void) => {
@@ -43,8 +59,9 @@ const uploadFile = async (event: Event, targetCallback: (url: string) => void) =
       targetCallback(res.url)
       showToast('✓ Filen har laddats upp!')
     }
-  } catch (err: any) {
-    showToast(`⚠️ Uppladdning misslyckades: ${err?.data?.message || err?.message || 'Fel'}`)
+  } catch (err: unknown) {
+    const errorObj = err as { data?: { message?: string }; message?: string }
+    showToast(`⚠️ Uppladdning misslyckades: ${errorObj?.data?.message || errorObj?.message || 'Fel'}`)
   } finally {
     isUploading.value = false
     input.value = ''
@@ -52,9 +69,9 @@ const uploadFile = async (event: Event, targetCallback: (url: string) => void) =
 }
 
 // ---------------- HASHTAG SELECTION FOR SONGS ----------------
-const allHashtags = computed<any[]>(() => (Array.isArray(hashtagsData.value) ? hashtagsData.value : []))
+const allHashtags = computed<AdminHashtag[]>(() => (Array.isArray(hashtagsData.value) ? hashtagsData.value : []))
 
-const tagHasCategory = (tag: any, cat: string) => {
+const tagHasCategory = (tag: AdminHashtag, cat: string) => {
   if (!tag || !tag.category) return false
   if (tag.category === 'all') return true
   return tag.category.split(',').map((s: string) => s.trim()).includes(cat)
@@ -82,7 +99,7 @@ const songSocialPreview = computed(() => {
 })
 
 // ---------------- SONGS CRUD ----------------
-const editingSong = ref<any | null>(null)
+const editingSong = ref<string | null>(null)
 const songForm = reactive({
   id: '',
   title: '',
@@ -121,7 +138,7 @@ const openAddSong = () => {
   editingSong.value = 'new'
 }
 
-const openEditSong = (s: any) => {
+const openEditSong = (s: Song) => {
   if (editingSong.value !== null && editingSong.value !== s.id) {
     const ok = confirm('⚠️ Du har redan ett öppet låtformulär med eventuellt osparade ändringar.\n\nVill du avbryta och redigera denna låt istället?')
     if (!ok) return
@@ -149,7 +166,7 @@ const saveSong = async () => {
     return
   }
 
-  const res = await $fetch<{ success: boolean; social?: any }>('/api/admin/songs', {
+  const res = await $fetch<{ success: boolean; social?: { success?: boolean; message?: string } }>('/api/admin/songs', {
     method: 'POST',
     body: {
       id: songForm.id || undefined,
@@ -184,14 +201,14 @@ const saveSong = async () => {
 
 // ---------------- SOCIAL SHARE MODAL ----------------
 const shareModalOpen = ref(false)
-const selectedShareSong = ref<any | null>(null)
+const selectedShareSong = ref<Song | null>(null)
 
-const openShareSong = (song: any) => {
+const openShareSong = (song: Song) => {
   selectedShareSong.value = song
   shareModalOpen.value = true
 }
 
-const onSocialPublished = (social: any) => {
+const onSocialPublished = (social: { message?: string }) => {
   showToast(`✓ ${social.message || 'Låten har publicerats på Facebook!'}`)
 }
 
@@ -234,11 +251,12 @@ const checkEngineHealth = async () => {
   try {
     const res = await $fetch<{ engine: string; available: boolean; message: string }>('/api/admin/songs/cover-engine-status')
     aiEngineHealth.value = res
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorObj = err as { data?: { statusMessage?: string } }
     aiEngineHealth.value = {
       engine: 'gemini',
       available: false,
-      message: err?.data?.statusMessage || 'Kunde inte kontakta AI-motorn',
+      message: errorObj?.data?.statusMessage || 'Kunde inte kontakta AI-motorn',
     }
   } finally {
     isCheckingEngine.value = false
@@ -301,9 +319,10 @@ const generateCoverWithAi = async () => {
     } else {
       aiGenerationError.value = 'Inget bildresultat returnerades från servern.'
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     clearInterval(stepTimer)
-    const errMsg = err?.data?.statusMessage || err?.data?.message || err?.message || 'Ett fel uppstod vid bildgenerering.'
+    const errorObj = err as { data?: { statusMessage?: string; message?: string }; message?: string }
+    const errMsg = errorObj?.data?.statusMessage || errorObj?.data?.message || errorObj?.message || 'Ett fel uppstod vid bildgenerering.'
     aiGenerationError.value = errMsg
     showToast(`⚠️ ${errMsg}`)
   } finally {
@@ -321,9 +340,9 @@ const applyGeneratedCover = () => {
 }
 
 // ---------------- COVER PREVIEW MODAL ----------------
-const previewCoverModal = ref<{ title: string; coverImage: string; isOriginal: boolean; originalArtist?: string; audioUrl?: string } | null>(null)
+const previewCoverModal = ref<{ title: string; coverImage: string; isOriginal: boolean; originalArtist?: string | null; audioUrl?: string | null } | null>(null)
 
-const openCoverPreview = (song: any) => {
+const openCoverPreview = (song: Song) => {
   previewCoverModal.value = {
     title: song.title,
     coverImage: song.coverImage || '',
@@ -333,13 +352,21 @@ const openCoverPreview = (song: any) => {
   }
 }
 
-const hasSongCover = (song: any): boolean => {
+const hasSongCover = (song: Song): boolean => {
   return !!(song.coverImage && song.coverImage.trim().length > 0)
 }
 
 // ---------------- STATS MODAL ----------------
-const selectedSongStatsModal = ref<any | null>(null)
-const getSongPlayCount = (song: any): number => {
+interface SongHistoryGig {
+  id?: string
+  venue?: string
+  city?: string
+  date: string | number | Date
+  setName?: string
+}
+
+const selectedSongStatsModal = ref<{ song: Song; totalPlays: number; history: SongHistoryGig[] } | null>(null)
+const getSongPlayCount = (song: Song): number => {
   if (!song) return 0
   if (song.id && songsStatsData.value?.lookupById?.[song.id] !== undefined) {
     return songsStatsData.value.lookupById[song.id] ?? 0
@@ -348,10 +375,10 @@ const getSongPlayCount = (song: any): number => {
   return songsStatsData.value?.lookupByTitle?.[norm] ?? 0
 }
 
-const openSongStats = (song: any) => {
+const openSongStats = (song: Song) => {
   const norm = (song.title || '').toLowerCase().trim()
   const statEntry = (songsStatsData.value?.stats || []).find(
-    (st: any) => (st.songId && st.songId === song.id) || (st.title && st.title.toLowerCase().trim() === norm)
+    (st) => (st.songId && st.songId === song.id) || (st.title && st.title.toLowerCase().trim() === norm)
   )
   selectedSongStatsModal.value = {
     song,
@@ -458,7 +485,7 @@ onBeforeRouteLeave((to, from, next) => {
         <div class="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Låttitel *</label>
-            <input v-model="songForm.title" type="text" placeholder="T.ex. Det 7:e Gunget" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="songForm.title" type="text" placeholder="T.ex. Det 7:e Gunget" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Låttyp</label>
@@ -469,7 +496,7 @@ onBeforeRouteLeave((to, from, next) => {
           </div>
           <div v-if="!songForm.isOriginal">
             <label class="block text-xs font-bold text-secondary mb-1">Originalartist</label>
-            <input v-model="songForm.originalArtist" type="text" placeholder="T.ex. Muddy Waters" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="songForm.originalArtist" type="text" placeholder="T.ex. Muddy Waters" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
 
           <!-- Audio File Uploader & Direct Audio URL -->
@@ -484,7 +511,7 @@ onBeforeRouteLeave((to, from, next) => {
                 type="text"
                 placeholder="/media/uploads/min-lat.mp3 eller klistra in URL"
                 class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs"
-              />
+              >
               <label class="btn btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
                 <span>📁 Ladda upp ljudfil</span>
                 <input
@@ -492,7 +519,7 @@ onBeforeRouteLeave((to, from, next) => {
                   accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg"
                   class="hidden"
                   @change="uploadFile($event, url => songForm.audioUrl = url)"
-                />
+                >
               </label>
             </div>
             <p class="text-[10px] text-base-content/60">
@@ -516,7 +543,7 @@ onBeforeRouteLeave((to, from, next) => {
                 type="text"
                 placeholder="/images/records/mitt-omslag.jpg eller klicka på Skapa med AI"
                 class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs"
-              />
+              >
 
               <div class="flex items-center gap-2 flex-shrink-0">
                 <!-- AI Generator Trigger Button -->
@@ -538,7 +565,7 @@ onBeforeRouteLeave((to, from, next) => {
                     accept="image/*"
                     class="hidden"
                     @change="uploadFile($event, url => songForm.coverImage = url)"
-                  />
+                  >
                 </label>
               </div>
             </div>
@@ -553,7 +580,7 @@ onBeforeRouteLeave((to, from, next) => {
                 :src="songForm.coverImage"
                 alt="Förhandsgranskning"
                 class="w-16 h-16 object-cover rounded-lg border border-primary/40 shadow"
-              />
+              >
               <div class="text-xs">
                 <span class="text-emerald-400 font-bold block">✓ Omslag tilldelat</span>
                 <span class="text-[10px] text-base-content/60 font-mono truncate max-w-xs block">{{ songForm.coverImage }}</span>
@@ -572,11 +599,11 @@ onBeforeRouteLeave((to, from, next) => {
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Låtlängd i sekunder (valfritt)</label>
-            <input v-model="songForm.duration" type="number" placeholder="245" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+            <input v-model="songForm.duration" type="number" placeholder="245" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" >
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Låt-URL / Inbäddnings-ID</label>
-            <input v-model="songForm.embedUrl" type="text" placeholder="https://open.spotify.com/track/..." class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+            <input v-model="songForm.embedUrl" type="text" placeholder="https://open.spotify.com/track/..." class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Låttext (svenska)</label>
@@ -588,7 +615,7 @@ onBeforeRouteLeave((to, from, next) => {
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Ackord (t.ex. E7 - A7 - B7)</label>
-            <input v-model="songForm.chords" type="text" placeholder="E7 - A7 - B7" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+            <input v-model="songForm.chords" type="text" placeholder="E7 - A7 - B7" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" >
           </div>
           <!-- Social Sharing & Hashtags Toggle -->
           <div class="sm:col-span-2 p-4 bg-base-200/80 rounded-xl border border-primary/20 space-y-3">
@@ -601,7 +628,7 @@ onBeforeRouteLeave((to, from, next) => {
                   Skapar ett färdigt socialt inlägg i kön när du sparar låten.
                 </p>
               </div>
-              <input v-model="songForm.postToSocials" type="checkbox" class="toggle toggle-primary toggle-sm" />
+              <input v-model="songForm.postToSocials" type="checkbox" class="toggle toggle-primary toggle-sm" >
             </div>
 
             <!-- Hashtag Selector for this Song Post -->
@@ -1031,7 +1058,7 @@ onBeforeRouteLeave((to, from, next) => {
                       :src="generatedCoverResult.coverUrl || generatedCoverResult.url"
                       :alt="generatedCoverResult.title || 'Skivomslag'"
                       class="w-full h-full object-cover"
-                    />
+                    >
                   </div>
                 </div>
 

@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   const current = existing[0]
   const newStatus = !current.isEpk
 
-  const updateData: any = {
+  const updateData: { isEpk: boolean; updatedAt: Date; epkResolution?: string } = {
     isEpk: newStatus,
     updatedAt: new Date(),
   }

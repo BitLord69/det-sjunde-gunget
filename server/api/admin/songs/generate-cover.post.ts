@@ -51,7 +51,9 @@ export default defineEventHandler(async (event) => {
             updatedAt: now,
           },
         })
-    } catch (_) {}
+    } catch {
+      // Ignore settings save error
+    }
   }
 
   let imageBuffer: Buffer | null = null
@@ -88,7 +90,9 @@ export default defineEventHandler(async (event) => {
         if (match?.[1]) {
           apiKey = match[1].trim()
         }
-      } catch (_) {}
+      } catch {
+        // .env file might not exist or be accessible
+      }
     }
 
     if (!apiKey) {
@@ -101,7 +105,9 @@ export default defineEventHandler(async (event) => {
         if (setting?.value) {
           apiKey = setting.value
         }
-      } catch (_) {}
+      } catch {
+        // Site setting table might not have key
+      }
     }
 
     // Load authentic band reference photo for multimodal generation when includeBand is true
@@ -117,22 +123,19 @@ export default defineEventHandler(async (event) => {
     }
 
     // Accurate Prompt Construction
-    let prompt = ''
+    let prompt: string
     if (promptMode === 'custom' && customPrompt && customPrompt.trim()) {
       prompt = customPrompt.trim()
     } else {
-      let subject = ''
-      if (includeBand) {
-        subject = `Award-winning square 35mm film photograph of the Swedish blues rock band in this reference photo performing on a 1970s stage. STRICT REQUIREMENT: Total count of human beings in the entire image is EXACTLY FOUR (4) MUSICIANS. Absolutely NO 5th person, NO second guitarist, NO backing musicians, NO stage extras.
+      const subject = includeBand
+        ? `Award-winning square 35mm film photograph of the Swedish blues rock band in this reference photo performing on a 1970s stage. STRICT REQUIREMENT: Total count of human beings in the entire image is EXACTLY FOUR (4) MUSICIANS. Absolutely NO 5th person, NO second guitarist, NO backing musicians, NO stage extras.
 
 The only 4 band members on stage:
 1. Janis (left): Lead singer in fedora hat and dark shirt cupping blues harmonica to vintage microphone. (Vocalist only, no guitar).
 2. Marcus (center-left): Lead guitarist playing vintage sunburst Fender electric guitar.
 3. Bosse (center-right): Bassist wearing sunglasses & leather jacket playing bass guitar.
 4. Jonas (background): Drummer seated behind a vintage Ludwig drum kit.`
-      } else {
-        subject = `Moody cinematic 1970s analog still life blues album artwork for the song '${title}'. A vintage glowing Fender tube guitar amplifier with warm amber vacuum tubes, a vintage sunburst electric guitar, and a classic Hohner Marine Band harmonica on wooden floorboards, atmospheric smoky reflections and analog film grain.`
-      }
+        : `Moody cinematic 1970s analog still life blues album artwork for the song '${title}'. A vintage glowing Fender tube guitar amplifier with warm amber vacuum tubes, a vintage sunburst electric guitar, and a classic Hohner Marine Band harmonica on wooden floorboards, atmospheric smoky reflections and analog film grain.`
 
       let eraStyle = '1970s Scandinavian blues-rock record sleeve aesthetic (Sonet / Gazell Records) in warm analog Kodak film tones (amber ochre, deep navy, slate gray).'
       if (era === '60s') {
@@ -152,7 +155,7 @@ The only 4 band members on stage:
       try {
         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`
         
-        const parts: any[] = []
+        const parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = []
         if (bandRefBase64) {
           parts.push({
             inlineData: {
@@ -173,8 +176,8 @@ The only 4 band members on stage:
         })
 
         if (res.ok) {
-          const data = await res.json()
-          const part = data.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData?.data)
+          const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }> }
+          const part = data.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)
           if (part?.inlineData?.data) {
             imageBuffer = Buffer.from(part.inlineData.data, 'base64')
             usedEngine = 'gemini'
@@ -238,7 +241,7 @@ The only 4 band members on stage:
 
     if (chosenStyle === 'chess_crimson') {
       // STIL 2: CHESS RECORDS (Röd / Vintage Serif / Klassisk 60-tal)
-      let titleSize = cleanTitle.length > 24 ? 32 : 44
+      const titleSize = cleanTitle.length > 24 ? 32 : 44
       svgOverlay = `
       <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -288,7 +291,7 @@ The only 4 band members on stage:
       `
     } else if (chosenStyle === 'bluenote_navy') {
       // STIL 3: BLUE NOTE / PRESTIGE (Minimalistisk Asymmetrisk / Cyan / Midnatt)
-      let titleSize = cleanTitle.length > 24 ? 30 : 42
+      const titleSize = cleanTitle.length > 24 ? 30 : 42
       svgOverlay = `
       <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -335,7 +338,7 @@ The only 4 band members on stage:
       `
     } else if (chosenStyle === 'stax_amber') {
       // STIL 4: STAX / ATLANTIC 70s SOUL-BLUES (Bärnsten / Tangerine / Varm Sepia)
-      let titleSize = cleanTitle.length > 24 ? 32 : 46
+      const titleSize = cleanTitle.length > 24 ? 32 : 46
       svgOverlay = `
       <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -378,7 +381,7 @@ The only 4 band members on stage:
       `
     } else if (chosenStyle === 'vintage_cream') {
       // STIL 5: VINTAGE CREAM & SEPIA DELUXE (Ornamenterad / Klassisk Skivfodral)
-      let titleSize = cleanTitle.length > 24 ? 30 : 42
+      const titleSize = cleanTitle.length > 24 ? 30 : 42
       svgOverlay = `
       <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -417,7 +420,7 @@ The only 4 band members on stage:
       `
     } else {
       // STIL 1: SONET GOLD (Standard Klassisk Guld Letterpress)
-      let titleSize = cleanTitle.length > 28 ? 30 : cleanTitle.length > 18 ? 38 : 46
+      const titleSize = cleanTitle.length > 28 ? 30 : cleanTitle.length > 18 ? 38 : 46
       const eraAccentColor = '#f59e0b'
       const eraSubText = era === '60s' ? '★ CHICAGO BLUES • 45 RPM ★' : '★ SKANDINAVISK BLUESROCK ★'
 
@@ -510,7 +513,9 @@ The only 4 band members on stage:
         contentType: 'image/jpeg',
       })
       publicUrl = blob.url
-    } catch (_) {}
+    } catch {
+      // Fallback to local storage if blob upload fails
+    }
   }
 
   if (!publicUrl) {

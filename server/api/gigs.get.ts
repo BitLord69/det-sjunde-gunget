@@ -3,6 +3,7 @@ import { db } from '../db/client'
 import { gigs, gigSetlistItems } from '../db/schema'
 
 export default defineEventHandler(async (event) => {
+  setHeader(event, 'Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600')
   const query = getQuery(event)
 
   const allGigs = await db.query.gigs.findMany({

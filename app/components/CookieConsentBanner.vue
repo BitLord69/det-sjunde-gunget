@@ -171,7 +171,7 @@ const handleSaveCustom = () => {
                     v-model="mediaToggle"
                     type="checkbox"
                     class="toggle toggle-primary"
-                  />
+                  >
                 </div>
               </div>
             </div>

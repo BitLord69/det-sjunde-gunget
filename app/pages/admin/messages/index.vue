@@ -352,9 +352,23 @@ const deleteMessage = async (id: string) => {
                 rel="noopener noreferrer"
                 class="btn btn-xs btn-outline btn-primary rounded-full font-bold self-start sm:self-auto gap-1"
               >
-                <span>📍</span>
+                <IconMapPin class="w-3.5 h-3.5" />
                 <span>Öppna i Google Maps ↗</span>
               </a>
+            </div>
+            <div v-if="selectedMessage.website" class="sm:col-span-2 pt-2 border-t border-primary/10 flex items-center justify-between gap-2">
+              <div>
+                <span class="text-[10px] uppercase font-bold text-secondary block">Webbadress / Länk</span>
+                <a
+                  :href="selectedMessage.website.startsWith('http') ? selectedMessage.website : 'https://' + selectedMessage.website"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-xs sm:text-sm text-primary font-bold hover:underline flex items-center gap-1.5"
+                >
+                  <span>🌐</span>
+                  <span>{{ selectedMessage.website }} ↗</span>
+                </a>
+              </div>
             </div>
           </div>
 

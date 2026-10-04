@@ -4,7 +4,7 @@ const localePath = useLocalePath()
 
 interface Gig {
   id: string
-  date: number | string
+  date: number | string | Date
   venue: string
   city: string
   ticketUrl: string | null

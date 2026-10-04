@@ -10,7 +10,8 @@ export default defineEventHandler(async (event) => {
   if (!body.title || !body.audioUrl) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Titel och ljudfil/URL krävs för att spara en idé.',
+      statusMessage: 'Bad Request',
+      message: 'Titel och ljudfil/URL krävs för att spara en idé.',
     })
   }
 
@@ -37,11 +38,12 @@ export default defineEventHandler(async (event) => {
       success: true,
       id,
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Ideas API] Error saving voice memo:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Kunde inte spara röstmemot i databasen.',
+      statusMessage: 'Internal Server Error',
+      message: 'Kunde inte spara röstmemot i databasen.',
     })
   }
 })

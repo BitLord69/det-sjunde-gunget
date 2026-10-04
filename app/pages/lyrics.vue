@@ -4,8 +4,11 @@ const localePath = useLocalePath()
 const route = useRoute()
 
 useSeoMeta({
-  title: 'Låttexter | Det 7:e Gunget',
-  description: 'Sjung med i Det 7:e Gungets egna låtar! Officiella låttexter, verser och refränger direkt från replokalen.',
+  title: () => `${t('seo.lyrics_title')}`,
+  description: () => t('seo.lyrics_desc'),
+  ogTitle: () => `${t('seo.lyrics_og_title')}`,
+  ogDescription: () => t('seo.lyrics_og_desc'),
+  ogImage: '/media/og/og-share.jpg',
 })
 
 interface Song {
@@ -91,6 +94,43 @@ const activeSong = computed(() => {
   return songsWithLyrics.value.find((s) => s.id === activeSongId.value) || songsWithLyrics.value[0] || null
 })
 
+// Audio Player Engine for in-place playback
+const {
+  isAudioPlaying,
+  currentSongId,
+  currentTime,
+  duration,
+  playTrack,
+  pauseTrack,
+  resumeTrack,
+} = useJukeboxAudio()
+
+const isPlayingActiveSong = computed(() => {
+  return isAudioPlaying.value && currentSongId.value === activeSong.value?.id
+})
+
+const togglePlayActiveSong = () => {
+  if (!activeSong.value) return
+  if (isPlayingActiveSong.value) {
+    pauseTrack()
+  } else if (currentSongId.value === activeSong.value.id && !isAudioPlaying.value) {
+    resumeTrack(activeSong.value)
+  } else {
+    playTrack({
+      id: activeSong.value.id,
+      title: activeSong.value.title,
+      audioUrl: activeSong.value.audioUrl,
+    })
+  }
+}
+
+const formatTime = (seconds: number) => {
+  if (isNaN(seconds) || seconds < 0) return '0:00'
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s < 10 ? '0' : ''}${s}`
+}
+
 interface LyricBlock {
   type: 'verse' | 'chorus' | 'bridge' | 'other'
   label?: string
@@ -106,7 +146,7 @@ const parseLyricsBlocks = (text: string | null): LyricBlock[] => {
     const lines = raw.split('\n').map((l) => l.trimEnd())
     if (lines.length === 0 || (lines.length === 1 && !lines[0])) continue
 
-    let firstLine = lines[0] || ''
+    const firstLine = lines[0] || ''
     let type: LyricBlock['type'] = 'verse'
     let label: string | undefined
 
@@ -170,7 +210,7 @@ const parseLyricsBlocks = (text: string | null): LyricBlock[] => {
             type="text"
             :placeholder="t('lyrics.search_placeholder')"
             class="input input-bordered input-sm sm:input-md w-full rounded-full pl-10 pr-4 bg-base-200/90 text-xs sm:text-sm border-primary/30 focus:border-primary"
-          />
+          >
           <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-base-content/50 pointer-events-none">🔍</span>
         </div>
 
@@ -220,6 +260,7 @@ const parseLyricsBlocks = (text: string | null): LyricBlock[] => {
               <div class="flex items-center gap-2.5 truncate">
                 <span class="font-mono text-xs opacity-70 w-4 text-right flex-shrink-0">{{ idx + 1 }}.</span>
                 <span class="truncate">{{ song.title }}</span>
+                <span v-if="currentSongId === song.id && isAudioPlaying" class="text-xs animate-bounce flex-shrink-0">🎵</span>
               </div>
               <span
                 v-if="song.isOriginal"
@@ -261,14 +302,59 @@ const parseLyricsBlocks = (text: string | null): LyricBlock[] => {
                 </h2>
               </div>
 
-              <!-- Jukebox Audio Jump Button -->
-              <div class="flex items-center gap-2 flex-shrink-0">
+              <!-- Action buttons: Play Here & Jukebox Jump Button -->
+              <div class="flex flex-wrap items-center gap-2 flex-shrink-0 pt-2 sm:pt-0">
+                <!-- Spela här / Pausa button -->
+                <button
+                  type="button"
+                  class="btn btn-sm rounded-full font-bold shadow px-4 text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  :class="
+                    isPlayingActiveSong
+                      ? 'bg-[#1b432a] hover:bg-[#143320] text-[#faf6ed] border-none ring-2 ring-emerald-500/50'
+                      : 'bg-[#2b2118] hover:bg-[#1a130e] text-[#faf6ed] border-none'
+                  "
+                  :title="isPlayingActiveSong ? t('lyrics.pause_here') : t('lyrics.play_here')"
+                  @click="togglePlayActiveSong"
+                >
+                  <span class="text-sm">{{ isPlayingActiveSong ? '⏸' : '▶' }}</span>
+                  <span>{{ isPlayingActiveSong ? t('lyrics.pause_here') : t('lyrics.play_here') }}</span>
+                </button>
+
+                <!-- Spela i Jukeboxen button -->
                 <NuxtLink
                   :to="localePath({ path: '/music', query: { song: activeSong.id } })"
-                  class="btn btn-sm bg-[#912426] hover:bg-[#731a1b] text-[#faf6ed] border-none rounded-full font-bold shadow px-4 text-xs"
+                  class="btn btn-sm bg-[#912426] hover:bg-[#731a1b] text-[#faf6ed] border-none rounded-full font-bold shadow px-4 text-xs flex items-center gap-1.5"
+                  :title="t('lyrics.play_jukebox')"
                 >
-                  {{ t('lyrics.play_jukebox') }}
+                  <span>📻</span>
+                  <span>{{ t('lyrics.play_jukebox') }}</span>
                 </NuxtLink>
+              </div>
+            </div>
+
+            <!-- In-place Mini Audio Player bar when this song is active in player -->
+            <div
+              v-if="currentSongId === activeSong.id"
+              class="mt-4 p-3 rounded-2xl bg-[#231a14] text-[#faf6ed] flex items-center justify-between gap-3 text-xs font-mono shadow-lg border border-amber-600/30 transition-all"
+            >
+              <div class="flex items-center gap-2.5 truncate">
+                <span
+                  class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  :class="isAudioPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400/70'"
+                />
+                <span class="text-amber-300 font-bold truncate">🎵 {{ activeSong.title }}</span>
+                <span class="text-[#a89b88] hidden sm:inline">• {{ isAudioPlaying ? t('lyrics.now_playing') : t('lyrics.paused') }}</span>
+              </div>
+              <div class="flex items-center gap-3 flex-shrink-0">
+                <span class="text-[#c5b59e] text-[11px] font-bold">{{ formatTime(currentTime) }} / {{ formatTime(duration) }}</span>
+                <button
+                  type="button"
+                  class="btn btn-xs rounded-full px-2.5 text-xs font-bold transition-all cursor-pointer"
+                  :class="isAudioPlaying ? 'bg-[#912426] text-white hover:bg-[#731a1b]' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
+                  @click="togglePlayActiveSong"
+                >
+                  {{ isAudioPlaying ? '⏸' : '▶' }}
+                </button>
               </div>
             </div>
 
@@ -296,7 +382,8 @@ const parseLyricsBlocks = (text: string | null): LyricBlock[] => {
                       : 'bg-transparent'
                 "
               >
-                <div v-if="block.label" class="text-[11px] font-mono font-black uppercase tracking-wider mb-2"
+                <div
+v-if="block.label" class="text-[11px] font-mono font-black uppercase tracking-wider mb-2"
                   :class="block.type === 'chorus' ? 'text-[#912426]' : 'text-[#6e5845]'"
                 >
                   {{ block.label }}
@@ -340,7 +427,7 @@ const parseLyricsBlocks = (text: string | null): LyricBlock[] => {
           <!-- Sheet Footer Band Stamp -->
           <div class="pt-6 border-t-2 border-dashed border-[#8c765c]/40 flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-[#735e47] gap-3">
             <div class="flex items-center gap-2">
-              <span>✍️ {{ t('lyrics.lyrics_and_music') }}</span>
+              <span v-if="activeSong.isOriginal">✍️ {{ t('lyrics.lyrics_and_music') }}</span>
             </div>
             <div class="font-bold text-[#801b1c]">
               {{ t('lyrics.volume_stamp') }}

@@ -1,6 +1,6 @@
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { db } from '../../db/client'
-import { adminAccounts, admins } from '../../db/schema'
+import { adminAccounts } from '../../db/schema'
 import { ensureAdminAccountsTable, requireAdminAuth } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {

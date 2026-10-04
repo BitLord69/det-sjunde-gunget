@@ -135,8 +135,9 @@ const testDiscordWebhook = async () => {
     })
     discordTestStatus.value = { success: true, message: res.message || '✓ Testnotis skickades!' }
     showToast('✓ Testnotis skickad till Discord!')
-  } catch (err: any) {
-    const msg = err.data?.statusMessage || err.message || 'Kunde inte skicka testnotis'
+  } catch (err: unknown) {
+    const errorObj = err as { data?: { statusMessage?: string }; message?: string }
+    const msg = errorObj.data?.statusMessage || errorObj.message || 'Kunde inte skicka testnotis'
     discordTestStatus.value = { success: false, message: `⚠️ ${msg}` }
     showToast(`⚠️ ${msg}`)
   } finally {
@@ -157,7 +158,7 @@ const saveSettings = async () => {
     })
     await refreshSettings()
     showToast('✓ Inställningar & aviseringar har sparats!')
-  } catch (err: any) {
+  } catch {
     showToast('⚠️ Kunde inte spara inställningar.')
   } finally {
     isSavingSettings.value = false
@@ -204,7 +205,7 @@ const saveSettings = async () => {
           :disabled="isSavingSettings"
           @click="saveSettings"
         >
-          <span v-if="isSavingSettings" class="loading loading-spinner loading-xs"></span>
+          <span v-if="isSavingSettings" class="loading loading-spinner loading-xs"/>
           <span>💾 {{ isSettingsDirty ? 'Spara ändringar!' : 'Spara inställningar' }}</span>
         </button>
       </div>
@@ -238,14 +239,14 @@ const saveSettings = async () => {
                   type="url"
                   placeholder="https://discord.com/api/webhooks/..."
                   class="input input-bordered input-sm flex-grow bg-base-200 font-mono text-xs"
-                />
+                >
                 <button
                   type="button"
                   class="btn btn-outline btn-accent btn-sm rounded-lg font-bold flex items-center gap-1 cursor-pointer flex-shrink-0"
                   :disabled="isTestingDiscord || !settingsForm.discordWebhookUrl.trim()"
                   @click="testDiscordWebhook"
                 >
-                  <span v-if="isTestingDiscord" class="loading loading-spinner loading-xs"></span>
+                  <span v-if="isTestingDiscord" class="loading loading-spinner loading-xs"/>
                   <span>🔔 Skicka test</span>
                 </button>
               </div>
@@ -281,7 +282,7 @@ const saveSettings = async () => {
                   v-model="settingsForm.discordNotifyBookings"
                   type="checkbox"
                   class="toggle toggle-primary toggle-sm flex-shrink-0 mt-0.5"
-                />
+                >
               </label>
 
               <!-- Trigger 2: Fan Photos -->
@@ -298,7 +299,7 @@ const saveSettings = async () => {
                   v-model="settingsForm.discordNotifyFanPhotos"
                   type="checkbox"
                   class="toggle toggle-secondary toggle-sm flex-shrink-0 mt-0.5"
-                />
+                >
               </label>
 
               <!-- Trigger 3: Guestbook -->
@@ -315,7 +316,7 @@ const saveSettings = async () => {
                   v-model="settingsForm.discordNotifyGuestbook"
                   type="checkbox"
                   class="toggle toggle-accent toggle-sm flex-shrink-0 mt-0.5"
-                />
+                >
               </label>
             </div>
           </div>
@@ -352,7 +353,7 @@ const saveSettings = async () => {
                   v-model="settingsForm.socialMockMode"
                   type="checkbox"
                   class="toggle toggle-warning toggle-md flex-shrink-0 mt-1"
-                />
+                >
               </label>
             </div>
           </div>
@@ -379,7 +380,7 @@ const saveSettings = async () => {
                 type="text"
                 placeholder="info@det7egunget.se, janis@example.com"
                 class="input input-bordered input-sm w-full bg-base-200 font-mono text-xs"
-              />
+              >
               <p class="text-[10px] text-base-content/60 mt-1">
                 Tips: Du kan ange flera e-postadresser separerade med kommatecken (<code>,</code>) eller semikolon (<code>;</code>).
               </p>
@@ -410,7 +411,7 @@ const saveSettings = async () => {
                   max="10"
                   step="1"
                   class="range range-primary range-xs w-full"
-                />
+                >
                 <div class="flex justify-between text-[10px] text-base-content/50 font-mono">
                   <span>2 st</span>
                   <span>6 st</span>
@@ -431,7 +432,7 @@ const saveSettings = async () => {
                   max="8"
                   step="1"
                   class="range range-primary range-xs w-full"
-                />
+                >
                 <div class="flex justify-between text-[10px] text-base-content/50 font-mono">
                   <span>2 st</span>
                   <span>5 st</span>
@@ -449,7 +450,7 @@ const saveSettings = async () => {
                   v-model="settingsForm.newsletterEnabled"
                   type="checkbox"
                   class="toggle toggle-primary toggle-sm"
-                />
+                >
               </label>
             </div>
           </div>
@@ -474,7 +475,7 @@ const saveSettings = async () => {
                   type="password"
                   placeholder="AIzaSy..."
                   class="input input-bordered input-sm w-full bg-base-200 font-mono text-xs"
-                />
+                >
                 <p class="text-[10px] text-base-content/60 mt-1">
                   Om lämnad tom används miljövariabeln <code>GEMINI_API_KEY</code> från Vercel.
                 </p>
@@ -489,7 +490,7 @@ const saveSettings = async () => {
                   rows="2"
                   placeholder="T.ex. Extra sliten vinyl vintage 70-tal med rökig känsla..."
                   class="textarea textarea-bordered text-xs w-full bg-base-200"
-                ></textarea>
+                />
               </div>
             </div>
           </div>
@@ -508,7 +509,7 @@ const saveSettings = async () => {
           :disabled="isSavingSettings"
           @click="saveSettings"
         >
-          <span v-if="isSavingSettings" class="loading loading-spinner loading-xs"></span>
+          <span v-if="isSavingSettings" class="loading loading-spinner loading-xs"/>
           <span>💾 {{ isSettingsDirty ? 'Spara ändringar!' : 'Spara inställningar' }}</span>
         </button>
       </div>

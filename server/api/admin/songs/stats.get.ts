@@ -1,6 +1,6 @@
-import { asc, desc, eq } from 'drizzle-orm'
+import { asc } from 'drizzle-orm'
 import { db } from '../../../db/client'
-import { gigs, gigSetlistItems, songs } from '../../../db/schema'
+import { gigSetlistItems } from '../../../db/schema'
 import { requireAdminAuth } from '../../../utils/auth'
 
 export interface SongLiveStats {
@@ -97,7 +97,7 @@ export default defineEventHandler(async (event) => {
       totalPerformances,
       uniqueSongsCount,
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[AdminStatsAPI] Error aggregating song stats:', err)
     return {
       stats: [],

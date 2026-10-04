@@ -212,6 +212,7 @@ export const messages = sqliteTable('messages', {
   streetAddress: text('street_address'),
   postalCode: text('postal_code'),
   city: text('city'),
+  website: text('website'),
   location: text('location'),
   body: text('body').notNull(),
   status: text('status', { enum: ['unread', 'pending', 'accepted', 'declined', 'archived', 'read'] })

@@ -3,8 +3,11 @@ const { t, locale } = useI18n()
 const localePath = useLocalePath()
 
 useSeoMeta({
-  title: 'Kommande gig & spelningar | Det 7:e Gunget',
-  description: 'Se var Det 7:e Gunget spelar härnäst. Datum, spelplatser, biljetter och arkiv.',
+  title: () => `${t('seo.gigs_title')}`,
+  description: () => t('seo.gigs_desc'),
+  ogTitle: () => `${t('seo.gigs_og_title')}`,
+  ogDescription: () => t('seo.gigs_og_desc'),
+  ogImage: '/media/og/og-share.jpg',
 })
 
 interface Gig {
@@ -26,6 +29,51 @@ const currentTab = ref<'upcoming' | 'past'>('upcoming')
 const upcomingGigs = computed(() => gigsData.value?.upcoming || [])
 const pastGigs = computed(() => gigsData.value?.past || [])
 
+// Schema.org MusicEvents for Google Search Rich Results
+const eventsStructuredData = computed(() => {
+  return upcomingGigs.value.map(gig => ({
+    '@context': 'https://schema.org',
+    '@type': 'MusicEvent',
+    name: `Det 7:e Gunget live på ${gig.venue}`,
+    startDate: new Date(gig.date).toISOString().split('T')[0],
+    eventStatus: gig.status === 'cancelled' ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    location: {
+      '@type': 'Place',
+      name: gig.venue,
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: gig.city,
+        addressCountry: 'SE',
+      },
+    },
+    performer: {
+      '@type': 'MusicGroup',
+      name: 'Det 7:e Gunget',
+      url: 'https://det7egunget.se',
+    },
+    offers: gig.ticketUrl ? {
+      '@type': 'Offer',
+      url: gig.ticketUrl,
+      availability: gig.status === 'sold_out' ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+    } : {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'SEK',
+      availability: 'https://schema.org/InStock',
+    },
+  }))
+})
+
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: computed(() => JSON.stringify(eventsStructuredData.value)),
+    },
+  ],
+})
+
 const expandedSetlists = ref<Set<string>>(new Set())
 
 const toggleGigSetlist = (gigId: string) => {
@@ -36,21 +84,33 @@ const toggleGigSetlist = (gigId: string) => {
   }
 }
 
-const parseGigSetlist = (setlistRaw: any) => {
-  if (!setlistRaw) return []
-  if (Array.isArray(setlistRaw)) return setlistRaw
-  try {
-    const parsed = JSON.parse(setlistRaw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
+export interface SetlistTrackItem {
+  id?: string
+  title?: string
+  artist?: string
+  isOriginal?: boolean | null
+  setName?: string
+  duration?: number
 }
 
-const groupGigSetlist = (setlistRaw: any) => {
+const parseGigSetlist = (setlistRaw: unknown): SetlistTrackItem[] => {
+  if (!setlistRaw) return []
+  if (Array.isArray(setlistRaw)) return setlistRaw as SetlistTrackItem[]
+  if (typeof setlistRaw === 'string') {
+    try {
+      const parsed = JSON.parse(setlistRaw)
+      return Array.isArray(parsed) ? (parsed as SetlistTrackItem[]) : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
+const groupGigSetlist = (setlistRaw: unknown): Record<string, SetlistTrackItem[]> => {
   const tracks = parseGigSetlist(setlistRaw)
   if (!tracks.length) return {}
-  const groups: Record<string, any[]> = {}
+  const groups: Record<string, SetlistTrackItem[]> = {}
   for (const track of tracks) {
     const setName = track.setName || 'Set 1'
     if (!groups[setName]) {
@@ -93,28 +153,31 @@ const formatGigDate = (dateVal: number | string | Date) => {
     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-6 sm:space-y-8">
 
       <!-- GIGS PAGE HEADER -->
-      <PageHeader :title="t('gigs.subtitle')" :description="t('gigs.desc')" />
+      <PageHeader :title="t('gigs.page_title')" :description="t('gigs.desc')" />
 
       <!-- TICKET BOOTH WINDOW / COUNTER -->
       <div class="max-w-5xl mx-auto">
         <!-- Booth Window Frame -->
-        <div class="rounded-[32px] sm:rounded-[48px] bg-gradient-to-b from-base-200/90 via-base-100 to-base-200 dark:from-[#2a1d15] dark:via-[#1a120c] dark:to-[#0d0907] border-4 border-primary/40 p-4 sm:p-8 shadow-2xl dark:shadow-[0_0_60px_rgba(200,121,63,0.2)] relative">
+        <div class="rounded-[32px] sm:rounded-[48px] bg-gradient-to-b from-base-200/90 via-base-100 to-base-200 dark:from-[#2a1d15] dark:via-[#1a120c] dark:to-[#0d0907] border-4 border-primary/40 px-4 sm:px-8 pb-4 sm:pb-8 pt-5 sm:pt-6 shadow-2xl dark:shadow-[0_0_60px_rgba(200,121,63,0.2)] relative">
           <!-- Outer glow -->
           <div class="absolute -inset-1 rounded-[34px] sm:rounded-[50px] bg-gradient-to-r from-secondary/20 via-primary/30 to-secondary/20 blur-sm pointer-events-none -z-10" />
 
           <!-- Glass Window Header with "TICKETS" sign -->
-          <div class="text-center mb-6 relative">
-            <div class="inline-flex items-center gap-3 px-8 py-2.5 rounded-full bg-gradient-to-r from-base-300 via-base-200 to-base-300 dark:from-[#1a1310] dark:via-[#3a2618] dark:to-[#1a1310] border-2 border-primary/60 shadow-lg">
+          <div class="flex flex-col items-center justify-center mb-6 relative">
+            <!-- "OPEN" neon badge (above) - perfectly centered vertically between top frame and Biljettluckan -->
+            <div class="inline-flex items-center gap-2.5 px-5 py-1.5 rounded-full bg-emerald-500/10 border-2 border-emerald-500/40 text-sm sm:text-base font-mono font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.25)]">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.9)]" />
+              <span>{{ t('gigs.open') }}</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.9)]" />
+            </div>
+
+            <!-- Biljettluckan sign with symmetric spacing from ÖPPEN -->
+            <div class="mt-5 sm:mt-6 inline-flex items-center gap-3 px-8 py-2.5 rounded-full bg-gradient-to-r from-base-300 via-base-200 to-base-300 dark:from-[#1a1310] dark:via-[#3a2618] dark:to-[#1a1310] border-2 border-primary/60 shadow-lg">
               <span class="text-primary text-sm">🎫</span>
               <span class="font-heading text-xl sm:text-2xl text-primary dark:text-secondary uppercase tracking-[0.25em] font-black">
                 {{ t('gigs.ticket_booth') }}
               </span>
               <span class="text-primary text-sm">🎫</span>
-            </div>
-            <!-- "OPEN" neon -->
-            <div class="mt-2 inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-widest">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span class="text-emerald-600 dark:text-emerald-400">{{ t('gigs.open') }}</span>
             </div>
           </div>
 

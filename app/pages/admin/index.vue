@@ -38,7 +38,7 @@ if (route.query.msg || route.query.messageId) {
 <template>
   <div class="flex items-center justify-center min-h-[50vh]">
     <div class="flex items-center gap-3 text-primary font-bold">
-      <span class="loading loading-spinner loading-md"></span>
+      <span class="loading loading-spinner loading-md"/>
       <span>Laddar Adminpanelen...</span>
     </div>
   </div>

@@ -7,12 +7,12 @@ export default defineEventHandler(async (event) => {
   await requireAdminAuth(event)
   const id = getRouterParam(event, 'id')
   if (!id) {
-    throw createError({ statusCode: 400, statusMessage: 'ID saknas.' })
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'ID saknas.' })
   }
 
   const body = await readBody(event)
   if (!body.title) {
-    throw createError({ statusCode: 400, statusMessage: 'Titel kan inte vara tom.' })
+    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Titel kan inte vara tom.' })
   }
 
   try {
@@ -34,11 +34,12 @@ export default defineEventHandler(async (event) => {
       success: true,
       id,
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Ideas API] Error updating voice memo:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Kunde inte uppdatera röstmemot.',
+      statusMessage: 'Internal Server Error',
+      message: 'Kunde inte uppdatera röstmemot.',
     })
   }
 })

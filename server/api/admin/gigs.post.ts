@@ -5,6 +5,19 @@ import { gigs, gigSetlistItems, songs } from '../../db/schema'
 import { requireAdminAuth } from '../../utils/auth'
 import { publishToSocialMedia } from '../../utils/social'
 
+interface SetlistItemInput {
+  title?: string
+  name?: string
+  songId?: string | null
+  artist?: string | null
+  originalArtist?: string | null
+  isOriginal?: boolean
+  setName?: string | null
+  set?: string | null
+  notes?: string | null
+  sortOrder?: number
+}
+
 export default defineEventHandler(async (event) => {
   await requireAdminAuth(event)
   const body = await readBody(event)
@@ -17,14 +30,16 @@ export default defineEventHandler(async (event) => {
   const gigDate = new Date(body.date)
   const now = new Date()
 
-  let rawSetlist = body.setlistItems || body.setlist
-  let parsedSetlist: any[] = []
+  const rawSetlist = body.setlistItems || body.setlist
+  let parsedSetlist: SetlistItemInput[] = []
   if (typeof rawSetlist === 'string') {
     try {
-      parsedSetlist = JSON.parse(rawSetlist)
-    } catch {}
+      parsedSetlist = JSON.parse(rawSetlist) as SetlistItemInput[]
+    } catch {
+      // Ignore JSON parse errors for non-JSON strings
+    }
   } else if (Array.isArray(rawSetlist)) {
-    parsedSetlist = rawSetlist
+    parsedSetlist = rawSetlist as SetlistItemInput[]
   }
 
   const setlistJson = parsedSetlist.length > 0 ? JSON.stringify(parsedSetlist) : null
@@ -73,8 +88,7 @@ export default defineEventHandler(async (event) => {
       if (s.title) songMap.set(s.title.toLowerCase().trim(), s.id)
     }
 
-    for (let idx = 0; idx < parsedSetlist.length; idx++) {
-      const item = parsedSetlist[idx]
+    for (const [idx, item] of parsedSetlist.entries()) {
       const title = item.title || item.name || 'Namnlös låt'
       const matchedSongId = songMap.get(title.toLowerCase().trim()) || item.songId || null
 

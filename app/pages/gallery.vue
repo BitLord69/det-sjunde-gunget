@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { GalleryItem } from '~/types'
+
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
 
@@ -7,9 +9,9 @@ useSeoMeta({
   description: computed(() => t('gallery.desc')),
 })
 
-const { data: galleryItems } = await useFetch('/api/gallery')
+const { data: galleryItems } = await useFetch<GalleryItem[]>('/api/gallery')
 
-const selectedImage = ref<any | null>(null)
+const selectedImage = ref<GalleryItem | null>(null)
 
 const photos = computed(() => galleryItems.value?.filter((i) => i.category !== 'fan_central') || [])
 </script>

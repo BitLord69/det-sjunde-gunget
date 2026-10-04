@@ -170,31 +170,31 @@ onBeforeRouteLeave((to, from, next) => {
         <div class="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Namn *</label>
-            <input v-model="newAdminForm.name" type="text" placeholder="T.ex. Janis Svensson" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="newAdminForm.name" type="text" placeholder="T.ex. Janis Svensson" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">E-postadress (Inloggningsmail) *</label>
-            <input v-model="newAdminForm.email" type="email" placeholder="namn@det7egunget.se" class="input input-bordered w-full bg-base-200 input-sm font-mono" />
+            <input v-model="newAdminForm.email" type="email" placeholder="namn@det7egunget.se" class="input input-bordered w-full bg-base-200 input-sm font-mono" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Användarnamn (valfritt)</label>
-            <input v-model="newAdminForm.username" type="text" placeholder="janis" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+            <input v-model="newAdminForm.username" type="text" placeholder="janis" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Roll / uppgift</label>
-            <input v-model="newAdminForm.role" type="text" placeholder="T.ex. Sång & munspel / Admin" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="newAdminForm.role" type="text" placeholder="T.ex. Sång & munspel / Admin" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Lösenord (minst 6 tecken) *</label>
-            <input v-model="newAdminForm.password" type="password" placeholder="••••••••" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="newAdminForm.password" type="password" placeholder="••••••••" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Avatar / Profilbild (valfritt)</label>
             <div class="flex items-center gap-2">
-              <input v-model="newAdminForm.avatarUrl" type="text" placeholder="/media/brand/avatar.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" />
+              <input v-model="newAdminForm.avatarUrl" type="text" placeholder="/media/brand/avatar.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" >
               <label class="btn btn-outline btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
                 <span>📁 Ladda upp</span>
-                <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => newAdminForm.avatarUrl = url)" />
+                <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => newAdminForm.avatarUrl = url)" >
               </label>
             </div>
           </div>

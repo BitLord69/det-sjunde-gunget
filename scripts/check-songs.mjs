@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
-dotenv.config()
 import { createClient } from '@libsql/client'
+dotenv.config()
 
 const client = createClient({
   url: process.env.TURSO_DATABASE_URL || 'file:local.db',

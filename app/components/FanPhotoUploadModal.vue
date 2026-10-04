@@ -102,7 +102,7 @@ const submitUpload = async () => {
 
   try {
     const formData = new FormData()
-    formData.append('photo', selectedFile.value)
+    formData.append('file', selectedFile.value)
     formData.append('email', uploadForm.email.trim())
     if (uploadForm.name.trim()) formData.append('uploaderName', uploadForm.name.trim())
     if (uploadForm.caption.trim()) formData.append('caption', uploadForm.caption.trim())
@@ -119,7 +119,26 @@ const submitUpload = async () => {
     emit('uploaded')
   } catch (err: any) {
     console.error('Upload error:', err)
-    uploadErrorMessage.value = err.data?.statusMessage || err.message || t('fan_central.modal_error_generic')
+    const errCode = err.data?.data?.code
+    if (errCode === 'RATE_LIMIT_EXCEEDED') {
+      uploadErrorMessage.value = t('fan_central.modal_error_rate_limit')
+    } else if (errCode === 'FILE_TOO_LARGE') {
+      uploadErrorMessage.value = t('fan_central.modal_error_too_large')
+    } else if (errCode === 'INVALID_FILE_TYPE') {
+      uploadErrorMessage.value = t('fan_central.modal_error_invalid_type')
+    } else if (errCode === 'BANNED_EMAIL') {
+      uploadErrorMessage.value = t('fan_central.modal_error_banned')
+    } else if (errCode === 'NO_FILE') {
+      uploadErrorMessage.value = t('fan_central.modal_error_no_file')
+    } else if (errCode === 'INVALID_EMAIL') {
+      uploadErrorMessage.value = t('fan_central.modal_error_invalid_email')
+    } else if (errCode === 'RULES_REQUIRED') {
+      uploadErrorMessage.value = t('fan_central.modal_error_rules_required')
+    } else if (errCode === 'UPLOAD_SAVE_FAILED') {
+      uploadErrorMessage.value = t('fan_central.modal_error_save_failed')
+    } else {
+      uploadErrorMessage.value = err.data?.message || t('fan_central.modal_error_generic')
+    }
   } finally {
     isSubmitting.value = false
   }
@@ -187,7 +206,7 @@ const submitUpload = async () => {
               :src="previewUrl"
               :alt="t('fan_central.alt_preview')"
               class="max-h-44 max-w-full mx-auto rounded-lg shadow-md object-contain"
-            />
+            >
             <p class="text-[11px] text-base-content/60">
               {{ t('fan_central.modal_dropzone_change') }}
             </p>
@@ -209,7 +228,7 @@ const submitUpload = async () => {
             accept="image/*"
             class="hidden"
             @change="handleFileSelect"
-          />
+          >
         </div>
 
         <!-- Text Fields Grid -->
@@ -223,7 +242,7 @@ const submitUpload = async () => {
               type="text"
               :placeholder="t('fan_central.modal_name_placeholder')"
               class="input input-bordered input-sm w-full bg-base-200 text-xs"
-            />
+            >
           </div>
 
           <div>
@@ -236,7 +255,7 @@ const submitUpload = async () => {
               required
               placeholder="namn@example.com"
               class="input input-bordered input-sm w-full bg-base-200 font-mono text-xs"
-            />
+            >
             <span class="text-[10px] text-base-content/55">
               {{ t('fan_central.modal_email_hint') }}
             </span>
@@ -251,7 +270,7 @@ const submitUpload = async () => {
               type="text"
               :placeholder="t('fan_central.modal_location_placeholder')"
               class="input input-bordered input-sm w-full bg-base-200 text-xs"
-            />
+            >
           </div>
 
           <div>
@@ -263,7 +282,7 @@ const submitUpload = async () => {
               type="text"
               :placeholder="t('fan_central.modal_when_placeholder')"
               class="input input-bordered input-sm w-full bg-base-200 text-xs"
-            />
+            >
           </div>
         </div>
 
@@ -287,7 +306,7 @@ const submitUpload = async () => {
               type="checkbox"
               required
               class="checkbox checkbox-primary checkbox-sm mt-0.5"
-            />
+            >
             <span class="text-[11px] text-base-content/85 leading-relaxed">
               {{ t('fan_central.modal_rules_text') }}
             </span>
@@ -308,7 +327,7 @@ const submitUpload = async () => {
             class="btn btn-primary btn-sm rounded-full font-bold px-7 shadow-lg cursor-pointer"
             :disabled="isSubmitting"
           >
-            <span v-if="isSubmitting" class="loading loading-spinner loading-xs"></span>
+            <span v-if="isSubmitting" class="loading loading-spinner loading-xs"/>
             <span>{{ isSubmitting ? '...' : t('fan_central.modal_submit_btn') }}</span>
           </button>
         </div>

@@ -47,33 +47,37 @@ watch(
   { immediate: true },
 )
 
+const { formatGigSocialPost, formatGallerySocialPost, formatSongSocialPost } = useSocialSharePost()
+
 const previewText = computed(() => {
   if (!props.item) return ''
-  const tagsStr = selectedTags.value.join(' ')
 
   if (props.type === 'gig') {
-    const venue = props.item.venue || 'Spelplats'
-    const city = props.item.city || 'Stad'
-    const dateStr = props.item.date
-      ? new Date(props.item.date).toLocaleDateString('sv-SE', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        })
-      : ''
-    return `🎸 NYTT GIG MED DET 7:e GUNGET! 🎸\n\n📍 Spelplats: ${venue}, ${city}\n📅 Datum: ${dateStr}${customNotes.value ? `\n\n"${customNotes.value}"` : ''}\n\n${props.item.ticketUrl ? `🎟️ Biljetter: ${props.item.ticketUrl}` : '👉 Mer info: https://det7egunget.se/gigs'}\n\nKom och sväng med oss! 🎶\n${tagsStr}`
+    return formatGigSocialPost({
+      venue: props.item.venue,
+      city: props.item.city,
+      date: props.item.date,
+      notes: customNotes.value,
+      ticketUrl: props.item.ticketUrl,
+      tags: selectedTags.value,
+    })
   }
 
   if (props.type === 'gallery') {
-    const caption = customNotes.value.trim() || props.item.captionSv || 'Ny bild från scenen & replokalen med Det 7:e Gunget!'
-    return `📷 NYTT I GALLERIET!\n\n"${caption}"\n\nKolla in fler bilder och ögonblick på vår webbplats! 🎸✨\n\nhttps://det7egunget.se/gallery\n\n${tagsStr}`
+    return formatGallerySocialPost({
+      caption: customNotes.value.trim() || props.item.captionSv,
+      tags: selectedTags.value,
+    })
   }
 
   if (props.type === 'song') {
-    const title = props.item.title || 'Låt'
-    const artist = props.item.isOriginal ? 'Originalkomposition av Det 7:e Gunget' : `Cover av ${props.item.originalArtist || 'Klassiker'}`
-    return `🎵 NY LÅT I JUKEBOXEN!\n\n"${title}" (${artist})${customNotes.value ? `\n\n"${customNotes.value}"` : ''}\n\nLyssna direkt i retro-jukeboxen på webbplatsen! 🎸✨\n\nhttps://det7egunget.se/music\n\n${tagsStr}`
+    return formatSongSocialPost({
+      title: props.item.title,
+      originalArtist: props.item.originalArtist,
+      isOriginal: props.item.isOriginal,
+      notes: customNotes.value,
+      tags: selectedTags.value,
+    })
   }
 
   return ''

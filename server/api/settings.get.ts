@@ -1,7 +1,8 @@
 import { db } from '../db/client'
 import { siteSettings } from '../db/schema'
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  setHeader(event, 'Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600')
   try {
     const list = await db.select().from(siteSettings)
     const map: Record<string, string> = {}
@@ -25,7 +26,7 @@ export default defineEventHandler(async () => {
         landing_merch_count: map.landing_merch_count || '4',
       },
     }
-  } catch (err: any) {
+  } catch {
     // Graceful fallback if table is not yet queryable
     return {
       contactEmail: 'info@det7egunget.se',

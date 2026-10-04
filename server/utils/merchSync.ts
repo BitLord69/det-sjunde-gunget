@@ -86,10 +86,14 @@ export async function ensureMerchTableExists() {
   `)
   try {
     await tursoClient.execute(`ALTER TABLE merch_products ADD COLUMN category_sv TEXT DEFAULT 'Kläder & Mode';`)
-  } catch {}
+  } catch {
+    // Column already exists
+  }
   try {
     await tursoClient.execute(`ALTER TABLE merch_products ADD COLUMN category_en TEXT DEFAULT 'Apparel & Clothing';`)
-  } catch {}
+  } catch {
+    // Column already exists
+  }
 }
 
 export async function syncMerchFromSpreadshop(): Promise<SyncResult> {
@@ -114,16 +118,20 @@ export async function syncMerchFromSpreadshop(): Promise<SyncResult> {
         if (row.type_sv && !mapSv[id]) mapSv[id] = String(row.type_sv)
         if (row.type_en && !mapEn[id]) mapEn[id] = String(row.type_en)
       }
-    } catch {}
+    } catch {
+      // Ignore db query errors if table schema differs
+    }
 
     // Försök hämta färska produkttyper från Spreadshop om de är tillgängliga (tyst fallback vid 403)
     try {
-      const [svRes, enRes]: [any, any] = await Promise.all([
-        $fetch('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/productTypes?locale=sv_SE&limit=1000', {
+      interface SpreadshopProductType { id?: string | number; name?: string }
+      interface SpreadshopProductTypesResponse { productTypes?: SpreadshopProductType[] }
+      const [svRes, enRes] = await Promise.all([
+        $fetch<SpreadshopProductTypesResponse>('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/productTypes?locale=sv_SE&limit=1000', {
           headers: BROWSER_HEADERS,
           timeout: 4000,
         }).catch(() => null),
-        $fetch('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/productTypes?locale=en_US&limit=1000', {
+        $fetch<SpreadshopProductTypesResponse>('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/productTypes?locale=en_US&limit=1000', {
           headers: BROWSER_HEADERS,
           timeout: 4000,
         }).catch(() => null),
@@ -139,16 +147,29 @@ export async function syncMerchFromSpreadshop(): Promise<SyncResult> {
           if (p?.id && p?.name) mapEn[String(p.id)] = p.name
         }
       }
-    } catch {}
+    } catch {
+      // Ignore product type fetching error
+    }
 
     // 2. Hämta live sellables från Spreadshop med äkta webbläsar-headers
-    const sellablesRes: any = await $fetch('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/sellables', {
+    interface SpreadshopSellable {
+      sellableId: string
+      productTypeId?: string | number
+      name?: string
+      price?: { formatted?: string; vatIncluded?: number; amount?: number | string }
+      previewImage?: { url?: string }
+      ideaId?: string | number
+    }
+    interface SpreadshopSellablesResponse {
+      sellables?: SpreadshopSellable[]
+    }
+    const sellablesRes = await $fetch<SpreadshopSellablesResponse>('https://det-7e-gunget.myspreadshop.se/api/v1/shops/1553619/sellables', {
       headers: BROWSER_HEADERS,
       timeout: 10000,
     })
 
-    const rawSellables: any[] = sellablesRes?.sellables || []
-    const validItems = rawSellables.filter((s: any) => s.previewImage?.url && s.sellableId)
+    const rawSellables: SpreadshopSellable[] = sellablesRes?.sellables || []
+    const validItems = rawSellables.filter((s): s is SpreadshopSellable & { sellableId: string } => Boolean(s.previewImage?.url && s.sellableId))
 
     if (validItems.length === 0) {
       return { success: false, totalItems: 0, syncedAt, error: 'Inga artiklar returnerades från Spreadshop' }
@@ -206,7 +227,7 @@ export async function syncMerchFromSpreadshop(): Promise<SyncResult> {
             updated_at = excluded.updated_at
         `,
         args: [
-          item.sellableId,
+          String(item.sellableId),
           typeIdStr,
           item.name || 'Det 7:e gunget',
           nameSv,
@@ -236,7 +257,9 @@ export async function syncMerchFromSpreadshop(): Promise<SyncResult> {
           })
         }
       }
-    } catch {}
+    } catch {
+      // Ignore database cleanup error
+    }
 
     // 5. Uppdatera last_merch_sync i site_settings
     await tursoClient.execute({
@@ -253,13 +276,13 @@ export async function syncMerchFromSpreadshop(): Promise<SyncResult> {
       totalItems: validItems.length,
       syncedAt,
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[MerchSync] Fel vid synkronisering från Spreadshop:', err)
     return {
       success: false,
       totalItems: 0,
       syncedAt,
-      error: err?.message || String(err),
+      error: err instanceof Error ? err.message : String(err),
     }
   }
 }

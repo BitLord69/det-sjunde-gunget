@@ -3,8 +3,11 @@ const { t } = useI18n()
 const localePath = useLocalePath()
 
 useSeoMeta({
-  title: 'Jukebox & musik | Det 7:e Gunget',
-  description: 'Klappa i en slant och lyssna på Det 7:e Gungets egna alster och svettiga tolkningar i vår interaktiva jukebox.',
+  title: () => `${t('seo.music_title')}`,
+  description: () => t('seo.music_desc'),
+  ogTitle: () => `${t('seo.music_og_title')}`,
+  ogDescription: () => t('seo.music_og_desc'),
+  ogImage: '/media/og/og-share.jpg',
 })
 
 const { data: songsData } = await useFetch('/api/songs')
@@ -379,7 +382,7 @@ const formatTime = (secs: number) => {
 
                       <!-- Cartridge & Stylus head -->
                       <div class="w-4 h-6 bg-gradient-to-b from-primary to-amber-700 rounded-sm -bottom-2 -left-1 absolute shadow-lg border border-black/60 flex items-center justify-center">
-                        <div class="w-1 h-1 rounded-full bg-amber-200 animate-ping opacity-60" v-if="isAudioPlaying" />
+                        <div v-if="isAudioPlaying" class="w-1 h-1 rounded-full bg-amber-200 animate-ping opacity-60" />
                       </div>
                     </div>
                   </div>
@@ -499,7 +502,7 @@ const formatTime = (secs: number) => {
                   :value="currentTime"
                   class="range range-xs range-primary w-full cursor-pointer"
                   @input="seek(parseFloat(($event.target as HTMLInputElement).value))"
-                />
+                >
               </div>
 
               <!-- Jukebox Transport Controls (Play / Pause / Next / Prev) -->
@@ -522,7 +525,7 @@ const formatTime = (secs: number) => {
                     :value="isMuted ? 0 : volume"
                     class="range range-xs range-secondary w-12 sm:w-14 hidden sm:inline-block cursor-pointer"
                     @input="setAudioVolume(parseFloat(($event.target as HTMLInputElement).value))"
-                  />
+                  >
                 </div>
 
                 <!-- Center Playback Controls -->
@@ -752,8 +755,8 @@ const formatTime = (secs: number) => {
               @click="selectSong(song.id)"
             >
               <!-- Perforation Edge Marks on Left & Right -->
-              <div class="strip-perf-left"></div>
-              <div class="strip-perf-right"></div>
+              <div class="strip-perf-left"/>
+              <div class="strip-perf-right"/>
 
               <!-- Weathered Header Band (Aged Red for Side A, Aged Navy for Side B) -->
               <div

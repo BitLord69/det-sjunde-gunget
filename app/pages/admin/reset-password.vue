@@ -19,7 +19,7 @@ const successMessage = ref('')
 
 const handleResetPassword = async () => {
   errorMessage.value = ''
-  successMessage.value = null as any
+  successMessage.value = ''
 
   if (!token.value) {
     errorMessage.value = 'Ingen återställningstoken hittades. Vänligen klicka på länken i ditt e-postmeddelande.'
@@ -51,8 +51,9 @@ const handleResetPassword = async () => {
     setTimeout(() => {
       navigateTo('/admin')
     }, 1500)
-  } catch (err: any) {
-    errorMessage.value = err?.data?.message || 'Kunde inte återställa lösenordet. Länken kan ha gått ut.'
+  } catch (err: unknown) {
+    const errorObj = err as { data?: { message?: string } } | null
+    errorMessage.value = errorObj?.data?.message || 'Kunde inte återställa lösenordet. Länken kan ha gått ut.'
   } finally {
     isLoading.value = false
   }
@@ -110,7 +111,7 @@ const handleResetPassword = async () => {
             minlength="6"
             placeholder="••••••••"
             class="input input-bordered w-full bg-base-100 text-sm focus:border-primary text-base-content"
-          />
+          >
         </div>
 
         <div>
@@ -122,7 +123,7 @@ const handleResetPassword = async () => {
             minlength="6"
             placeholder="••••••••"
             class="input input-bordered w-full bg-base-100 text-sm focus:border-primary text-base-content"
-          />
+          >
         </div>
 
         <button

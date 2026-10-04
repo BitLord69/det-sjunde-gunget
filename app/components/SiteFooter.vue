@@ -29,7 +29,14 @@ const handleNewsletter = async () => {
     }
   } catch (err: any) {
     console.error('Newsletter subscription error:', err)
-    newsletterError.value = err?.data?.statusMessage || 'Kunde inte registrera. Försök igen.'
+    const errCode = err?.data?.data?.code
+    if (errCode === 'INVALID_EMAIL') {
+      newsletterError.value = t('newsletter.error_invalid')
+    } else if (errCode === 'RATE_LIMIT_EXCEEDED') {
+      newsletterError.value = t('newsletter.error_rate_limit')
+    } else {
+      newsletterError.value = t('newsletter.error_failed')
+    }
   } finally {
     newsletterLoading.value = false
   }
@@ -175,7 +182,7 @@ const handleNewsletter = async () => {
             required
             :placeholder="t('newsletter.placeholder')"
             class="input input-bordered input-sm w-full bg-neutral focus:border-primary text-xs"
-          />
+          >
           <div v-if="newsletterError" class="text-error text-[11px] font-semibold">
             ⚠️ {{ newsletterError }}
           </div>
@@ -195,8 +202,8 @@ const handleNewsletter = async () => {
       <!-- Fallback Card when newsletter is disabled in admin settings -->
       <div v-else class="bg-base-200/50 p-6 rounded-2xl border border-primary/20 shadow-inner flex flex-col justify-between space-y-4">
         <div class="space-y-2">
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-mono text-[10px] font-bold uppercase tracking-wider">
-            <span>🎸</span> Det 7:e Gunget
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-mono text-[10px] font-bold tracking-wider">
+            <span>🎸</span> DET 7:e GUNGET
           </div>
           <h4 class="font-heading text-lg text-primary font-bold">{{ t('common.scenic_blues_rock') }}</h4>
           <p class="text-xs text-neutral-content/75 leading-relaxed">

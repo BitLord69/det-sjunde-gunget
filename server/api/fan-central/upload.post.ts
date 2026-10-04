@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import type { MultiPartData } from 'h3'
 import { put } from '@vercel/blob'
 import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
@@ -8,16 +9,26 @@ import { bannedEmails, fanSubmissions, siteSettings } from '../../db/schema'
 import { sendDiscordFanPhotoAlert } from '../../utils/discord'
 
 export default defineEventHandler(async (event) => {
+  // Rate limiting: Maximum 5 fan photo uploads per 10 minutes per IP
+  enforceRateLimit(event, {
+    scope: 'fan-upload',
+    maxRequests: 5,
+    windowMs: 10 * 60 * 1000,
+    errorMessage: 'För många uppladdningar på kort tid. Vänligen vänta några minuter innan du laddar upp fler bilder.',
+  })
+
   const multipartData = await readMultipartFormData(event)
   if (!multipartData || multipartData.length === 0) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Ingen information skickades med formuläret.',
+      statusMessage: 'Bad Request',
+      message: 'Ingen information skickades med formuläret.',
+      data: { code: 'NO_DATA' },
     })
   }
 
   // Extract fields
-  let fileItem: any = null
+  let fileItem: MultiPartData | null = null
   let email = ''
   let caption = ''
   let location = ''
@@ -27,7 +38,7 @@ export default defineEventHandler(async (event) => {
 
   for (const item of multipartData) {
     const fieldName = item.name
-    if (fieldName === 'file' && item.data && item.data.length > 0) {
+    if ((fieldName === 'file' || fieldName === 'photo' || item.filename) && item.data && item.data.length > 0) {
       fileItem = item
     } else if (fieldName === 'email' && item.data) {
       email = item.data.toString('utf-8').trim().toLowerCase()
@@ -49,21 +60,53 @@ export default defineEventHandler(async (event) => {
   if (!email || !email.includes('@') || !email.includes('.')) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Vänligen ange en giltig e-postadress.',
+      statusMessage: 'Bad Request',
+      message: 'Vänligen ange en giltig e-postadress.',
+      data: { code: 'INVALID_EMAIL' },
     })
   }
 
   if (!rulesAccepted) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Du måste intyga och acceptera villkoren för bildinnehåll.',
+      statusMessage: 'Bad Request',
+      message: 'Du måste intyga och acceptera villkoren för bildinnehåll.',
+      data: { code: 'RULES_REQUIRED' },
     })
   }
 
   if (!fileItem) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Vänligen välj en bildfil att ladda upp.',
+      statusMessage: 'Bad Request',
+      message: 'Vänligen välj en bildfil att ladda upp.',
+      data: { code: 'NO_FILE' },
+    })
+  }
+
+  // File size validation: Maximum 10 MB
+  const MAX_FILE_SIZE = 10 * 1024 * 1024
+  if (fileItem.data.length > MAX_FILE_SIZE) {
+    throw createError({
+      statusCode: 413,
+      statusMessage: 'Payload Too Large',
+      message: 'Bildfilen är för stor. Maximal tillåten storlek är 10 MB.',
+      data: { code: 'FILE_TOO_LARGE' },
+    })
+  }
+
+  // File extension and MIME type validation
+  const originalName = fileItem.filename || 'fanphoto.jpg'
+  const ext = path.extname(originalName).toLowerCase() || '.jpg'
+  const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.avif']
+  const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
+
+  if (!ALLOWED_EXTENSIONS.includes(ext) || (fileItem.type && !ALLOWED_MIME_TYPES.includes(fileItem.type))) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      message: 'Otillåtet filformat. Endast bildfiler (.jpg, .jpeg, .png, .webp, .avif) är tillåtna.',
+      data: { code: 'INVALID_FILE_TYPE' },
     })
   }
 
@@ -77,13 +120,13 @@ export default defineEventHandler(async (event) => {
   if (banned.length > 0) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Denna e-postadress har spärrats från att ladda upp bilder eller skriva kommentarer.',
+      statusMessage: 'Forbidden',
+      message: 'Denna e-postadress har spärrats från att ladda upp bilder eller skriva kommentarer.',
+      data: { code: 'BANNED_EMAIL' },
     })
   }
 
   // 3. Process image upload
-  const originalName = fileItem.filename || 'fanphoto.jpg'
-  const ext = path.extname(originalName).toLowerCase() || '.jpg'
   const safeFilename = `fan-${Date.now()}-${nanoid(6)}${ext}`
   let mediaUrl = ''
 
@@ -94,8 +137,8 @@ export default defineEventHandler(async (event) => {
         contentType: fileItem.type || 'image/jpeg',
       })
       mediaUrl = blob.url
-    } catch (blobError: any) {
-      console.warn('[Fan Upload] Vercel Blob upload failed, falling back to local storage:', blobError.message)
+    } catch (blobError: unknown) {
+      console.warn('[Fan Upload] Vercel Blob upload failed, falling back to local storage:', blobError instanceof Error ? blobError.message : String(blobError))
     }
   }
 
@@ -106,11 +149,13 @@ export default defineEventHandler(async (event) => {
       const filePath = path.join(uploadDir, safeFilename)
       await fs.writeFile(filePath, fileItem.data)
       mediaUrl = `/media/uploads/${safeFilename}`
-    } catch (fsError: any) {
+    } catch (fsError: unknown) {
       console.error('[Fan Upload] Local save error:', fsError)
       throw createError({
         statusCode: 500,
-        statusMessage: 'Kunde inte spara bildfilen på servern.',
+        statusMessage: 'Internal Server Error',
+        message: 'Kunde inte spara bildfilen på servern.',
+        data: { code: 'UPLOAD_SAVE_FAILED' },
       })
     }
   }
@@ -171,8 +216,8 @@ export default defineEventHandler(async (event) => {
         adminUrl,
       )
     }
-  } catch (err: any) {
-    console.error('[Fan Upload] Failed to send Discord notification:', err.message)
+  } catch (err: unknown) {
+    console.error('[Fan Upload] Failed to send Discord notification:', err instanceof Error ? err.message : String(err))
     // Non-fatal, do not fail the upload
   }
 

@@ -16,8 +16,11 @@ const resolvedEyebrow = computed(() => {
 
 <template>
   <div class="text-center space-y-1.5 max-w-2xl mx-auto mb-6 sm:mb-8">
-    <div v-if="resolvedEyebrow" class="text-[11px] sm:text-xs font-mono uppercase tracking-[0.25em] text-secondary font-bold">
-      {{ resolvedEyebrow }}
+    <div v-if="resolvedEyebrow" class="text-[11px] sm:text-xs font-mono tracking-[0.25em] text-secondary font-bold">
+      <template v-for="(chunk, idx) in resolvedEyebrow.split(/(7:[eE])/g)" :key="idx">
+        <span v-if="chunk.toLowerCase() === '7:e'" class="normal-case">7:e</span>
+        <span v-else class="uppercase">{{ chunk }}</span>
+      </template>
     </div>
 
     <h1 class="font-heading text-4xl sm:text-6xl lg:text-7xl text-primary text-gritty leading-none my-1">

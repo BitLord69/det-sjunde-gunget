@@ -212,7 +212,7 @@ onBeforeRouteLeave((to, from, next) => {
               type="text"
               placeholder="T.ex. #DetSjundeGunget eller #BluesRock"
               class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs"
-            />
+            >
           </div>
 
           <div>
@@ -363,7 +363,7 @@ onBeforeRouteLeave((to, from, next) => {
                     :checked="tag.isActive"
                     class="toggle toggle-success toggle-xs"
                     @change="toggleHashtagActive(tag)"
-                  />
+                  >
                   <span class="text-[11px] font-bold" :class="tag.isActive ? 'text-emerald-400' : 'text-base-content/40'">
                     {{ tag.isActive ? 'Aktiv' : 'Inaktiv' }}
                   </span>

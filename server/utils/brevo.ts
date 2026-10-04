@@ -13,7 +13,7 @@ interface SendEmailParams {
 
 interface AddSubscriberParams {
   email: string
-  attributes?: Record<string, any>
+  attributes?: Record<string, unknown>
   listIds?: number[]
 }
 
@@ -57,9 +57,9 @@ export async function sendTransactionalEmail(params: SendEmailParams) {
     const data = await response.json()
     console.log('[Brevo] Email sent successfully:', data)
     return { success: true, messageId: data.messageId }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Brevo] Network error during email dispatch:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }
 
@@ -71,7 +71,7 @@ export async function addOrUpdateContact(params: AddSubscriberParams) {
     return { success: false, reason: 'NO_API_KEY' }
   }
 
-  const payload: Record<string, any> = {
+  const payload: { email: string; updateEnabled: boolean; attributes?: Record<string, unknown>; listIds?: number[] } = {
     email: params.email,
     updateEnabled: true,
   }
@@ -107,9 +107,9 @@ export async function addOrUpdateContact(params: AddSubscriberParams) {
     const data = await response.json()
     console.log('[Brevo] Contact added/updated:', data)
     return { success: true, contactId: data.id }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Brevo] Contact sync network error:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }
 
@@ -142,8 +142,8 @@ export async function unsubscribeContact(email: string) {
 
     console.log('[Brevo] Contact successfully unsubscribed/blacklisted:', email)
     return { success: true }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Brevo] Unsubscribe network error:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }

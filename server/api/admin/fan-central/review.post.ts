@@ -11,7 +11,8 @@ export default defineEventHandler(async (event) => {
   if (!id || !action) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'ID och åtgärd (action) är obligatoriska fält.',
+      statusMessage: 'Bad Request',
+      message: 'ID och åtgärd (action) är obligatoriska fält.',
     })
   }
 
@@ -24,7 +25,8 @@ export default defineEventHandler(async (event) => {
   if (existing.length === 0) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Bilden hittades inte.',
+      statusMessage: 'Not Found',
+      message: 'Bilden hittades inte.',
     })
   }
 
@@ -70,6 +72,7 @@ export default defineEventHandler(async (event) => {
 
   throw createError({
     statusCode: 400,
-    statusMessage: `Okänd åtgärd: ${action}`,
+    statusMessage: 'Bad Request',
+    message: `Okänd åtgärd: ${action}`,
   })
 })

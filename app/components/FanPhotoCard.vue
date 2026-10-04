@@ -9,7 +9,7 @@ export interface FanPhoto {
   takenWhen?: string | null
   fastenerType?: 'pin' | 'tape' | 'paperclip' | string | null
   pinColor?: string | null
-  rotation?: number
+  rotation?: number | null
 }
 
 interface Props {
@@ -86,8 +86,8 @@ const effectiveRotation = computed(() => {
           class="flex items-center justify-between text-[10px] font-mono text-neutral-600"
           :class="size === 'sm' ? 'mt-1 text-[9px]' : 'pt-2 border-t border-neutral-300/80'"
         >
-          <span class="truncate font-semibold text-neutral-800">
-            📍 {{ photo.location || t('fan_central.unknown_location') }}
+          <span class="truncate font-semibold text-neutral-800 flex items-center gap-1">
+            <IconMapPin class="w-3 h-3 text-primary shrink-0" /> {{ photo.location || t('fan_central.unknown_location') }}
           </span>
           <span v-if="photo.takenWhen" class="truncate opacity-85">
             {{ photo.takenWhen }}

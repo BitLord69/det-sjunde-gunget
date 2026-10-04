@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { GalleryItem } from '~/types'
+
 const { t } = useI18n()
 
 useSeoMeta({
@@ -10,7 +12,7 @@ useSeoMeta({
 const {
   data: fanPhotos,
   refresh: refreshPhotos,
-} = await useFetch<any[]>('/api/fan-central/photos', {
+} = await useFetch<GalleryItem[]>('/api/fan-central/photos', {
   default: () => [],
 })
 

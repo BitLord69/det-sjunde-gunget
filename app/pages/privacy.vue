@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useCookieConsent } from '~/composables/useCookieConsent'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const localePath = useLocalePath()
 const { contactEmail } = useSiteSettings()
 
@@ -14,13 +14,10 @@ useSeoMeta({
 })
 
 const {
-  consent,
-  hasAnswered,
   isConsentGiven,
   acceptAll,
   acceptNecessaryOnly,
   savePreferences,
-  openSettings,
 } = useCookieConsent()
 
 const isMediaActive = computed(() => isConsentGiven('media'))
@@ -96,7 +93,7 @@ const toggleMediaConsent = () => {
                 :checked="isMediaActive"
                 class="toggle toggle-primary toggle-sm"
                 @change="toggleMediaConsent"
-              />
+              >
             </div>
             <p class="text-xs text-neutral-content/75 leading-relaxed">
               {{ t('privacy.media_summary') }}

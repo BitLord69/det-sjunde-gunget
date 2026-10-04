@@ -71,9 +71,9 @@ export async function sendDiscordWebhook(
     }
 
     return { success: true }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Discord Webhook] Network exception:', err)
-    return { success: false, error: err.message || 'Nätverksfel vid anrop till Discord' }
+    return { success: false, error: err instanceof Error ? err.message : 'Nätverksfel vid anrop till Discord' }
   }
 }
 
@@ -93,6 +93,7 @@ export async function sendDiscordBookingAlert(
     streetAddress?: string | null
     postalCode?: string | null
     city?: string | null
+    website?: string | null
     location?: string | null
     message: string
   },
@@ -105,11 +106,12 @@ export async function sendDiscordBookingAlert(
   ].filter(Boolean)
 
   const placeStr = addressParts.length > 0 ? addressParts.join('\n') : (data.location ? `**Plats:** ${data.location}` : 'Ej specificerat')
+  const websiteLine = data.website ? `\n🌐 [${data.website}](${data.website.startsWith('http') ? data.website : `https://${data.website}`})` : ''
 
   const fields: DiscordEmbedField[] = [
     {
       name: '👤 Kontaktperson',
-      value: `**${data.name}**\n📧 [${data.email}](mailto:${data.email})${data.phone ? `\n📞 ${data.phone}` : ''}`,
+      value: `**${data.name}**\n📧 [${data.email}](mailto:${data.email})${data.phone ? `\n📞 ${data.phone}` : ''}${websiteLine}`,
       inline: true,
     },
     {

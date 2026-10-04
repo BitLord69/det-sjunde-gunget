@@ -15,7 +15,9 @@ export default defineEventHandler(async (event) => {
   if (!parseResult.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Ogiltig e-postadress',
+      statusMessage: 'Bad Request',
+      message: 'Ogiltig e-postadress',
+      data: { code: 'INVALID_EMAIL' },
     })
   }
 
@@ -41,11 +43,13 @@ export default defineEventHandler(async (event) => {
       success: true,
       message: 'Du har blivit avregistrerad från nyhetsbrevet.',
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Newsletter] Unsubscribe error:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Kunde inte avregistrera. Kontakta info@det7egunget.se för manuell hjälp.',
+      statusMessage: 'Internal Server Error',
+      message: 'Kunde inte avregistrera. Kontakta info@det7egunget.se för manuell hjälp.',
+      data: { code: 'UNSUBSCRIBE_FAILED' },
     })
   }
 })

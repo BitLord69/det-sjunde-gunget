@@ -17,7 +17,9 @@ const showToast = (msg: string) => {
   }, 4000)
 }
 
-const { data: setlistData, refresh: refreshSetlist } = await useFetch<any[]>('/api/setlist', {
+import type { SetlistItem } from '~/types'
+
+const { data: setlistData, refresh: refreshSetlist } = await useFetch<SetlistItem[]>('/api/setlist', {
   default: () => [],
 })
 
@@ -48,7 +50,7 @@ const openAddSetlist = () => {
   editingSetlist.value = 'new'
 }
 
-const openEditSetlist = (item: any) => {
+const openEditSetlist = (item: SetlistItem) => {
   if (editingSetlist.value !== null && editingSetlist.value !== item.id) {
     const ok = confirm('⚠️ Du har redan ett öppet formulär för setlistan.\n\nVill du avbryta och redigera denna låt istället?')
     if (!ok) return
@@ -76,8 +78,9 @@ const saveSetlistItem = async () => {
     editingSetlist.value = null
     await refreshSetlist()
     showToast('✓ Setlistan har uppdaterats!')
-  } catch (err: any) {
-    showToast(`⚠️ ${err?.data?.message || 'Kunde inte spara låten'}`)
+  } catch (err: unknown) {
+    const errorObj = err as { data?: { message?: string } }
+    showToast(`⚠️ ${errorObj?.data?.message || 'Kunde inte spara låten'}`)
   }
 }
 
@@ -90,8 +93,9 @@ const deleteSetlistItem = async (id: string) => {
     })
     await refreshSetlist()
     showToast('✓ Låten togs bort från setlistan!')
-  } catch (err: any) {
-    showToast(`⚠️ ${err?.data?.message || 'Kunde inte ta bort låten'}`)
+  } catch (err: unknown) {
+    const errorObj = err as { data?: { message?: string } }
+    showToast(`⚠️ ${errorObj?.data?.message || 'Kunde inte ta bort låten'}`)
   }
 }
 
@@ -183,7 +187,7 @@ onBeforeRouteLeave((to, from, next) => {
         <div class="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Låttitel *</label>
-            <input v-model="setlistForm.title" type="text" placeholder="T.ex. Hoochie Coochie Man" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="setlistForm.title" type="text" placeholder="T.ex. Hoochie Coochie Man" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Set / Avdelning *</label>
@@ -203,15 +207,15 @@ onBeforeRouteLeave((to, from, next) => {
           </div>
           <div v-if="!setlistForm.isOriginal">
             <label class="block text-xs font-bold text-secondary mb-1">Originalartist</label>
-            <input v-model="setlistForm.artist" type="text" placeholder="T.ex. Muddy Waters" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="setlistForm.artist" type="text" placeholder="T.ex. Muddy Waters" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Live-notering / Cue (valfritt)</label>
-            <input v-model="setlistForm.notes" type="text" placeholder="T.ex. Munspelssolo i D, publikallsång, tempoökning" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="setlistForm.notes" type="text" placeholder="T.ex. Munspelssolo i D, publikallsång, tempoökning" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Sorteringsordning</label>
-            <input v-model="setlistForm.sortOrder" type="number" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+            <input v-model="setlistForm.sortOrder" type="number" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" >
           </div>
         </div>
 

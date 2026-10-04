@@ -6,6 +6,14 @@ import { admins, verification } from '../../db/schema'
 import { sendTransactionalEmail } from '../../utils/brevo'
 
 export default defineEventHandler(async (event) => {
+  // Rate limiting: Maximum 3 password reset requests per 15 minutes per IP
+  enforceRateLimit(event, {
+    scope: 'forgot-password',
+    maxRequests: 3,
+    windowMs: 15 * 60 * 1000,
+    errorMessage: 'För många återställningsförsök från denna IP-adress. Vänligen vänta 15 minuter innan du försöker igen.',
+  })
+
   const body = await readBody(event)
   const email = (body.email || '').trim().toLowerCase()
 

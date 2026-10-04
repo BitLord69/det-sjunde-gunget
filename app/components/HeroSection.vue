@@ -20,35 +20,35 @@ const handleLogoClick = () => {
     <div class="absolute inset-0 -z-10 tube-glow pointer-events-none opacity-90" />
     <div class="absolute inset-0 -z-10 edge-speckles opacity-35 pointer-events-none" />
 
-    <div class="mx-auto max-w-7xl px-6 lg:px-10 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
-      <!-- Left: Text & Pitch -->
-      <div class="space-y-8 max-w-2xl">
+    <div class="mx-auto max-w-7xl px-6 lg:px-10 grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-start">
+      <!-- Left: Text & Pitch (order-2 on mobile so logo appears first) -->
+      <div class="space-y-8 max-w-2xl order-2 lg:order-1 text-center lg:text-left mx-auto lg:mx-0">
         <h1 class="text-5xl sm:text-7xl lg:text-8xl leading-[0.95] text-gritty font-castoro pb-3">
-          Det 7:e<br>Gunget
+          Det 7:e<br class="hidden sm:inline lg:inline"> Gunget
         </h1>
 
-        <p class="text-lg sm:text-xl text-base-content/85 leading-relaxed font-normal pt-2">
+        <p class="text-lg sm:text-xl text-base-content/85 leading-relaxed font-normal pt-2 min-h-[3.5rem] sm:min-h-[4rem]">
           {{ t('hero.desc') }}
         </p>
 
         <!-- Sleek inline band metadata pills -->
-        <div class="flex flex-wrap items-center gap-2 sm:gap-3 pt-2 text-xs font-sans">
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/90 border border-primary/30 text-base-content shadow-sm">
+        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-2.5 pt-2 text-xs font-sans min-h-[2.5rem]">
+          <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-base-200/90 border border-primary/30 text-base-content shadow-sm whitespace-nowrap">
             <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span class="text-base-content/70 font-medium">{{ t('hero.stats.musicians') }}:</span>
-            <span class="font-bold text-primary text-sm">4</span>
+            <span class="text-base-content/70 font-medium">{{ t('hero.stats.pulse') }}:</span>
+            <span class="font-bold text-primary text-sm">{{ t('hero.stats.pulse_val') }}</span>
           </div>
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/90 border border-secondary/30 text-base-content shadow-sm">
+          <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-base-200/90 border border-secondary/30 text-base-content shadow-sm whitespace-nowrap">
             <span class="w-1.5 h-1.5 rounded-full bg-secondary" />
-            <span class="text-base-content/70 font-medium">{{ t('hero.stats.avg_age') }}:</span>
-            <span class="font-bold text-secondary text-sm">50+</span>
+            <span class="text-base-content/70 font-medium">{{ t('hero.stats.joy') }}:</span>
+            <span class="font-bold text-secondary text-sm">{{ t('hero.stats.joy_val') }}</span>
           </div>
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/90 border border-accent/30 text-base-content shadow-sm">
+          <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-base-200/90 border border-accent/30 text-base-content shadow-sm whitespace-nowrap">
             <span class="w-1.5 h-1.5 rounded-full bg-accent" />
             <span class="text-base-content/70 font-medium">{{ t('hero.stats.groove') }}:</span>
             <span class="font-bold text-accent text-sm">100%</span>
           </div>
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/90 border border-primary/30 text-base-content shadow-sm">
+          <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-base-200/90 border border-primary/30 text-base-content shadow-sm whitespace-nowrap">
             <span class="w-1.5 h-1.5 rounded-full bg-primary" />
             <span class="text-base-content/70 font-medium">{{ t('hero.stats.volume') }}:</span>
             <span class="font-bold text-primary text-sm">11</span>
@@ -56,7 +56,7 @@ const handleLogoClick = () => {
         </div>
 
         <!-- CTAs navigating to dedicated pages -->
-        <div class="flex flex-wrap gap-4 pt-4">
+        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-4">
           <NuxtLink :to="localePath('/gigs')" class="btn btn-primary rounded-full px-8 text-sm font-bold shadow-lg shadow-primary/25 hover:scale-105 transition-transform">
             {{ t('hero.cta_gigs') }} →
           </NuxtLink>
@@ -66,8 +66,8 @@ const handleLogoClick = () => {
         </div>
       </div>
 
-      <!-- Right: Vintage Badge Logo Showcase with Interactive Blues Harp Riff Easter Egg -->
-      <div class="flex justify-center items-center relative">
+      <!-- Right: Vintage Badge Logo Showcase (order-1 on mobile so it displays on top) -->
+      <div class="flex justify-center items-center relative order-1 lg:order-2 lg:pt-4">
         <div class="absolute -inset-4 rounded-full bg-gradient-to-tr from-secondary/20 to-primary/20 blur-2xl opacity-60 pointer-events-none" />
         
         <div
@@ -81,6 +81,9 @@ const handleLogoClick = () => {
           <NuxtImg
             src="/media/brand/Logotyp.webp"
             :alt="t('hero.logo_alt')"
+            width="460"
+            height="460"
+            sizes="xs:320px sm:420px lg:460px"
             class="w-[320px] sm:w-[420px] lg:w-[460px] object-contain drop-shadow-2xl transition-transform duration-500 group-hover:rotate-1"
             :class="isPlayingHarp ? 'filter drop-shadow-[0_0_25px_rgba(200,121,63,0.85)]' : ''"
             priority

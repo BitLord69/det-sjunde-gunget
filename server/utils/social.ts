@@ -162,7 +162,7 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
   let fbToken = process.env.FB_PAGE_ACCESS_TOKEN || ''
   let fbPageId = process.env.FB_PAGE_ID || ''
   let igUserId = process.env.INSTAGRAM_ACCOUNT_ID || ''
-  let webhookUrl = process.env.SOCIAL_WEBHOOK_URL || ''
+  const webhookUrl = process.env.SOCIAL_WEBHOOK_URL || ''
 
   try {
     const envPath = path.resolve(process.cwd(), '.env')
@@ -181,8 +181,8 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
         igUserId = igMatch[1].trim().replace(/^["']|["']$/g, '')
       }
     }
-  } catch (err: any) {
-    console.warn('[Social] Could not read fresh .env from disk:', err?.message)
+  } catch (err: unknown) {
+    console.warn('[Social] Could not read fresh .env from disk:', err instanceof Error ? err.message : String(err))
   }
 
   let hasExternalDispatch = false
@@ -252,9 +252,10 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
         result.facebook = { success: false, error: errDetail }
         console.error('[Social] ✕ Facebook post error:', fbData)
       }
-    } catch (e: any) {
-      result.facebook = { success: false, error: e.message }
-      console.error('[Social] ✕ Facebook network error:', e.message)
+    } catch (e: unknown) {
+      const errorMsg = e instanceof Error ? e.message : String(e)
+      result.facebook = { success: false, error: errorMsg }
+      console.error('[Social] ✕ Facebook network error:', errorMsg)
     }
   }
 
@@ -288,8 +289,8 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
       } else {
         result.instagram = { success: false, error: containerData.error?.message || 'IG Container Error' }
       }
-    } catch (e: any) {
-      result.instagram = { success: false, error: e.message }
+    } catch (e: unknown) {
+      result.instagram = { success: false, error: e instanceof Error ? e.message : String(e) }
     }
   }
 
@@ -312,8 +313,8 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
       })
       result.webhook = { success: true }
       console.log('[Social] Dispatched to social webhook')
-    } catch (e: any) {
-      result.webhook = { success: false, error: e.message }
+    } catch (e: unknown) {
+      result.webhook = { success: false, error: e instanceof Error ? e.message : String(e) }
     }
   }
 

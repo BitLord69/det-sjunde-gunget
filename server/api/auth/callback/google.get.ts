@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     await ensureAdminAccountsTable()
 
     // 1. Exchange authorization code for access token
-    const tokenResponse: any = await $fetch('https://oauth2.googleapis.com/token', {
+    const tokenResponse = await $fetch<{ access_token: string }>('https://oauth2.googleapis.com/token', {
       method: 'POST',
       body: new URLSearchParams({
         code,
@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
     const accessToken = tokenResponse.access_token
 
     // 2. Fetch Google user profile
-    const googleUser: any = await $fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    const googleUser = await $fetch<{ sub?: string; id?: string; name?: string; email?: string; picture?: string }>('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -115,7 +115,7 @@ export default defineEventHandler(async (event) => {
       )
       .limit(1)
 
-    let targetAdmin: any = null
+    let targetAdmin: typeof admins.$inferSelect | null = null
     const firstLinked = linkedAccounts[0]
 
     if (firstLinked) {
@@ -124,7 +124,7 @@ export default defineEventHandler(async (event) => {
         .from(admins)
         .where(eq(admins.id, firstLinked.adminId))
         .limit(1)
-      targetAdmin = adminRows[0]
+      targetAdmin = adminRows[0] || null
     }
 
     // 2. If not in admin_accounts, check admins by email
@@ -135,7 +135,7 @@ export default defineEventHandler(async (event) => {
         .where(sql`lower(${admins.email}) = ${email}`)
         .limit(1)
 
-      if (matchingAdmins.length > 0) {
+      if (matchingAdmins[0]) {
         targetAdmin = matchingAdmins[0]
 
         // Link to admin_accounts for future logins
@@ -183,7 +183,7 @@ export default defineEventHandler(async (event) => {
       })
 
       const newlyCreated = await db.select().from(admins).where(eq(admins.id, id)).limit(1)
-      targetAdmin = newlyCreated[0]
+      targetAdmin = newlyCreated[0] || null
     }
 
     if (!targetAdmin) {
@@ -193,7 +193,7 @@ export default defineEventHandler(async (event) => {
     // 4. Create session and redirect to admin dashboard
     await createAdminSession(targetAdmin.id, event)
     return sendRedirect(event, '/admin')
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Google OAuth Callback Error:', err)
     return sendRedirect(event, `/admin/login?error=google_auth_failed`)
   }

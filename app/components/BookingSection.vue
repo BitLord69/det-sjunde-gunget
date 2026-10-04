@@ -21,7 +21,7 @@ const { t, locale } = useI18n()
 
         <div class="space-y-3 text-sm font-medium pt-2">
           <div class="flex items-center gap-3">
-            <span class="text-primary font-bold">📍 {{ locale === 'en' ? 'Based in:' : 'Utgår från:' }}</span>
+            <span class="text-primary font-bold flex items-center gap-1.5"><IconMapPin class="w-4 h-4 shrink-0" /> {{ locale === 'en' ? 'Based in:' : 'Utgår från:' }}</span>
             <span>{{ locale === 'en' ? 'Ängelholm & all of Skåne' : 'Ängelholm & Skåne med omnejd' }}</span>
           </div>
           <div class="flex items-center gap-3">

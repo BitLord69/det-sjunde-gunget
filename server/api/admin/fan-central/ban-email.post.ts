@@ -12,7 +12,8 @@ export default defineEventHandler(async (event) => {
   if (!email || !email.includes('@')) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Giltig e-postadress krävs för att spärra.',
+      statusMessage: 'Bad Request',
+      message: 'Giltig e-postadress krävs för att spärra.',
     })
   }
 

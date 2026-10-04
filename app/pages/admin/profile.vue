@@ -98,8 +98,9 @@ const handleAvatarUpload = async (event: Event) => {
       profileForm.avatarUrl = res.url
       showToast('✓ Profilbild uppladdad!')
     }
-  } catch (err: any) {
-    showToast(`⚠️ Uppladdning misslyckades: ${err?.data?.message || err?.message || 'Fel'}`)
+  } catch (err: unknown) {
+    const errorObj = err as { data?: { message?: string }; message?: string }
+    showToast(`⚠️ Uppladdning misslyckades: ${errorObj?.data?.message || errorObj?.message || 'Fel'}`)
   } finally {
     isUploadingAvatar.value = false
     input.value = ''
@@ -169,8 +170,9 @@ const disconnectSocial = async (provider: 'google' | 'github' | 'facebook') => {
     })
     await refreshSocialAccounts()
     showToast(res.message || `✓ ${label}-konto frånkopplat`)
-  } catch (err: any) {
-    showToast(`⚠️ Kunde inte koppla från: ${err?.data?.message || err?.message || 'Fel'}`)
+  } catch (err: unknown) {
+    const errorObj = err as { data?: { message?: string }; message?: string }
+    showToast(`⚠️ Kunde inte koppla från: ${errorObj?.data?.message || errorObj?.message || 'Fel'}`)
   } finally {
     isDisconnecting.value = false
   }
@@ -260,7 +262,7 @@ onBeforeRouteLeave((to, from, next) => {
                 required
                 placeholder="namn@det7egunget.se"
                 class="input input-bordered w-full bg-base-200 input-sm text-sm font-mono text-base-content"
-              />
+              >
               <p class="text-[11px] text-base-content/60 mt-1">
                 Denna e-postadress används för att logga in med lösenord och ta emot återställningslänkar.
               </p>
@@ -275,7 +277,7 @@ onBeforeRouteLeave((to, from, next) => {
                   required
                   placeholder="Janis Svensson"
                   class="input input-bordered w-full bg-base-200 input-sm text-sm text-base-content"
-                />
+                >
               </div>
 
               <div>
@@ -285,7 +287,7 @@ onBeforeRouteLeave((to, from, next) => {
                   type="text"
                   placeholder="janis"
                   class="input input-bordered w-full bg-base-200 input-sm text-sm font-mono text-base-content"
-                />
+                >
               </div>
             </div>
 
@@ -303,10 +305,10 @@ onBeforeRouteLeave((to, from, next) => {
                   type="text"
                   placeholder="/media/band/avatar.jpg"
                   class="input input-bordered flex-grow bg-base-200 input-sm text-xs font-mono text-base-content"
-                />
+                >
                 <label class="btn btn-outline btn-primary btn-sm rounded-xl cursor-pointer whitespace-nowrap" :class="isUploadingAvatar ? 'loading' : ''">
                   <span>📁 Ladda upp</span>
-                  <input type="file" accept="image/*" class="hidden" @change="handleAvatarUpload" />
+                  <input type="file" accept="image/*" class="hidden" @change="handleAvatarUpload" >
                 </label>
               </div>
             </div>
@@ -351,7 +353,7 @@ onBeforeRouteLeave((to, from, next) => {
                 required
                 placeholder="••••••••"
                 class="input input-bordered w-full bg-base-200 input-sm text-sm text-base-content"
-              />
+              >
             </div>
 
             <div class="grid sm:grid-cols-2 gap-4">
@@ -364,7 +366,7 @@ onBeforeRouteLeave((to, from, next) => {
                   minlength="6"
                   placeholder="••••••••"
                   class="input input-bordered w-full bg-base-200 input-sm text-sm text-base-content"
-                />
+                >
               </div>
 
               <div>
@@ -376,7 +378,7 @@ onBeforeRouteLeave((to, from, next) => {
                   minlength="6"
                   placeholder="••••••••"
                   class="input input-bordered w-full bg-base-200 input-sm text-sm text-base-content"
-                />
+                >
               </div>
             </div>
 

@@ -1,3 +1,4 @@
+// Nuxt configuration for Det 7:e Gunget
 export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
@@ -58,6 +59,7 @@ export default defineNuxtConfig({
     ],
   },
   i18n: {
+    baseUrl: 'https://det7egunget.se',
     defaultLocale: 'sv',
     strategy: 'prefix_except_default',
     locales: [
@@ -89,7 +91,19 @@ export default defineNuxtConfig({
     '/api/gigs': { swr: 60 },
   },
   site: {
+    url: 'https://det7egunget.se',
     name: 'Det 7:e Gunget',
     description: 'Blues, rock och lagom mycket oväsen.',
+  },
+  sitemap: {
+    exclude: ['/admin/**', '/api/**'],
+  },
+  robots: {
+    groups: [
+      {
+        userAgent: ['*'],
+        disallow: ['/admin', '/admin/**'],
+      },
+    ],
   },
 })

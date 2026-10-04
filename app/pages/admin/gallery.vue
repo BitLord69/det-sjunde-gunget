@@ -581,10 +581,10 @@ onBeforeRouteLeave((to, from, next) => {
             <div class="flex-grow space-y-2 w-full">
               <label class="block text-xs font-bold text-secondary">Bildfil / Media URL *</label>
               <div class="flex items-center gap-2">
-                <input v-model="galForm.mediaUrl" type="text" placeholder="/media/band/bild.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" />
+                <input v-model="galForm.mediaUrl" type="text" placeholder="/media/band/bild.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" >
                 <label class="btn btn-outline btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
                   <span>📁 Ladda upp</span>
-                  <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => galForm.mediaUrl = url)" />
+                  <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => galForm.mediaUrl = url)" >
                 </label>
               </div>
               <p class="text-[10px] text-base-content/60">Välj en bildfil från datorn eller klistra in en bildlänk.</p>
@@ -611,23 +611,23 @@ onBeforeRouteLeave((to, from, next) => {
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Lutning / rotation (-3° till 3°)</label>
-            <input v-model.number="galForm.rotation" type="number" min="-5" max="5" class="input input-bordered w-full bg-base-200 input-sm font-mono" />
+            <input v-model.number="galForm.rotation" type="number" min="-5" max="5" class="input input-bordered w-full bg-base-200 input-sm font-mono" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Bildtext (svenska)</label>
-            <input v-model="galForm.captionSv" type="text" placeholder="Hela gänget samlat inför sommarsäsongen..." class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="galForm.captionSv" type="text" placeholder="Hela gänget samlat inför sommarsäsongen..." class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Bildtext (engelska / English)</label>
-            <input v-model="galForm.captionEn" type="text" placeholder="The whole band gathered before the summer season..." class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="galForm.captionEn" type="text" placeholder="The whole band gathered before the summer season..." class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Alt-text (svenska / tillgänglighet)</label>
-            <input v-model="galForm.altTextSv" type="text" placeholder="Det 7:e Gunget live på scen" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="galForm.altTextSv" type="text" placeholder="Det 7:e Gunget live på scen" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Alt-text (engelska / accessibility)</label>
-            <input v-model="galForm.altTextEn" type="text" placeholder="Det 7:e Gunget performing live on stage" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="galForm.altTextEn" type="text" placeholder="Det 7:e Gunget performing live on stage" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
 
           <!-- EPK / Presskit Toggle & Metadata -->
@@ -641,16 +641,16 @@ onBeforeRouteLeave((to, from, next) => {
                   När detta är aktiverat görs bilden nedladdningsbar i full upplösning för arrangörer och press på <code>/epk</code>.
                 </p>
               </div>
-              <input v-model="galForm.isEpk" type="checkbox" class="toggle toggle-warning toggle-sm" />
+              <input v-model="galForm.isEpk" type="checkbox" class="toggle toggle-warning toggle-sm" >
             </div>
             <div v-if="galForm.isEpk" class="grid sm:grid-cols-3 gap-3 pt-2 border-t border-warning/20">
               <div>
                 <label class="block text-[11px] font-bold text-warning mb-1">EPK-titel (svenska)</label>
-                <input v-model="galForm.epkTitleSv" type="text" placeholder="T.ex. Bandfoto (Liggande)" class="input input-bordered w-full bg-base-200 input-sm" />
+                <input v-model="galForm.epkTitleSv" type="text" placeholder="T.ex. Bandfoto (Liggande)" class="input input-bordered w-full bg-base-200 input-sm" >
               </div>
               <div>
                 <label class="block text-[11px] font-bold text-warning mb-1">EPK-titel (engelska)</label>
-                <input v-model="galForm.epkTitleEn" type="text" placeholder="E.g. Band Portrait (Landscape)" class="input input-bordered w-full bg-base-200 input-sm" />
+                <input v-model="galForm.epkTitleEn" type="text" placeholder="E.g. Band Portrait (Landscape)" class="input input-bordered w-full bg-base-200 input-sm" >
               </div>
               <div>
                 <div class="flex items-center justify-between mb-1">
@@ -672,7 +672,7 @@ onBeforeRouteLeave((to, from, next) => {
                     type="text"
                     placeholder="T.ex. 6000 × 4000 px • 4.3 MB • 300 DPI"
                     class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs pr-8"
-                  />
+                  >
                   <button
                     v-if="galForm.mediaUrl"
                     type="button"
@@ -698,7 +698,7 @@ onBeforeRouteLeave((to, from, next) => {
                   Skapar ett färdigt foto-inlägg med bild och text när du sparar bilden.
                 </p>
               </div>
-              <input v-model="galForm.postToSocials" type="checkbox" class="toggle toggle-primary toggle-sm" />
+              <input v-model="galForm.postToSocials" type="checkbox" class="toggle toggle-primary toggle-sm" >
             </div>
 
             <!-- Hashtag Selector for this Photo Post -->
@@ -871,10 +871,10 @@ onBeforeRouteLeave((to, from, next) => {
             <div class="sm:col-span-2 p-4 bg-base-300/60 rounded-xl border border-secondary/20 space-y-2">
               <label class="block text-xs font-bold text-secondary">Dokumentfil (PDF, DOC, bild etc.) *</label>
               <div class="flex items-center gap-2">
-                <input v-model="docForm.fileUrl" type="text" placeholder="/media/uploads/affisch.pdf eller URL" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" />
+                <input v-model="docForm.fileUrl" type="text" placeholder="/media/uploads/affisch.pdf eller URL" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" >
                 <label class="btn btn-outline btn-secondary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
                   <span>📁 Ladda upp fil</span>
-                  <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.zip" class="hidden" @change="uploadFile($event, url => { docForm.fileUrl = url; if (url.endsWith('.pdf')) docForm.fileType = 'pdf'; })" />
+                  <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.zip" class="hidden" @change="uploadFile($event, url => { docForm.fileUrl = url; if (url.endsWith('.pdf')) docForm.fileType = 'pdf'; })" >
                 </label>
               </div>
               <p class="text-[10px] text-base-content/60">Ladda upp en PDF från datorn eller klistra in en direktlänk.</p>
@@ -882,11 +882,11 @@ onBeforeRouteLeave((to, from, next) => {
 
             <div>
               <label class="block text-xs font-bold text-secondary mb-1">Dokumenttitel (svenska) *</label>
-              <input v-model="docForm.titleSv" type="text" placeholder="T.ex. Officiell Konsertaffisch (A3-mall)" class="input input-bordered w-full bg-base-200 input-sm" />
+              <input v-model="docForm.titleSv" type="text" placeholder="T.ex. Officiell Konsertaffisch (A3-mall)" class="input input-bordered w-full bg-base-200 input-sm" >
             </div>
             <div>
               <label class="block text-xs font-bold text-secondary mb-1">Dokumenttitel (engelska)</label>
-              <input v-model="docForm.titleEn" type="text" placeholder="E.g. Official Concert Poster Template" class="input input-bordered w-full bg-base-200 input-sm" />
+              <input v-model="docForm.titleEn" type="text" placeholder="E.g. Official Concert Poster Template" class="input input-bordered w-full bg-base-200 input-sm" >
             </div>
 
             <div>
@@ -901,16 +901,16 @@ onBeforeRouteLeave((to, from, next) => {
             </div>
             <div>
               <label class="block text-xs font-bold text-secondary mb-1">Format / Storlek / Upplösning</label>
-              <input v-model="docForm.fileSize" type="text" placeholder="T.ex. A3 Tryck-PDF • 300 DPI eller 2.4 MB" class="input input-bordered w-full bg-base-200 input-sm" />
+              <input v-model="docForm.fileSize" type="text" placeholder="T.ex. A3 Tryck-PDF • 300 DPI eller 2.4 MB" class="input input-bordered w-full bg-base-200 input-sm" >
             </div>
 
             <div>
               <label class="block text-xs font-bold text-secondary mb-1">Beskrivning (svenska)</label>
-              <textarea v-model="docForm.descriptionSv" rows="2" placeholder="Kort instruktion till arrangören..." class="textarea textarea-bordered w-full bg-base-200 text-xs"></textarea>
+              <textarea v-model="docForm.descriptionSv" rows="2" placeholder="Kort instruktion till arrangören..." class="textarea textarea-bordered w-full bg-base-200 text-xs"/>
             </div>
             <div>
               <label class="block text-xs font-bold text-secondary mb-1">Beskrivning (engelska)</label>
-              <textarea v-model="docForm.descriptionEn" rows="2" placeholder="Brief note for promoters in English..." class="textarea textarea-bordered w-full bg-base-200 text-xs"></textarea>
+              <textarea v-model="docForm.descriptionEn" rows="2" placeholder="Brief note for promoters in English..." class="textarea textarea-bordered w-full bg-base-200 text-xs"/>
             </div>
 
             <div class="sm:col-span-2 flex items-center justify-between p-3 bg-base-300/40 rounded-xl border border-secondary/20">
@@ -918,7 +918,7 @@ onBeforeRouteLeave((to, from, next) => {
                 <span class="font-bold text-xs text-secondary">Aktiv och synlig på /epk</span>
                 <p class="text-[10px] text-base-content/60">Gör dokumentet nedladdningsbart i arrangörsöversikten på webbplatsen.</p>
               </div>
-              <input v-model="docForm.isActive" type="checkbox" class="toggle toggle-secondary toggle-sm" />
+              <input v-model="docForm.isActive" type="checkbox" class="toggle toggle-secondary toggle-sm" >
             </div>
           </div>
 

@@ -11,9 +11,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Message ID is required' })
   }
 
-  const updateData: Record<string, any> = {}
+  type MessageStatus = 'unread' | 'pending' | 'accepted' | 'declined' | 'archived' | 'read'
+  const updateData: { status?: MessageStatus; readAt?: Date | null; adminNotes?: string | null } = {}
   if (body.status !== undefined) {
-    updateData.status = body.status
+    updateData.status = body.status as MessageStatus
     if (body.status === 'unread') {
       updateData.readAt = null
     } else {

@@ -1,4 +1,3 @@
-import { eq } from 'drizzle-orm'
 import { db } from '../../db/client'
 import { siteSettings } from '../../db/schema'
 import { requireAdminAuth } from '../../utils/auth'
@@ -26,7 +25,7 @@ export default defineEventHandler(async (event) => {
       })
   }
 
-  const tasks: Promise<any>[] = []
+  const tasks: Promise<void>[] = []
 
   if (body.newsletterEnabled !== undefined) {
     tasks.push(upsertSetting('newsletter_enabled', body.newsletterEnabled ? 'true' : 'false'))

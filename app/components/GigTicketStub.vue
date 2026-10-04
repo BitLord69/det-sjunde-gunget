@@ -214,7 +214,7 @@ const exportGigSetlistAsTxt = () => {
             {{ gig.venue }}
           </h2>
           <div class="flex items-center gap-1.5 mt-1">
-            <span class="text-sm">📍</span>
+            <IconMapPin class="w-4 h-4 text-primary shrink-0" />
             <span
               class="text-sm font-medium"
               :class="isTorn ? 'text-base-content/80' : 'text-stone-700'"

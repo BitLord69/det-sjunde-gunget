@@ -150,10 +150,10 @@ onBeforeRouteLeave((to, from, next) => {
             <div class="flex-grow space-y-2 w-full">
               <label class="block text-xs font-bold text-secondary">Profilfoto</label>
               <div class="flex items-center gap-2">
-                <input v-model="memberForm.photoUrl" type="text" placeholder="/media/band/namn.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" />
+                <input v-model="memberForm.photoUrl" type="text" placeholder="/media/band/namn.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" >
                 <label class="btn btn-outline btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
                   <span>📁 Ladda upp</span>
-                  <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => memberForm.photoUrl = url)" />
+                  <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => memberForm.photoUrl = url)" >
                 </label>
               </div>
               <p class="text-[10px] text-base-content/60">Ladda upp från datorn eller ange sökväg.</p>
@@ -162,11 +162,11 @@ onBeforeRouteLeave((to, from, next) => {
 
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Namn *</label>
-            <input v-model="memberForm.name" type="text" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="memberForm.name" type="text" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Roll / instrument *</label>
-            <input v-model="memberForm.role" type="text" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="memberForm.role" type="text" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
 
           <!-- Bilingual Bios -->
@@ -182,25 +182,25 @@ onBeforeRouteLeave((to, from, next) => {
           <!-- Bilingual Gear -->
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Vapen / utrustning (svenska)</label>
-            <input v-model="memberForm.gearSv" type="text" placeholder="T.ex. Hohner Marine Band..." class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="memberForm.gearSv" type="text" placeholder="T.ex. Hohner Marine Band..." class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Gear / instruments (English)</label>
-            <input v-model="memberForm.gearEn" type="text" placeholder="E.g. Fender Stratocaster 1968..." class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="memberForm.gearEn" type="text" placeholder="E.g. Fender Stratocaster 1968..." class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
 
           <!-- Fun Band Lore -->
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Favoritackord</label>
-            <input v-model="memberForm.favoriteChord" type="text" placeholder="T.ex. E7#9 (Hendrix-ackordet)" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" />
+            <input v-model="memberForm.favoriteChord" type="text" placeholder="T.ex. E7#9 (Hendrix-ackordet)" class="input input-bordered w-full bg-base-200 input-sm font-mono text-xs" >
           </div>
           <div>
             <label class="block text-xs font-bold text-secondary mb-1">Svaghet</label>
-            <input v-model="memberForm.weaknessSv" type="text" placeholder="T.ex. Skånska kanelbullar..." class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="memberForm.weaknessSv" type="text" placeholder="T.ex. Skånska kanelbullar..." class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-secondary mb-1">Kaffekonsumtion per rep</label>
-            <input v-model="memberForm.coffeeConsumption" type="text" placeholder="T.ex. 6 koppar bryggkaffe" class="input input-bordered w-full bg-base-200 input-sm" />
+            <input v-model="memberForm.coffeeConsumption" type="text" placeholder="T.ex. 6 koppar bryggkaffe" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
         </div>
 

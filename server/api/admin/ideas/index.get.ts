@@ -28,11 +28,12 @@ export default defineEventHandler(async (event) => {
       .orderBy(desc(voiceMemos.createdAt))
 
     return memos
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Ideas API] Error fetching voice memos:', error)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Kunde inte hämta idébankens röstmemos.',
+      statusMessage: 'Internal Server Error',
+      message: 'Kunde inte hämta idébankens röstmemos.',
     })
   }
 })

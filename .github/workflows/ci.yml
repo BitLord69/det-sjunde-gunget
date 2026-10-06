@@ -32,3 +32,6 @@ jobs:
 
       - name: Build Nuxt Application
         run: pnpm build
+
+      - name: Run Endpoint Regression Test Suite
+        run: pnpm run test:endpoints

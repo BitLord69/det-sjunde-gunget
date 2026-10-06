@@ -86,9 +86,7 @@ export default defineNuxtConfig({
   routeRules: {
     '/admin': { ssr: false },
     '/admin/**': { ssr: false },
-    '/api/songs': { swr: 600 },
     '/api/merch': { swr: 1800 },
-    '/api/gigs': { swr: 60 },
   },
   site: {
     url: 'https://det7egunget.se',

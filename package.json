@@ -14,6 +14,10 @@
     "db:pull-remote": "node scripts/pull-database.mjs",
     "db:sync-merch": "node scripts/sync-merch.mjs",
     "test:auth": "node scripts/test-auth.mjs",
+    "test:endpoints": "node scripts/test-all-endpoints.mjs",
+    "test:ui": "node scripts/test-all-ui.mjs",
+    "test:all": "node scripts/test-all-endpoints.mjs && node scripts/test-all-ui.mjs",
+    "setup:hooks": "git config core.hooksPath .githooks",
     "typecheck": "nuxt typecheck",
     "lint": "eslint .",
     "format": "prettier --write ."
@@ -51,6 +55,7 @@
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.8.1",
+    "playwright": "^1.63.0",
     "postcss": "^8.5.26",
     "prettier": "^3.9.6",
     "tailwindcss": "^3.4.17",

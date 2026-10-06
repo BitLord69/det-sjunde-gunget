@@ -17,8 +17,13 @@ const showToast = (msg: string) => {
   }, 4000)
 }
 
-const { data: gigsData, refresh: refreshGigs } = await useFetch<{ upcoming: any[]; past: any[]; all: any[] }>('/api/gigs')
-const { data: songsData } = await useFetch<any[]>('/api/songs', { default: () => [] })
+const { data: gigsData, refresh: refreshGigs } = await useFetch<{ upcoming: any[]; past: any[]; all: any[] }>('/api/gigs', {
+  headers: { 'Cache-Control': 'no-cache' },
+})
+const { data: songsData } = await useFetch<any[]>('/api/songs', {
+  default: () => [],
+  headers: { 'Cache-Control': 'no-cache' },
+})
 const { data: hashtagsData } = await useFetch<any[]>('/api/admin/hashtags', { default: () => [] })
 
 const activeGigSetTab = ref<string>('Set 1')

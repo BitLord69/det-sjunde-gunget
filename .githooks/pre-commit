@@ -1,0 +1,16 @@
+#!/bin/sh
+# Det 7:e Gunget - Pre-commit Hook
+# Garanterar att alla spara/uppdatera-endpoints fungerar felfritt innan commit
+
+echo "🔍 [Git Pre-commit] Kör automatisk regressionskontroll av alla endpoints..."
+
+node scripts/test-all-endpoints.mjs
+
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
+  echo "❌ [Git Pre-commit] En eller flera endpoints misslyckades! Avbryter commit för att skydda siten."
+  exit 1
+fi
+
+echo "✅ [Git Pre-commit] Alla endpoints godkända! Tillåter commit."
+exit 0

@@ -646,6 +646,15 @@ const scrollTo = (id: string) => {
           <li><strong>Databas & Säkerhet:</strong> Drivs av Turso (krypterad SQLite i molnet). Ändringar sparas omedelbart och är skyddade med säker inloggning.</li>
           <li><strong>Garanterad Dataintegritet (Prod-skydd):</strong> Produktionsdatabasen på Vercel/Turso kan aldrig skrivas över eller rensas vid driftsättning. Schemauppdateringar (nya tabeller och fält) sker icke-destruktivt, och befintliga rader bevaras alltid 100%.</li>
           <li><strong>Säker Utveckling & Backup (Pull):</strong> Utvecklare kan ladda ner skarp produktionsdata till lokal utveckling med <code class="text-secondary font-mono text-xs">pnpm db:pull-remote</code> (skapar automatisk lokal säkerhetskopia). För schemauppdateringar används <code class="text-secondary font-mono text-xs">pnpm db:migrate-remote</code> helt utan risk för dataförlust.</li>
+          <li><strong>Automatiserade Testsviter för Alla Spara- & Uppdateringsflöden:</strong> Projektet har två kompletta testsviter för att förhindra regressioner:
+            <ul class="pl-6 pt-1 space-y-1 list-circle text-xs text-base-content/75 font-mono">
+              <li><code class="text-secondary font-bold">pnpm test:endpoints</code> – Testar samtliga 17 API-endpoints direkt mot backend (skapa, redigera, spara, autentisering, städning).</li>
+              <li><code class="text-secondary font-bold">pnpm test:ui</code> – Kör fullständiga end-to-end webbläsartester (Playwright/Chrome) för gränssnittet (bandmedlemmar, gig, låtar, setlist, inställningar, hashtags, kontaktformulär).</li>
+              <li><code class="text-secondary font-bold">pnpm test:all</code> – Kör både API- och UI-testsviterna i följd.</li>
+            </ul>
+          </li>
+          <li><strong>Automatisk CI & Git Pre-commit Spärr (Regressionsskydd):</strong> En Git pre-commit-hook (<code class="text-secondary font-mono text-xs">.githooks/pre-commit</code>) och GitHub Actions CI-pipeline (<code class="text-secondary font-mono text-xs">.github/workflows/ci.yml</code>) körs automatiskt vid varje commit och pull request. Om någon sparfunktion någonsin skulle sluta fungera avbryts åtgärden omedelbart för att förhindra att trasig kod når produktion.</li>
+          <li><strong>Realtidsuppdateringar i Admin & Cache-skydd:</strong> Samtliga administrationssidor använder dubbelspärr mot webbläsarcachning (<code class="text-secondary font-mono text-xs">Cache-Control: no-store, no-cache</code>) så att sparade ändringar på bandmedlemmar, gig, låtar och setlists alltid syns omedelbart och består vid omladdning.</li>
           <li><strong>Hosting:</strong> Sidan driftas på Vercels globala servrar med automatisk SSL-kryptering (HTTPS) och automatisk optimering av alla bilder.</li>
           <li><strong>Nyhetsbrev & E-post:</strong> Formulär på sajten skickar bekräftelser och sparar prenumeranter via Brevo.</li>
           <li><strong>Ingen kod i vardagen:</strong> Allt innehåll uppdateras via detta administrationsgränssnitt!</li>

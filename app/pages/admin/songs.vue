@@ -35,6 +35,7 @@ interface SongStatEntry {
 
 const { data: songsData, refresh: refreshSongs } = await useFetch<Song[]>('/api/songs', {
   default: () => [],
+  headers: { 'Cache-Control': 'no-cache' },
 })
 const { data: hashtagsData } = await useFetch<AdminHashtag[]>('/api/admin/hashtags', { default: () => [] })
 const { data: songsStatsData } = await useFetch<{ stats: SongStatEntry[]; lookupById: Record<string, number>; lookupByTitle: Record<string, number> }>('/api/admin/songs/stats')

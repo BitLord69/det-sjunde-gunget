@@ -21,6 +21,7 @@ import type { SetlistItem } from '~/types'
 
 const { data: setlistData, refresh: refreshSetlist } = await useFetch<SetlistItem[]>('/api/setlist', {
   default: () => [],
+  headers: { 'Cache-Control': 'no-cache' },
 })
 
 // ---------------- SETLIST & REPERTOIRE CRUD ----------------

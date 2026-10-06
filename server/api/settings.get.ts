@@ -2,7 +2,12 @@ import { db } from '../db/client'
 import { siteSettings } from '../db/schema'
 
 export default defineEventHandler(async (event) => {
-  setHeader(event, 'Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600')
+  const isAdminOrNoCache = getCookie(event, 'gunget_session') || getHeader(event, 'cache-control')?.includes('no-cache')
+  if (isAdminOrNoCache) {
+    setHeader(event, 'Cache-Control', 'no-store, no-cache, must-revalidate')
+  } else {
+    setHeader(event, 'Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600')
+  }
   try {
     const list = await db.select().from(siteSettings)
     const map: Record<string, string> = {}

@@ -41,4 +41,6 @@ Thumbs.db
 
 # Scratch & test exploration files
 scripts/test-*
+!scripts/test-all-endpoints.mjs
+!scripts/test-all-ui.mjs
 public/images/records/test-*

@@ -19,6 +19,7 @@ const showToast = (msg: string) => {
 
 const { data: bandMembers, refresh: refreshBand } = await useFetch<any[]>('/api/band', {
   default: () => [],
+  headers: { 'Cache-Control': 'no-cache' },
 })
 
 const isUploading = ref(false)
@@ -85,13 +86,23 @@ const openEditMember = (m: any) => {
 }
 
 const saveMember = async () => {
-  await $fetch('/api/admin/band', {
-    method: 'POST',
-    body: memberForm,
-  })
-  editingMember.value = null
-  await refreshBand()
-  showToast('✓ Medlemsprofilen har uppdaterats!')
+  try {
+    await $fetch('/api/admin/band', {
+      method: 'POST',
+      body: { ...memberForm },
+    })
+    if (bandMembers.value) {
+      const idx = bandMembers.value.findIndex((m: any) => m.id === memberForm.id)
+      if (idx !== -1) {
+        bandMembers.value[idx] = { ...bandMembers.value[idx], ...memberForm }
+      }
+    }
+    editingMember.value = null
+    await refreshBand()
+    showToast('✓ Medlemsprofilen har uppdaterats!')
+  } catch (err: any) {
+    showToast(`⚠️ Kunde inte spara: ${err?.data?.message || err?.message || 'Ett fel uppstod'}`)
+  }
 }
 
 onBeforeRouteLeave((to, from, next) => {

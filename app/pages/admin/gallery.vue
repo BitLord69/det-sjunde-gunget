@@ -19,6 +19,7 @@ const showToast = (msg: string) => {
 
 const { data: galleryItems, refresh: refreshGallery } = await useFetch<any[]>('/api/gallery', {
   default: () => [],
+  headers: { 'Cache-Control': 'no-cache' },
 })
 const { data: hashtagsData } = await useFetch<any[]>('/api/admin/hashtags', { default: () => [] })
 

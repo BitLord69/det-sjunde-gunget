@@ -506,10 +506,12 @@ The only 4 band members on stage:
   let publicUrl = ''
 
   // 4. Save Image: Try Vercel Blob in production, or local public/images/records/
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  const blobToken = getBlobToken()
+  if (blobToken) {
     try {
       const blob = await put(`records/${fileName}`, imageBuffer, {
         access: 'public',
+        token: blobToken,
         contentType: 'image/jpeg',
       })
       publicUrl = blob.url

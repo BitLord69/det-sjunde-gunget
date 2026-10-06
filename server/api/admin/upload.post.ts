@@ -54,13 +54,15 @@ export default defineEventHandler(async (event) => {
   const safeFilename = `${Date.now()}-${nanoid(6)}${cleanExt}`
 
   const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_ENV)
-  const hasBlobToken = Boolean(process.env.BLOB_READ_WRITE_TOKEN)
+  const blobToken = getBlobToken()
+  const hasBlobToken = Boolean(blobToken)
 
   // 1. Production / Vercel Blob storage
-  if (hasBlobToken) {
+  if (hasBlobToken && blobToken) {
     try {
       const blob = await put(`media/${safeFilename}`, fileItem.data, {
         access: 'public',
+        token: blobToken,
         contentType: fileItem.type || 'application/octet-stream',
       })
       return {

@@ -130,10 +130,12 @@ export default defineEventHandler(async (event) => {
   const safeFilename = `fan-${Date.now()}-${nanoid(6)}${ext}`
   let mediaUrl = ''
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  const blobToken = getBlobToken()
+  if (blobToken) {
     try {
       const blob = await put(`fan-central/${safeFilename}`, fileItem.data, {
         access: 'public',
+        token: blobToken,
         contentType: fileItem.type || 'image/jpeg',
       })
       mediaUrl = blob.url

@@ -152,7 +152,7 @@ const deleteMessage = async (id: string) => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -202,8 +202,73 @@ const deleteMessage = async (id: string) => {
         </button>
       </div>
 
-      <!-- Messages Table -->
-      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+      <!-- Mobile Messages Cards View (md:hidden: inga avklippta rader eller horisontell scroll) -->
+      <div class="block md:hidden space-y-3">
+        <div
+          v-for="msg in filteredMessages"
+          :key="msg.id"
+          class="stage-card p-4 rounded-2xl border border-primary/25 space-y-3 shadow-xs bg-base-100 cursor-pointer hover:border-primary/60 transition-all"
+          :class="msg.status === 'unread' ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/30' : ''"
+          @click="selectedMessage = msg"
+        >
+          <!-- Top Row: Name + Status -->
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-1.5 font-heading text-base font-bold text-primary">
+                <span>{{ msg.name }}</span>
+                <span v-if="msg.adminNotes" class="text-amber-400 text-xs" title="Har anteckning">📝</span>
+              </div>
+              <p class="text-xs text-base-content/70 font-mono mt-0.5">
+                {{ msg.email }} <span v-if="msg.phone">• {{ msg.phone }}</span>
+              </p>
+            </div>
+            <span
+              class="badge badge-sm font-bold gap-1 text-[10px] border shadow-xs flex-shrink-0"
+              :class="getStatusMeta(msg.status).badgeClass"
+            >
+              <span>{{ getStatusMeta(msg.status).icon }}</span>
+              <span>{{ getStatusMeta(msg.status).label }}</span>
+            </span>
+          </div>
+
+          <!-- Event Details Row -->
+          <div v-if="msg.eventDate || msg.venue || msg.city" class="text-xs space-y-0.5 pt-1 border-t border-primary/10">
+            <div v-if="msg.eventDate" class="font-bold text-primary flex items-center gap-1">
+              <span>📅</span> <span>{{ msg.eventDate }}</span>
+              <span class="badge badge-ghost badge-xs font-mono ml-auto">{{ msg.eventType || 'Allmänt' }}</span>
+            </div>
+            <div v-if="msg.venue || msg.city" class="text-base-content/80 flex items-center gap-1">
+              <span>📍</span> <span>{{ [msg.venue, msg.city].filter(Boolean).join(', ') }}</span>
+            </div>
+          </div>
+
+          <!-- Footer & Actions Row -->
+          <div class="flex items-center justify-between pt-1 border-t border-primary/10 text-xs" @click.stop>
+            <span class="text-[10px] font-mono text-base-content/60">
+              {{ new Date(msg.createdAt).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }}
+            </span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="btn btn-xs btn-outline btn-primary rounded-xl font-bold px-3 cursor-pointer"
+                @click="selectedMessage = msg"
+              >
+                Visa
+              </button>
+              <button
+                type="button"
+                class="btn btn-xs btn-outline btn-error rounded-xl font-bold px-3 cursor-pointer"
+                @click="deleteMessage(msg.id)"
+              >
+                Ta bort
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages Table (Desktop & Tablet: hidden md:block) -->
+      <div class="hidden md:block overflow-x-auto rounded-2xl border border-primary/20 stage-card">
         <table class="table table-zebra w-full text-xs">
           <thead>
             <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
@@ -262,21 +327,23 @@ const deleteMessage = async (id: string) => {
                   <span>{{ getStatusMeta(msg.status).label }}</span>
                 </span>
               </td>
-              <td class="text-right space-x-2" @click.stop>
-                <button
-                  type="button"
-                  class="btn btn-xs btn-outline btn-primary rounded cursor-pointer"
-                  @click="selectedMessage = msg"
-                >
-                  Visa
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-xs btn-outline btn-error rounded cursor-pointer"
-                  @click="deleteMessage(msg.id)"
-                >
-                  Ta bort
-                </button>
+              <td class="text-right whitespace-nowrap" @click.stop>
+                <div class="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-outline btn-primary rounded cursor-pointer whitespace-nowrap"
+                    @click="selectedMessage = msg"
+                  >
+                    Visa
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-outline btn-error rounded cursor-pointer whitespace-nowrap"
+                    @click="deleteMessage(msg.id)"
+                  >
+                    Ta bort
+                  </button>
+                </div>
               </td>
             </tr>
             <tr v-if="!filteredMessages || filteredMessages.length === 0">

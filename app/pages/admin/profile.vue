@@ -186,20 +186,21 @@ onMounted(() => {
   }
 })
 
-// Route navigation guard
-onBeforeRouteLeave((to, from, next) => {
-  if (isDirty.value) {
-    const answer = window.confirm('⚠️ Du har osparade ändringar i dina kontouppgifter.\n\nVill du verkligen lämna sidan utan att spara?')
-    if (answer) next()
-    else next(false)
-  } else {
-    next()
+const discardProfileChanges = () => {
+  if (adminUser.value) {
+    profileForm.name = adminUser.value.name || ''
+    profileForm.email = adminUser.value.email || ''
+    profileForm.username = adminUser.value.username || ''
+    profileForm.avatarUrl = adminUser.value.avatarUrl || ''
   }
-})
+  oldPassword.value = ''
+  newPassword.value = ''
+  confirmPassword.value = ''
+}
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -209,7 +210,7 @@ onBeforeRouteLeave((to, from, next) => {
     </div>
 
     <!-- CMS Tab Navigation -->
-    <AdminNavBar :dirty="isDirty" />
+    <AdminNavBar :dirty="isDirty" @discard="discardProfileChanges" />
 
     <!-- PAGE HEADER -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

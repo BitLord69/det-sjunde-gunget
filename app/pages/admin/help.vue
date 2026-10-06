@@ -27,7 +27,7 @@ const scrollTo = (id: string) => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Top Navigation Bar for Admin Pages -->
     <AdminNavBar />
 
@@ -292,6 +292,20 @@ const scrollTo = (id: string) => {
       <div class="flex items-center gap-2 border-b border-primary/30 pb-2">
         <span class="text-xl">🛠️</span>
         <h2 class="font-heading text-xl sm:text-2xl text-primary font-bold">4. Administrationspanelen – Bandets Kontrollrum</h2>
+      </div>
+
+      <!-- Mobilanpassning & Säkert Formulärskydd Info -->
+      <div class="bg-primary/10 p-4 sm:p-5 rounded-2xl border border-primary/30 space-y-2">
+        <div class="flex items-center gap-2 font-bold text-primary text-sm sm:text-base">
+          <span>📱</span>
+          <span>Mobiloptimerad Layout & Säkert Formulärskydd</span>
+        </div>
+        <p class="text-xs sm:text-sm text-base-content/85 leading-relaxed">
+          Adminpanelen är helt anpassad för mobiler och datorer. Högst upp hittar du en ren mobilheader med snabbknapp för mörkt/ljust läge samt en utfällbar användarmeny (profil, länk till sajten, manual och utloggning). På mobilen visas den aktiva adminsektionen i ett kompakt fält, och samtliga 14 adminmoduler nås snabbt och överskådligt via hamburgermenyn (<strong>☰</strong>).
+        </p>
+        <p class="text-xs sm:text-sm text-base-content/85 leading-relaxed">
+          <strong>🛡️ Enhetligt och pålitligt formulärskydd:</strong> När du öppnar eller redigerar ett formulär (gig, låtar, bandmedlemmar, setlist, galleri, taggar, inställningar etc.) markeras sektionen som aktiv med en pulserande varningsindikator. Om du klickar på en annan sektion i menyn eller på den aktiva sektionen för att avbryta, visas en garanterad in-app dialog (<em>Osparade ändringar</em>). Du kan välja att stanna kvar och fortsätta spara eller godkänna att lämna formuläret och kasta ändringarna direkt. Dialogen är inbyggd i gränssnittet och blockeras aldrig av webbläsarens popup-skydd.
+        </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -517,7 +517,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- TOAST NOTIFICATION -->
     <div
       v-if="toastMessage"
@@ -527,7 +527,7 @@ onUnmounted(() => {
     </div>
 
     <!-- CMS Tab Navigation -->
-    <AdminNavBar :dirty="isRecording || recordedBlob !== null" />
+    <AdminNavBar :dirty="isRecording || recordedBlob !== null" @discard="cancelRecording" />
 
     <!-- HEADER -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-primary/20 pb-4">
@@ -912,9 +912,9 @@ onUnmounted(() => {
             </div>
 
             <!-- TOOLBAR: SLOW-DOWN SPEED / EDIT / DELETE -->
-            <div class="flex items-center justify-between text-xs pt-1">
+            <div class="flex flex-wrap items-center justify-between text-xs pt-1 gap-2">
               <!-- PLAYBACK SPEED CONTROLS FOR PRACTICING RIFFS -->
-              <div class="flex items-center gap-1 text-[10px] font-mono">
+              <div class="flex items-center gap-1 text-[10px] font-mono flex-shrink-0">
                 <span class="text-base-content/50">Tempo:</span>
                 <button
                   type="button"
@@ -943,25 +943,25 @@ onUnmounted(() => {
               </div>
 
               <!-- EDIT & DELETE BUTTONS -->
-              <div class="flex items-center gap-1">
+              <div class="flex items-center gap-1 flex-shrink-0">
                 <a
                   :href="idea.audioUrl"
                   download
-                  class="btn btn-ghost btn-xs text-base-content/60 hover:text-primary"
+                  class="btn btn-ghost btn-xs text-base-content/60 hover:text-primary whitespace-nowrap"
                   title="Ladda ner ljudfil"
                 >
                   ⬇️
                 </a>
                 <button
                   type="button"
-                  class="btn btn-ghost btn-xs text-base-content/70 hover:text-primary font-bold"
+                  class="btn btn-ghost btn-xs text-base-content/70 hover:text-primary font-bold whitespace-nowrap"
                   @click="openEditModal(idea)"
                 >
                   ✏️ Ändra
                 </button>
                 <button
                   type="button"
-                  class="btn btn-ghost btn-xs text-error font-bold"
+                  class="btn btn-ghost btn-xs text-error font-bold whitespace-nowrap"
                   @click="deleteIdea(idea.id, idea.title)"
                 >
                   🗑️ Radera

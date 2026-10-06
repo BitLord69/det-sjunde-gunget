@@ -137,6 +137,11 @@ const openAddSong = () => {
   songForm.postToSocials = false
   selectedSongTags.value = availableSongTags.value.map((t) => t.tag)
   editingSong.value = 'new'
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const openEditSong = (s: Song) => {
@@ -159,6 +164,11 @@ const openEditSong = (s: Song) => {
   songForm.postToSocials = false
   selectedSongTags.value = availableSongTags.value.map((t) => t.tag)
   editingSong.value = s.id
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const saveSong = async () => {
@@ -435,20 +445,10 @@ const sortedSongs = computed(() => {
     return 0
   })
 })
-
-onBeforeRouteLeave((to, from, next) => {
-  if (editingSong.value !== null) {
-    const answer = window.confirm('⚠️ Du har ett öppet låtformulär.\n\nVill du verkligen lämna sidan?')
-    if (answer) next()
-    else next(false)
-  } else {
-    next()
-  }
-})
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -458,7 +458,7 @@ onBeforeRouteLeave((to, from, next) => {
     </div>
 
     <!-- CMS Tab Navigation -->
-    <AdminNavBar :dirty="editingSong !== null" />
+    <AdminNavBar :dirty="editingSong !== null" @discard="editingSong = null" />
 
     <!-- SONGS & JUKEBOX -->
     <div class="space-y-6">
@@ -473,7 +473,7 @@ onBeforeRouteLeave((to, from, next) => {
       </div>
 
       <!-- Add/Edit Song Modal Form -->
-      <div v-if="editingSong" class="stage-card p-6 sm:p-8 rounded-2xl border border-primary/40 space-y-4 shadow-2xl">
+      <div v-if="editingSong" class="stage-card p-4 sm:p-8 rounded-2xl border border-primary/40 space-y-4 shadow-2xl">
         <div class="flex items-center justify-between border-b border-primary/20 pb-3">
           <h3 class="font-heading text-xl text-primary font-bold">
             {{ editingSong === 'new' ? 'Lägg till ny låt' : 'Redigera låt' }}
@@ -506,14 +506,14 @@ onBeforeRouteLeave((to, from, next) => {
               <label class="block text-xs font-bold text-secondary">🎙️ Ljudfil / MP3 (Egen uppladdning)</label>
               <span class="text-[10px] text-base-content/60 font-mono">MP3, WAV, AAC, M4A</span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <input
                 v-model="songForm.audioUrl"
                 type="text"
                 placeholder="/media/uploads/min-lat.mp3 eller klistra in URL"
-                class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs"
+                class="input input-bordered w-full flex-grow bg-base-200 input-sm font-mono text-xs"
               >
-              <label class="btn btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
+              <label class="btn btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap justify-center w-full sm:w-auto" :class="isUploading ? 'loading' : ''">
                 <span>📁 Ladda upp ljudfil</span>
                 <input
                   type="file"
@@ -543,14 +543,14 @@ onBeforeRouteLeave((to, from, next) => {
                 v-model="songForm.coverImage"
                 type="text"
                 placeholder="/images/records/mitt-omslag.jpg eller klicka på Skapa med AI"
-                class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs"
+                class="input input-bordered w-full flex-grow bg-base-200 input-sm font-mono text-xs"
               >
 
-              <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 flex-shrink-0 w-full sm:w-auto">
                 <!-- AI Generator Trigger Button -->
                 <button
                   type="button"
-                  class="btn btn-primary btn-sm rounded-lg font-bold shadow-md hover:scale-105 transition-transform flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                  class="btn btn-primary btn-sm rounded-lg font-bold shadow-md hover:scale-105 transition-transform flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
                   title="Skapa ett autentiskt 70-tals vinylsingelomslag med Det 7:e Gunget-typografi"
                   @click="openAiCoverGenerator"
                 >
@@ -559,7 +559,7 @@ onBeforeRouteLeave((to, from, next) => {
                 </button>
 
                 <!-- Manual File Upload -->
-                <label class="btn btn-outline btn-secondary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
+                <label class="btn btn-outline btn-secondary btn-sm rounded-lg cursor-pointer whitespace-nowrap justify-center" :class="isUploading ? 'loading' : ''">
                   <span>📷 Ladda upp</span>
                   <input
                     type="file"
@@ -663,18 +663,159 @@ onBeforeRouteLeave((to, from, next) => {
           </div>
         </div>
 
-        <div class="flex items-center gap-3 pt-3">
-          <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6 cursor-pointer" @click="saveSong">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-3">
+          <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6 cursor-pointer w-full sm:w-auto" @click="saveSong">
             Spara låt
           </button>
-          <button type="button" class="btn btn-ghost btn-sm rounded-full cursor-pointer" @click="editingSong = null">
+          <button type="button" class="btn btn-ghost btn-sm rounded-full cursor-pointer w-full sm:w-auto" @click="editingSong = null">
             Avbryt
           </button>
         </div>
       </div>
 
-      <!-- Songs Table with Interactive Sorting -->
-      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+      <!-- Songs Mobile Cards View (md:hidden: inga avklippta kolumner eller horisontell scroll) -->
+      <div class="block md:hidden space-y-3">
+        <!-- Mobile Sorting & Count Bar -->
+        <div class="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl bg-base-200/90 border border-primary/20 text-xs font-semibold">
+          <div class="flex items-center gap-1.5 text-primary">
+            <span>🎶</span>
+            <span class="font-bold">{{ sortedSongs.length }} låtar</span>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] uppercase font-mono text-secondary font-bold">Sortera:</span>
+            <select
+              :value="songSortKey"
+              class="select select-bordered select-xs bg-base-100 text-xs font-semibold rounded-lg"
+              @change="toggleSongSort(($event.target as HTMLSelectElement).value as any)"
+            >
+              <option value="title">Titel</option>
+              <option value="cover">Omslag</option>
+              <option value="isOriginal">Typ</option>
+              <option value="originalArtist">Artist</option>
+              <option value="embedProvider">Plattform</option>
+              <option value="playCount">Live</option>
+            </select>
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs btn-square font-mono text-xs border border-primary/20"
+              :title="songSortDir === 'asc' ? 'Stigande ordning' : 'Fallande ordning'"
+              @click="songSortDir = songSortDir === 'asc' ? 'desc' : 'asc'"
+            >
+              {{ songSortDir === 'asc' ? '↑' : '↓' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Song Mobile Cards List -->
+        <div
+          v-for="song in sortedSongs"
+          :key="song.id"
+          class="stage-card p-4 rounded-2xl border border-primary/25 space-y-3 shadow-xs bg-base-100"
+        >
+          <!-- Top Row: Cover Thumbnail + Title + Type Badge -->
+          <div class="flex items-start justify-between gap-2.5">
+            <div class="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                class="w-11 h-11 rounded-xl overflow-hidden border border-primary/30 flex items-center justify-center flex-shrink-0 bg-base-200 cursor-pointer shadow-xs active:scale-95 transition-transform"
+                :title="hasSongCover(song) ? 'Klicka för att förhandsgranska skivomslaget' : 'Saknar omslag - Klicka för att skapa'"
+                @click="openCoverPreview(song)"
+              >
+                <img
+                  v-if="song.coverImage"
+                  :src="song.coverImage"
+                  :alt="song.title"
+                  class="w-full h-full object-cover"
+                >
+                <span v-else-if="hasSongCover(song)" class="text-lg">💿</span>
+                <span v-else class="text-rose-400 font-mono text-xs font-bold">⨉</span>
+              </button>
+
+              <div class="flex flex-col min-w-0">
+                <button
+                  type="button"
+                  class="text-left font-heading text-base font-bold text-primary hover:text-secondary truncate cursor-pointer leading-tight"
+                  title="Klicka för att redigera"
+                  @click="openEditSong(song)"
+                >
+                  {{ song.title }}
+                </button>
+                <span v-if="!song.isOriginal && song.originalArtist" class="text-xs text-base-content/75 italic truncate mt-0.5">
+                  av {{ song.originalArtist }}
+                </span>
+                <span v-else class="text-[11px] text-base-content/60 font-mono mt-0.5">
+                  Eget hantverk
+                </span>
+              </div>
+            </div>
+
+            <span
+              class="badge badge-sm font-mono uppercase text-[9px] font-bold flex-shrink-0"
+              :class="song.isOriginal ? 'badge-primary' : 'badge-secondary'"
+            >
+              {{ song.isOriginal ? 'Original' : 'Cover' }}
+            </span>
+          </div>
+
+          <!-- Metadata Chips Row -->
+          <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-primary/10 text-xs">
+            <span v-if="song.embedProvider" class="badge badge-ghost badge-sm font-mono text-[10px] text-base-content/70">
+              {{ song.embedProvider }}
+            </span>
+            <button
+              type="button"
+              class="badge badge-ghost badge-sm hover:badge-primary text-[10px] gap-1 cursor-pointer transition-colors"
+              title="Klicka för att se vilka gig låten har spelats på"
+              @click="openSongStats(song)"
+            >
+              <span>🎸</span>
+              <span>{{ getSongPlayCount(song) }} gig</span>
+            </button>
+          </div>
+
+          <!-- Action Buttons Row (Touch Friendly) -->
+          <div class="grid grid-cols-3 gap-2 pt-1 border-t border-primary/10">
+            <button
+              type="button"
+              class="btn btn-xs btn-outline btn-secondary rounded-xl font-bold flex items-center justify-center gap-1 py-1.5 h-auto cursor-pointer"
+              title="Dela låten till sociala medier"
+              @click="openShareSong(song)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="6" r="3" />
+                <circle cx="18" cy="18" r="3" />
+                <line x1="8.7" y1="10.7" x2="15.3" y2="7.3" />
+                <line x1="8.7" y1="13.3" x2="15.3" y2="16.7" />
+              </svg>
+              <span>Dela</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-xs btn-outline btn-primary rounded-xl font-bold flex items-center justify-center gap-1 py-1.5 h-auto cursor-pointer"
+              title="Redigera låt"
+              @click="openEditSong(song)"
+            >
+              <span>✏️</span>
+              <span>Redigera</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-xs btn-outline btn-error rounded-xl font-bold flex items-center justify-center gap-1 py-1.5 h-auto cursor-pointer"
+              title="Ta bort låt"
+              @click="deleteSong(song.id)"
+            >
+              <span>🗑️</span>
+              <span>Ta bort</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Songs Table with Interactive Sorting (Desktop & Tablet: hidden md:block) -->
+      <div class="hidden md:block overflow-x-auto rounded-2xl border border-primary/20 stage-card">
         <table class="table table-zebra w-full text-xs">
           <thead>
             <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">

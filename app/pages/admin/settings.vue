@@ -85,20 +85,6 @@ const isSettingsDirty = computed(() => {
   )
 })
 
-// Route Guard: Warn before leaving settings page with unsaved edits
-onBeforeRouteLeave((to, from, next) => {
-  if (isSettingsDirty.value) {
-    const answer = window.confirm('⚠️ Du har osparade ändringar i inställningarna.\n\nVill du verkligen lämna sidan utan att spara?')
-    if (answer) {
-      next()
-    } else {
-      next(false)
-    }
-  } else {
-    next()
-  }
-})
-
 // Browser Guard: Warn before closing tab or reloading
 const handleBeforeUnload = (e: BeforeUnloadEvent) => {
   if (isSettingsDirty.value) {
@@ -164,10 +150,27 @@ const saveSettings = async () => {
     isSavingSettings.value = false
   }
 }
+
+const resetSettings = () => {
+  if (adminSettings.value) {
+    const orig = adminSettings.value
+    settingsForm.newsletterEnabled = orig.newsletterEnabled ?? false
+    settingsForm.landingSongCount = orig.landingSongCount ?? 4
+    settingsForm.landingMerchCount = orig.landingMerchCount ?? 4
+    settingsForm.geminiApiKey = orig.geminiApiKey ?? ''
+    settingsForm.customCoverPrompt = orig.customCoverPrompt ?? ''
+    settingsForm.discordWebhookUrl = orig.discordWebhookUrl ?? ''
+    settingsForm.discordNotifyBookings = orig.discordNotifyBookings ?? true
+    settingsForm.discordNotifyFanPhotos = orig.discordNotifyFanPhotos ?? false
+    settingsForm.discordNotifyGuestbook = orig.discordNotifyGuestbook ?? false
+    settingsForm.notificationEmail = orig.notificationEmail || 'info@det7egunget.se'
+    settingsForm.socialMockMode = orig.socialMockMode ?? false
+  }
+}
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -177,7 +180,7 @@ const saveSettings = async () => {
     </div>
 
     <!-- CMS Tab Navigation -->
-    <AdminNavBar :dirty="isSettingsDirty" />
+    <AdminNavBar :dirty="isSettingsDirty" @discard="resetSettings" />
 
     <!-- SETTINGS & ALERTS MANAGER -->
     <div class="space-y-8">

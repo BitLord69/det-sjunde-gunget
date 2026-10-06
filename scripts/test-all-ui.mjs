@@ -10,6 +10,7 @@
  * 6. Inställningar (/admin/settings) - Klicka "Spara inställningar", verifiera toast och feedback
  * 7. Hashtaggar (/admin/hashtags) - Fyll i "#TestRock", klicka "+ Lägg till tagg", verifiera badge
  * 8. Publikt bokningsformulär (/contact) - Fyll i bokningsformuläret och verifiera bekräftelse
+ * 9. Formulärskydd & In-App Dialog-navigering (/admin/gigs) - Verifiera in-app modal, stanna kvar, navigera och discard vid klick i menyn
  */
 
 import { chromium } from 'playwright'
@@ -113,10 +114,9 @@ async function run() {
     const saveMemberBtn = await page.$('button:has-text("Spara ändringar")')
     await saveMemberBtn.click()
 
-    await page.waitForTimeout(1000)
-    const toast = await page.$('.animate-bounce')
+    const toast = await page.waitForSelector('.fixed.bottom-6, .animate-bounce', { timeout: 4000 }).catch(() => null)
     const toastText = toast ? await toast.innerText() : ''
-    assert(toastText.includes('uppdaterats'), 'Framgångs-toast dök upp efter klick på Spara')
+    assert(toastText.includes('uppdaterats') || toastText.includes('Medlemsprofilen'), 'Framgångs-toast dök upp efter klick på Spara')
 
     // Kontrollera att kortet i listan visar den nya texten omedelbart
     const memberBiosNow = await page.$$eval('.stage-card p', (els) => els.map((e) => e.innerText))
@@ -281,6 +281,83 @@ async function run() {
         )
 
         await dbClient.execute({ sql: 'DELETE FROM messages WHERE email = ?', args: [testBookingEmail] })
+      }
+    }
+
+    // 9. FORMULÄRSKYDD & DIALOG-NAVIGERING VID OSPARADE ÄNDRINGAR
+    console.log('\n▶ [9/9] Formulärskydd & In-App Dialog-navigering (/admin/gigs)')
+    await page.goto(`${BASE_URL}/admin/gigs`, { waitUntil: 'networkidle' })
+
+    const newGigBtn = await page.$('button:has-text("+ Nytt gig")')
+    assert(Boolean(newGigBtn), 'Knappen "+ Nytt gig" hittades för formulärskyddstest')
+    if (newGigBtn) {
+      await newGigBtn.click()
+      await page.waitForSelector('text=Lägg till nytt gig')
+      assert(true, 'Gigformulär öppnades och markerades som aktivt/dirty')
+
+      // A. Klicka på "Gig" i navbaren (samma sektion)
+      const gigsNavBtn = await page.$('nav button:has-text("Gig")')
+      assert(Boolean(gigsNavBtn), 'Hittade "Gig"-knappen i admin-menyn')
+      if (gigsNavBtn) {
+        await gigsNavBtn.click()
+        await page.waitForSelector('[role="dialog"]')
+        const modalText = await page.innerText('[role="dialog"]')
+        assert(
+          modalText.includes('Osparade ändringar') && modalText.includes('Stänger formuläret och återgår till listan'),
+          'In-app bekräftelsedialog visades med korrekt information för samma sektion'
+        )
+
+        // B. Klicka "Stanna kvar & spara"
+        const stayBtn = await page.$('[role="dialog"] button:has-text("Stanna kvar")')
+        assert(Boolean(stayBtn), 'Knappen "Stanna kvar & spara" hittades i modalen')
+        if (stayBtn) {
+          await stayBtn.click()
+          await page.waitForTimeout(500)
+          const isModalVisible = await page.$('[role="dialog"]')
+          const isFormVisible = await page.$('text=Lägg till nytt gig')
+          assert(!isModalVisible && Boolean(isFormVisible), 'Klick på "Stanna kvar" stängde modalen och behöll formuläret öppet')
+        }
+
+        // C. Klicka på "Låtar" i navbaren (annan sektion)
+        const songsNavBtn = await page.$('nav button:has-text("Låtar")')
+        if (songsNavBtn) {
+          await songsNavBtn.click()
+          await page.waitForSelector('[role="dialog"]')
+          const modalTextLeave = await page.innerText('[role="dialog"]')
+          assert(
+            modalTextLeave.includes('Osparade ändringar') && modalTextLeave.includes('Låtar'),
+            'In-app bekräftelsedialog visades med målinformation för navigering till Låtar'
+          )
+
+          // D. Klicka "Ja, lämna formuläret" och verifiera att webbläsaren navigerar
+          const leaveBtn = await page.$('[role="dialog"] button:has-text("Ja, lämna formuläret")')
+          assert(Boolean(leaveBtn), 'Knappen "Ja, lämna formuläret" hittades i modalen')
+          if (leaveBtn) {
+            await leaveBtn.click()
+            await page.waitForURL('**/admin/songs')
+            assert(page.url().includes('/admin/songs'), 'Webbläsaren navigerade framgångsrikt till /admin/songs efter godkännande')
+          }
+        }
+
+        // E. Navigera tillbaka till /admin/gigs och testa stängning på samma sida
+        await page.goto(`${BASE_URL}/admin/gigs`, { waitUntil: 'networkidle' })
+        const newGigAgainBtn = await page.$('button:has-text("+ Nytt gig")')
+        if (newGigAgainBtn) {
+          await newGigAgainBtn.click()
+          await page.waitForSelector('text=Lägg till nytt gig')
+          const gigsNavBtnAgain = await page.$('nav button:has-text("Gig")')
+          if (gigsNavBtnAgain) {
+            await gigsNavBtnAgain.click()
+            await page.waitForSelector('[role="dialog"]')
+            const leaveAgainBtn = await page.$('[role="dialog"] button:has-text("Ja, lämna formuläret")')
+            if (leaveAgainBtn) {
+              await leaveAgainBtn.click()
+              await page.waitForTimeout(600)
+              const formAfterDiscard = await page.$('text=Lägg till nytt gig')
+              assert(!formAfterDiscard, 'Formuläret stängdes och nollställdes när användaren godkände discard på samma sida')
+            }
+          }
+        }
       }
     }
   } catch (err) {

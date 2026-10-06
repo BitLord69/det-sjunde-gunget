@@ -31,6 +31,25 @@ const tagHasCategory = (tag: any, cat: string) => {
   return tag.category.split(',').map((s: string) => s.trim()).includes(cat)
 }
 
+// ---------------- GALLERY CRUD STATE ----------------
+const editingGal = ref<any | null>(null)
+const galForm = reactive({
+  id: '',
+  category: 'photo',
+  mediaUrl: '',
+  frameStyle: 'polaroid',
+  rotation: 0,
+  captionSv: '',
+  captionEn: '',
+  altTextSv: '',
+  altTextEn: '',
+  isEpk: false,
+  epkTitleSv: '',
+  epkTitleEn: '',
+  epkResolution: '',
+  postToSocials: false,
+})
+
 const selectedGalTags = ref<string[]>([])
 const availableGalTags = computed(() => {
   return allHashtags.value.filter((t) => t.isActive && (tagHasCategory(t, 'photo') || tagHasCategory(t, 'gig') || tagHasCategory(t, 'song')))
@@ -221,6 +240,11 @@ const openAddDoc = () => {
   docForm.sortOrder = (epkDocs.value || []).length + 1
   docForm.isActive = true
   editingDoc.value = 'new'
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const openEditDoc = (doc: any) => {
@@ -236,6 +260,11 @@ const openEditDoc = (doc: any) => {
   docForm.sortOrder = doc.sortOrder ?? 0
   docForm.isActive = Boolean(doc.isActive)
   editingDoc.value = doc.id
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const saveDoc = async () => {
@@ -335,25 +364,7 @@ watch(() => galForm.isEpk, async (isEpk) => {
   }
 })
 
-// ---------------- GALLERY CRUD ----------------
-const editingGal = ref<any | null>(null)
-const galForm = reactive({
-  id: '',
-  category: 'photo',
-  mediaUrl: '',
-  frameStyle: 'polaroid',
-  rotation: 0,
-  captionSv: '',
-  captionEn: '',
-  altTextSv: '',
-  altTextEn: '',
-  isEpk: false,
-  epkTitleSv: '',
-  epkTitleEn: '',
-  epkResolution: '',
-  postToSocials: false,
-})
-
+// ---------------- GALLERY CRUD ACTIONS ----------------
 const openAddGal = () => {
   if (editingGal.value !== null) {
     const ok = confirm('⚠️ Du har redan ett öppet galleriformulär.\n\nVill du avbryta och ladda upp en ny bild istället?')
@@ -375,6 +386,11 @@ const openAddGal = () => {
   galForm.postToSocials = false
   selectedGalTags.value = availableGalTags.value.map((t) => t.tag)
   editingGal.value = 'new'
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const openEditGal = (g: any) => {
@@ -398,6 +414,11 @@ const openEditGal = (g: any) => {
   galForm.postToSocials = false
   selectedGalTags.value = availableGalTags.value.map((t) => t.tag)
   editingGal.value = g.id
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const saveGalleryItem = async () => {
@@ -472,20 +493,10 @@ const deleteGalleryItem = async (id: string) => {
   await refreshGallery()
   showToast('✓ Bilden raderades.')
 }
-
-onBeforeRouteLeave((to, from, next) => {
-  if (editingGal.value !== null) {
-    const answer = window.confirm('⚠️ Du har ett öppet bildformulär.\n\nVill du verkligen lämna sidan?')
-    if (answer) next()
-    else next(false)
-  } else {
-    next()
-  }
-})
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -495,7 +506,7 @@ onBeforeRouteLeave((to, from, next) => {
     </div>
 
     <!-- CMS Tab Navigation -->
-    <AdminNavBar :dirty="editingGal !== null" />
+    <AdminNavBar :dirty="editingGal !== null" @discard="editingGal = null" />
 
     <!-- GALLERY & FAN CENTRAL MANAGER -->
     <div class="space-y-6">
@@ -787,9 +798,9 @@ onBeforeRouteLeave((to, from, next) => {
             </p>
           </div>
 
-          <div class="pt-3 border-t border-base-content/10 flex flex-wrap items-center justify-between gap-2 mt-4">
+          <div class="pt-3 border-t border-base-content/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mt-4">
             <!-- Quick Frame Style Selector Dropdown (Left side) -->
-            <div class="flex items-center gap-1.5 flex-grow max-w-[130px]">
+            <div class="flex items-center gap-1.5 w-full sm:w-auto sm:max-w-[140px]">
               <select
                 :value="item.frameStyle || 'random'"
                 class="select select-bordered select-xs w-full bg-base-200 text-[11px] font-sans border-primary/40 focus:border-primary rounded-lg cursor-pointer font-bold"
@@ -806,10 +817,10 @@ onBeforeRouteLeave((to, from, next) => {
             </div>
 
             <!-- Action buttons (Right side) -->
-            <div class="flex items-center gap-1.5 flex-shrink-0">
+            <div class="flex flex-wrap items-center gap-1.5 justify-end">
               <button
                 type="button"
-                class="btn btn-xs rounded cursor-pointer inline-flex items-center gap-1 font-sans"
+                class="btn btn-xs rounded cursor-pointer inline-flex items-center gap-1 font-sans whitespace-nowrap"
                 :class="item.isEpk ? 'btn-warning font-bold' : 'btn-ghost border border-base-content/20 text-base-content/70'"
                 :title="item.isEpk ? 'Ta bort från presskit' : 'Lägg till i presskit'"
                 @click="toggleEpk(item)"
@@ -818,7 +829,7 @@ onBeforeRouteLeave((to, from, next) => {
               </button>
               <button
                 type="button"
-                class="btn btn-xs btn-outline btn-secondary rounded cursor-pointer inline-flex items-center justify-center gap-1 font-sans"
+                class="btn btn-xs btn-outline btn-secondary rounded cursor-pointer inline-flex items-center justify-center gap-1 font-sans whitespace-nowrap"
                 title="Dela bilden till Facebook & Sociala medier"
                 @click="openShareGal(item)"
               >
@@ -834,20 +845,20 @@ onBeforeRouteLeave((to, from, next) => {
               </button>
               <button
                 type="button"
-                class="btn btn-xs btn-outline btn-primary rounded cursor-pointer inline-flex items-center justify-center font-sans"
+                class="btn btn-xs btn-outline btn-primary rounded cursor-pointer inline-flex items-center justify-center font-sans whitespace-nowrap"
                 @click="openEditGal(item)"
               >
                 Redigera
               </button>
               <button
                 type="button"
-                class="btn btn-xs btn-outline btn-error rounded cursor-pointer inline-flex items-center justify-center font-sans"
+                class="btn btn-xs btn-outline btn-error rounded cursor-pointer inline-flex items-center justify-center font-sans whitespace-nowrap"
                 @click="deleteGalleryItem(item.id)"
               >
                 Ta bort
               </button>
+            </div>
           </div>
-        </div>
       </div>
       </div>
     </div>
@@ -973,35 +984,35 @@ onBeforeRouteLeave((to, from, next) => {
               </div>
             </div>
 
-            <div class="pt-3 border-t border-base-content/10 flex items-center justify-between gap-2">
+            <div class="pt-3 border-t border-base-content/10 flex flex-wrap items-center justify-between gap-2">
               <button
                 type="button"
-                class="btn btn-xs rounded cursor-pointer inline-flex items-center gap-1 font-sans"
+                class="btn btn-xs rounded cursor-pointer inline-flex items-center gap-1 font-sans whitespace-nowrap"
                 :class="doc.isActive ? 'btn-secondary text-secondary-content font-bold' : 'btn-ghost border border-base-content/20 text-base-content/70'"
                 @click="toggleDocActive(doc)"
               >
                 {{ doc.isActive ? '✓ Visas i EPK' : '☆ Dold i EPK' }}
               </button>
 
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <a
                   :href="doc.fileUrl"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="btn btn-xs btn-outline btn-ghost rounded text-xs"
+                  class="btn btn-xs btn-outline btn-ghost rounded text-xs whitespace-nowrap"
                 >
                   👁️ Öppna
                 </a>
                 <button
                   type="button"
-                  class="btn btn-xs btn-outline btn-primary rounded cursor-pointer"
+                  class="btn btn-xs btn-outline btn-primary rounded cursor-pointer whitespace-nowrap"
                   @click="openEditDoc(doc)"
                 >
                   Redigera
                 </button>
                 <button
                   type="button"
-                  class="btn btn-xs btn-outline btn-error rounded cursor-pointer"
+                  class="btn btn-xs btn-outline btn-error rounded cursor-pointer whitespace-nowrap"
                   @click="deleteDoc(doc.id)"
                 >
                   Ta bort

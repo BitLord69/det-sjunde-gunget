@@ -83,6 +83,11 @@ const openEditMember = (m: any) => {
   memberForm.weaknessSv = m.weaknessSv || ''
   memberForm.coffeeConsumption = m.coffeeConsumption || ''
   editingMember.value = m.id
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const saveMember = async () => {
@@ -104,20 +109,10 @@ const saveMember = async () => {
     showToast(`⚠️ Kunde inte spara: ${err?.data?.message || err?.message || 'Ett fel uppstod'}`)
   }
 }
-
-onBeforeRouteLeave((to, from, next) => {
-  if (editingMember.value !== null) {
-    const answer = window.confirm('⚠️ Du har ett öppet medlemsprofilsformulär.\n\nVill du verkligen lämna sidan?')
-    if (answer) next()
-    else next(false)
-  } else {
-    next()
-  }
-})
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -127,7 +122,7 @@ onBeforeRouteLeave((to, from, next) => {
     </div>
 
     <!-- CMS Tab Navigation -->
-    <AdminNavBar :dirty="editingMember !== null" />
+    <AdminNavBar :dirty="editingMember !== null" @discard="editingMember = null" />
 
     <!-- BAND MEMBERS & BIOS -->
     <div class="space-y-6">
@@ -137,32 +132,35 @@ onBeforeRouteLeave((to, from, next) => {
       </div>
 
       <!-- Edit Member Modal -->
-      <div v-if="editingMember" class="stage-card p-6 sm:p-8 rounded-2xl border border-primary/40 space-y-5 shadow-2xl">
-        <div class="flex items-center justify-between border-b border-primary/20 pb-3">
-          <div class="flex items-center gap-3">
-            <h3 class="font-heading text-xl text-primary font-bold">
+      <div v-if="editingMember" class="stage-card p-4 sm:p-8 rounded-2xl border border-primary/40 space-y-5 shadow-2xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-primary/20 pb-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="font-heading text-lg sm:text-xl text-primary font-bold">
               Redigera profil för {{ memberForm.name }}
             </h3>
-            <span class="badge badge-warning badge-sm font-bold animate-pulse">
+            <span class="badge badge-warning badge-xs sm:badge-sm font-bold animate-pulse whitespace-nowrap">
               ⚠️ Osparade ändringar
             </span>
           </div>
-          <span class="badge badge-primary font-mono text-xs font-bold">{{ memberForm.role }}</span>
+          <span v-if="memberForm.role" class="badge badge-primary font-mono text-[11px] sm:text-xs font-bold self-start sm:self-auto whitespace-nowrap">
+            {{ memberForm.role }}
+          </span>
         </div>
 
         <div class="grid sm:grid-cols-2 gap-4 text-sm">
           <!-- Profile Photo with Direct Uploader -->
           <div class="sm:col-span-2 flex flex-col sm:flex-row items-center gap-4 p-4 bg-base-200/60 rounded-xl border border-primary/20">
-            <NuxtImg
+            <img
               :src="memberForm.photoUrl || '/media/brand/Logotyp_mini.webp'"
               :alt="memberForm.name"
-              class="w-20 h-24 object-cover rounded-lg border border-primary/40 shadow-md flex-shrink-0"
+              class="w-20 h-24 object-cover rounded-lg border border-primary/40 shadow-md flex-shrink-0 bg-base-300"
+              @error="(e: any) => (e.target.src = '/media/brand/Logotyp_mini.webp')"
             />
             <div class="flex-grow space-y-2 w-full">
               <label class="block text-xs font-bold text-secondary">Profilfoto</label>
-              <div class="flex items-center gap-2">
-                <input v-model="memberForm.photoUrl" type="text" placeholder="/media/band/namn.jpg" class="input input-bordered flex-grow bg-base-200 input-sm font-mono text-xs" >
-                <label class="btn btn-outline btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap" :class="isUploading ? 'loading' : ''">
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <input v-model="memberForm.photoUrl" type="text" placeholder="/media/band/namn.jpg" class="input input-bordered w-full flex-grow bg-base-200 input-sm font-mono text-xs" >
+                <label class="btn btn-outline btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap justify-center w-full sm:w-auto" :class="isUploading ? 'loading' : ''">
                   <span>📁 Ladda upp</span>
                   <input type="file" accept="image/*" class="hidden" @change="uploadFile($event, url => memberForm.photoUrl = url)" >
                 </label>
@@ -215,11 +213,11 @@ onBeforeRouteLeave((to, from, next) => {
           </div>
         </div>
 
-        <div class="flex items-center gap-3 pt-3">
-          <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6 cursor-pointer" @click="saveMember">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-3">
+          <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6 cursor-pointer w-full sm:w-auto" @click="saveMember">
             Spara ändringar
           </button>
-          <button type="button" class="btn btn-ghost btn-sm rounded-full cursor-pointer" @click="editingMember = null">
+          <button type="button" class="btn btn-ghost btn-sm rounded-full cursor-pointer w-full sm:w-auto" @click="editingMember = null">
             Avbryt
           </button>
         </div>

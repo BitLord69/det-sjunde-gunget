@@ -49,6 +49,11 @@ const openAddSetlist = () => {
   setlistForm.notes = ''
   setlistForm.sortOrder = (setlistData.value?.length || 0) + 1
   editingSetlist.value = 'new'
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const openEditSetlist = (item: SetlistItem) => {
@@ -64,6 +69,11 @@ const openEditSetlist = (item: SetlistItem) => {
   setlistForm.notes = item.notes || ''
   setlistForm.sortOrder = item.sortOrder || 0
   editingSetlist.value = item.id
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const saveSetlistItem = async () => {
@@ -135,20 +145,10 @@ const sortedSetlist = computed(() => {
     return 0
   })
 })
-
-onBeforeRouteLeave((to, from, next) => {
-  if (editingSetlist.value !== null) {
-    const answer = window.confirm('⚠️ Du har ett öppet formulär för setlistan.\n\nVill du verkligen lämna sidan?')
-    if (answer) next()
-    else next(false)
-  } else {
-    next()
-  }
-})
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -158,7 +158,7 @@ onBeforeRouteLeave((to, from, next) => {
     </div>
 
     <!-- CMS Tab Navigation -->
-    <AdminNavBar :dirty="editingSetlist !== null" />
+    <AdminNavBar :dirty="editingSetlist !== null" @discard="editingSetlist = null" />
 
     <!-- SETLIST & REPERTOIRE MANAGER -->
     <div class="space-y-6">
@@ -230,11 +230,72 @@ onBeforeRouteLeave((to, from, next) => {
         </div>
       </div>
 
-      <!-- Setlist Table -->
-      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+      <!-- 1. MOBILE PHONE (< md): Clean Card List -->
+      <div class="block md:hidden space-y-3">
+        <div
+          v-for="item in sortedSetlist"
+          :key="item.id"
+          class="stage-card p-4 rounded-2xl border transition-all space-y-3"
+          :class="editingSetlist === item.id ? 'border-primary ring-2 ring-primary/40 bg-primary/10 shadow-lg' : 'border-primary/20 bg-base-200/50'"
+        >
+          <!-- Card Header: Sort Order & Title -->
+          <div class="flex items-start justify-between gap-2 border-b border-primary/15 pb-2.5">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="badge badge-primary font-mono font-black text-xs px-2 py-0.5 rounded-lg flex-shrink-0">
+                #{{ item.sortOrder || '—' }}
+              </span>
+              <span class="font-bold text-primary text-sm truncate">{{ item.title }}</span>
+            </div>
+            <span
+              class="badge badge-xs font-bold uppercase text-[9px] flex-shrink-0 whitespace-nowrap"
+              :class="item.isOriginal ? 'badge-primary' : 'badge-secondary'"
+            >
+              {{ item.isOriginal ? 'Original' : item.artist || 'Cover' }}
+            </span>
+          </div>
+
+          <!-- Card Body: Set & Notes -->
+          <div class="space-y-1.5 text-xs">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-secondary font-mono font-bold">Avdelning:</span>
+              <span class="badge badge-sm font-mono text-[10px] bg-base-300 border border-primary/20">
+                {{ item.setName || 'Set 1' }}
+              </span>
+            </div>
+            <div v-if="item.notes" class="text-xs text-base-content/80 italic pt-1 border-t border-primary/10">
+              📝 {{ item.notes }}
+            </div>
+          </div>
+
+          <!-- Card Footer: Distinct Action Buttons -->
+          <div class="pt-2 border-t border-primary/15 flex items-center gap-2">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline btn-primary rounded-xl flex-1 font-bold cursor-pointer"
+              @click="openEditSetlist(item)"
+            >
+              ✏️ Redigera
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline btn-error rounded-xl flex-1 font-bold cursor-pointer"
+              @click="deleteSetlistItem(item.id)"
+            >
+              🗑️ Ta bort
+            </button>
+          </div>
+        </div>
+
+        <div v-if="!setlistData || setlistData.length === 0" class="text-center py-8 text-base-content/60 italic stage-card rounded-2xl border border-primary/20 p-6">
+          Inga låtar finns i setlistan ännu.
+        </div>
+      </div>
+
+      <!-- 2. DESKTOP & TABLET (>= md): Full Data Table with Whitespace-Nowrap -->
+      <div class="hidden md:block overflow-x-auto rounded-2xl border border-primary/20 stage-card">
         <table class="table table-zebra w-full text-xs">
           <thead>
-            <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
+            <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20 bg-base-300/40">
               <th>
                 <button
                   type="button"
@@ -360,33 +421,35 @@ onBeforeRouteLeave((to, from, next) => {
               </th>
 
               <th>Live-notering</th>
-              <th class="text-right">Åtgärder</th>
+              <th class="text-right whitespace-nowrap">Åtgärder</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="item in sortedSetlist" :key="item.id" :class="editingSetlist === item.id ? 'bg-primary/10 border-l-4 border-primary' : ''">
               <td class="font-mono text-secondary font-bold text-center w-12">{{ item.sortOrder || '—' }}</td>
-              <td class="font-bold text-primary text-sm">{{ item.title }}</td>
-              <td>
-                <span class="badge badge-xs font-bold uppercase text-[9px]" :class="item.isOriginal ? 'badge-primary' : 'badge-secondary'">
+              <td class="font-bold text-primary text-sm whitespace-nowrap">{{ item.title }}</td>
+              <td class="whitespace-nowrap">
+                <span class="badge badge-xs font-bold uppercase text-[9px] whitespace-nowrap" :class="item.isOriginal ? 'badge-primary' : 'badge-secondary'">
                   {{ item.isOriginal ? 'Original' : item.artist || 'Cover' }}
                 </span>
               </td>
-              <td>
-                <span class="badge badge-sm font-mono text-[10px] bg-base-300 border border-primary/20">
+              <td class="whitespace-nowrap">
+                <span class="badge badge-sm font-mono text-[10px] bg-base-300 border border-primary/20 whitespace-nowrap">
                   {{ item.setName || 'Set 1' }}
                 </span>
               </td>
               <td class="text-xs text-base-content/75 italic max-w-xs truncate">
                 {{ item.notes || '—' }}
               </td>
-              <td class="text-right space-x-1">
-                <button type="button" class="btn btn-xs btn-outline btn-primary rounded cursor-pointer" @click="openEditSetlist(item)">
-                  Redigera
-                </button>
-                <button type="button" class="btn btn-xs btn-outline btn-error rounded cursor-pointer" @click="deleteSetlistItem(item.id)">
-                  Ta bort
-                </button>
+              <td class="text-right whitespace-nowrap">
+                <div class="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                  <button type="button" class="btn btn-xs btn-outline btn-primary rounded cursor-pointer whitespace-nowrap" @click="openEditSetlist(item)">
+                    Redigera
+                  </button>
+                  <button type="button" class="btn btn-xs btn-outline btn-error rounded cursor-pointer whitespace-nowrap" @click="deleteSetlistItem(item.id)">
+                    Ta bort
+                  </button>
+                </div>
               </td>
             </tr>
             <tr v-if="!setlistData || setlistData.length === 0">

@@ -21,7 +21,7 @@
  */
 
 import { spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { createClient } from '@libsql/client'
 import 'dotenv/config'
 
@@ -671,6 +671,55 @@ async function run() {
     await dbClient.execute({ sql: 'DELETE FROM subscribers WHERE email = ?', args: [testSubEmail] })
   } catch (err) {
     assert(false, 'Nyhetsbrev test misslyckades', err.message)
+  }
+
+  // 18. FORMULÄRSKYDD & ENHETLIG ADMIN-NAVIGERING
+  console.log('\n▶ [18/18] Formulärskydd & Enhetlig Admin-navigering (Dirty & Discard på alla formulärsidor)')
+  try {
+    // A. Kontrollera att AdminNavBar har den nya in-app modalen och emit('discard')
+    const navBarContent = readFileSync('app/components/admin/AdminNavBar.vue', 'utf8')
+    assert(
+      navBarContent.includes('showLeaveModal') &&
+      navBarContent.includes('pendingTargetPath') &&
+      navBarContent.includes("emit('discard')") &&
+      navBarContent.includes('Osparade ändringar'),
+      'AdminNavBar.vue har fullständig in-app bekräftelsedialog, showLeaveModal och emit("discard")'
+    )
+
+    // B. Kontrollera att samtliga 10 admin-sidor med formulär har BÅDE :dirty och @discard deklarerade
+    const formPages = [
+      { file: 'app/pages/admin/gigs.vue', name: 'Gigs / Spelningar' },
+      { file: 'app/pages/admin/songs.vue', name: 'Låtar & Jukebox' },
+      { file: 'app/pages/admin/band.vue', name: 'Bandmedlemmar' },
+      { file: 'app/pages/admin/setlist.vue', name: 'Setlist & Repertoar' },
+      { file: 'app/pages/admin/gallery.vue', name: 'Galleri & Dokument' },
+      { file: 'app/pages/admin/admins.vue', name: 'Administratörer' },
+      { file: 'app/pages/admin/hashtags.vue', name: 'Sociala Hashtaggar' },
+      { file: 'app/pages/admin/settings.vue', name: 'Sajtinställningar' },
+      { file: 'app/pages/admin/profile.vue', name: 'Admin Profil' },
+      { file: 'app/pages/admin/ideas.vue', name: 'Riff- & Idébank' },
+    ]
+
+    let allPagesConfigured = true
+    for (const p of formPages) {
+      const pageCode = readFileSync(p.file, 'utf8')
+      const hasDirty = pageCode.includes(':dirty="')
+      const hasDiscard = pageCode.includes('@discard="')
+      if (!hasDirty || !hasDiscard) {
+        allPagesConfigured = false
+        console.error(`  ✕ ${p.name} (${p.file}) saknar :dirty eller @discard`)
+      }
+    }
+    assert(allPagesConfigured, 'Samtliga 10 admin-formulärsidor har :dirty och @discard synkroniserat med AdminNavBar')
+
+    // C. Verifiera att hjälpmanualen innehåller information om formulärskyddet
+    const helpPageContent = readFileSync('app/pages/admin/help.vue', 'utf8')
+    assert(
+      helpPageContent.includes('Formulärskydd') || helpPageContent.includes('Osparade ändringar'),
+      'Hjälpmanualen (/admin/help) är synkroniserad och dokumenterar formulärskyddet'
+    )
+  } catch (err) {
+    assert(false, 'Formulärskydds- och navigeringskontroll misslyckades', err.message)
   }
 
   // --- STÄDNING AV TESTDATA ---

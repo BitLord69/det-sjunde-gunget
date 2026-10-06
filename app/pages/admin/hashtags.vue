@@ -39,14 +39,14 @@ const filteredHashtags = computed(() => {
 
 const getCategoryBadges = (categoryStr: string) => {
   if (!categoryStr || categoryStr === 'all') {
-    return [{ key: 'all', label: '🌐 Allmänt (Alla)', class: 'badge-neutral' }]
+    return [{ key: 'all', label: '🌐 Allmänt (Alla)', class: 'bg-base-300 text-base-content border border-primary/20' }]
   }
   const cats = categoryStr.split(',').map((s) => s.trim())
   const list: { key: string; label: string; class: string }[] = []
-  if (cats.includes('gig')) list.push({ key: 'gig', label: '📅 Spelningar', class: 'badge-primary' })
-  if (cats.includes('song')) list.push({ key: 'song', label: '🎵 Låtar', class: 'badge-secondary' })
-  if (cats.includes('news')) list.push({ key: 'news', label: '📢 Nyheter', class: 'badge-accent' })
-  if (cats.includes('photo')) list.push({ key: 'photo', label: '📷 Foton', class: 'badge-info' })
+  if (cats.includes('gig')) list.push({ key: 'gig', label: '📅 Spelningar', class: 'bg-primary/20 text-primary border border-primary/30' })
+  if (cats.includes('song')) list.push({ key: 'song', label: '🎵 Låtar', class: 'bg-secondary/20 text-secondary border border-secondary/30' })
+  if (cats.includes('news')) list.push({ key: 'news', label: '📢 Nyheter', class: 'bg-accent/20 text-accent border border-accent/30' })
+  if (cats.includes('photo')) list.push({ key: 'photo', label: '📷 Foton', class: 'bg-info/20 text-info border border-info/30' })
   return list
 }
 
@@ -154,20 +154,10 @@ const deleteHashtag = async (id: string) => {
   await refreshHashtags()
   showToast('✓ Taggen togs bort.')
 }
-
-onBeforeRouteLeave((to, from, next) => {
-  if (isHashtagDirty.value) {
-    const answer = window.confirm('⚠️ Du har osparade ändringar i taggformuläret.\n\nVill du verkligen lämna sidan?')
-    if (answer) next()
-    else next(false)
-  } else {
-    next()
-  }
-})
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -177,7 +167,7 @@ onBeforeRouteLeave((to, from, next) => {
     </div>
 
     <!-- CMS Tab Navigation -->
-    <AdminNavBar :dirty="isHashtagDirty" />
+    <AdminNavBar :dirty="isHashtagDirty" @discard="resetHashtagForm" />
 
     <!-- SOCIAL HASHTAGS MANAGER -->
     <div class="space-y-6">
@@ -323,15 +313,78 @@ onBeforeRouteLeave((to, from, next) => {
         </button>
       </div>
 
-      <!-- Hashtags Table -->
-      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+      <!-- 1. MOBILE PHONE (< md): Clean Card List -->
+      <div class="block md:hidden space-y-3">
+        <div
+          v-for="tag in filteredHashtags"
+          :key="tag.id"
+          class="stage-card p-4 rounded-2xl border transition-all space-y-3"
+          :class="editingHashtagId === tag.id ? 'border-primary ring-2 ring-primary/40 bg-primary/10 shadow-lg' : 'border-primary/20 bg-base-200/50'"
+        >
+          <!-- Card Header: Tag & Active Switch -->
+          <div class="flex items-center justify-between gap-2 border-b border-primary/15 pb-2.5">
+            <span class="font-bold text-primary font-mono text-base tracking-wide">{{ tag.tag }}</span>
+            <label class="cursor-pointer inline-flex items-center gap-2 select-none flex-shrink-0">
+              <input
+                type="checkbox"
+                :checked="tag.isActive"
+                class="toggle toggle-success toggle-xs"
+                @change="toggleHashtagActive(tag)"
+              >
+              <span class="text-[11px] font-bold" :class="tag.isActive ? 'text-emerald-400' : 'text-base-content/40'">
+                {{ tag.isActive ? 'Aktiv' : 'Inaktiv' }}
+              </span>
+            </label>
+          </div>
+
+          <!-- Card Body: Categories -->
+          <div class="space-y-1">
+            <span class="text-[10px] uppercase font-mono text-secondary font-bold">Kategorier:</span>
+            <div class="flex flex-wrap gap-1.5 pt-0.5">
+              <span
+                v-for="badge in getCategoryBadges(tag.category)"
+                :key="badge.key"
+                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide shadow-xs whitespace-nowrap"
+                :class="badge.class"
+              >
+                {{ badge.label }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Card Footer: Distinct Action Buttons -->
+          <div class="pt-2 border-t border-primary/15 flex items-center gap-2">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline btn-primary rounded-xl flex-1 font-bold cursor-pointer"
+              @click="openEditHashtag(tag)"
+            >
+              ✏️ Redigera
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline btn-error rounded-xl flex-1 font-bold cursor-pointer"
+              @click="deleteHashtag(tag.id)"
+            >
+              🗑️ Ta bort
+            </button>
+          </div>
+        </div>
+
+        <div v-if="filteredHashtags.length === 0" class="text-center py-8 text-base-content/60 italic stage-card rounded-2xl border border-primary/20 p-6">
+          Inga taggar hittades i denna kategori.
+        </div>
+      </div>
+
+      <!-- 2. DESKTOP & TABLET (>= md): Full Data Table with Whitespace-Nowrap -->
+      <div class="hidden md:block overflow-x-auto rounded-2xl border border-primary/20 stage-card">
         <table class="table table-zebra w-full text-xs">
           <thead>
-            <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">
+            <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20 bg-base-300/40">
               <th>Hashtag</th>
               <th>Kategorier</th>
               <th>Status</th>
-              <th class="text-right">Åtgärder</th>
+              <th class="text-right whitespace-nowrap">Åtgärder</th>
             </tr>
           </thead>
           <tbody>
@@ -341,23 +394,23 @@ onBeforeRouteLeave((to, from, next) => {
               class="hover:bg-base-200/50 transition-colors"
               :class="editingHashtagId === tag.id ? 'bg-primary/10 border-l-4 border-primary' : ''"
             >
-              <td class="font-bold text-primary font-mono text-sm">
+              <td class="font-bold text-primary font-mono text-sm whitespace-nowrap">
                 {{ tag.tag }}
               </td>
               <td>
-                <div class="flex flex-wrap gap-1">
+                <div class="flex flex-wrap gap-1.5 py-1">
                   <span
                     v-for="badge in getCategoryBadges(tag.category)"
                     :key="badge.key"
-                    class="badge badge-xs font-bold uppercase text-[9px]"
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shadow-xs"
                     :class="badge.class"
                   >
                     {{ badge.label }}
                   </span>
                 </div>
               </td>
-              <td>
-                <label class="cursor-pointer inline-flex items-center gap-2">
+              <td class="whitespace-nowrap">
+                <label class="cursor-pointer inline-flex items-center gap-2 select-none">
                   <input
                     type="checkbox"
                     :checked="tag.isActive"
@@ -369,21 +422,23 @@ onBeforeRouteLeave((to, from, next) => {
                   </span>
                 </label>
               </td>
-              <td class="text-right space-x-1">
-                <button
-                  type="button"
-                  class="btn btn-ghost btn-xs text-secondary font-bold hover:bg-secondary/20 rounded-full cursor-pointer"
-                  @click="openEditHashtag(tag)"
-                >
-                  ✏️ Redigera
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-ghost btn-xs text-error font-bold hover:bg-error/20 rounded-full cursor-pointer"
-                  @click="deleteHashtag(tag.id)"
-                >
-                  🗑️ Ta bort
-                </button>
+              <td class="text-right whitespace-nowrap">
+                <div class="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-xs text-secondary font-bold hover:bg-secondary/20 rounded-full cursor-pointer whitespace-nowrap"
+                    @click="openEditHashtag(tag)"
+                  >
+                    ✏️ Redigera
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-xs text-error font-bold hover:bg-error/20 rounded-full cursor-pointer whitespace-nowrap"
+                    @click="deleteHashtag(tag.id)"
+                  >
+                    🗑️ Ta bort
+                  </button>
+                </div>
               </td>
             </tr>
             <tr v-if="filteredHashtags.length === 0">

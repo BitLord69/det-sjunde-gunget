@@ -110,6 +110,11 @@ const openAddGig = () => {
   gigForm.setlistTracks = []
   selectedGigTags.value = availableGigTags.value.map((t) => t.tag)
   editingGig.value = 'new'
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const openEditGig = (gig: any) => {
@@ -135,6 +140,11 @@ const openEditGig = (gig: any) => {
   }
   selectedGigTags.value = availableGigTags.value.map((t) => t.tag)
   editingGig.value = gig.id
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const { formatGigSocialPost } = useSocialSharePost()
@@ -245,20 +255,10 @@ const sortedGigs = computed(() => {
     return 0
   })
 })
-
-onBeforeRouteLeave((to, from, next) => {
-  if (editingGig.value !== null) {
-    const answer = window.confirm('⚠️ Du har ett öppet gigformulär.\n\nVill du verkligen lämna sidan?')
-    if (answer) next()
-    else next(false)
-  } else {
-    next()
-  }
-})
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -268,7 +268,7 @@ onBeforeRouteLeave((to, from, next) => {
     </div>
 
     <!-- CMS Tab Navigation -->
-    <AdminNavBar :dirty="editingGig !== null" />
+    <AdminNavBar :dirty="editingGig !== null" @discard="editingGig = null" />
 
     <!-- GIGS MANAGER -->
     <div class="space-y-6">
@@ -488,18 +488,113 @@ onBeforeRouteLeave((to, from, next) => {
           </div>
         </div>
 
-        <div class="flex items-center gap-3 pt-3">
-          <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6 cursor-pointer" @click="saveGig">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-3">
+          <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6 cursor-pointer w-full sm:w-auto" @click="saveGig">
             Spara gig
           </button>
-          <button type="button" class="btn btn-ghost btn-sm rounded-full cursor-pointer" @click="editingGig = null">
+          <button type="button" class="btn btn-ghost btn-sm rounded-full cursor-pointer w-full sm:w-auto" @click="editingGig = null">
             Avbryt
           </button>
         </div>
       </div>
 
-      <!-- Gigs List Table with Interactive Sorting -->
-      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+      <!-- Gigs Mobile Cards View (md:hidden: inga avklippta kolumner eller horisontell scroll) -->
+      <div class="block md:hidden space-y-3">
+        <!-- Mobile Sort & Count Bar -->
+        <div class="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl bg-base-200/90 border border-primary/20 text-xs font-semibold">
+          <div class="flex items-center gap-1.5 text-primary">
+            <span>🗓️</span>
+            <span class="font-bold">{{ sortedGigs.length }} gig</span>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] uppercase font-mono text-secondary font-bold">Sortera:</span>
+            <select
+              :value="gigSortKey"
+              class="select select-bordered select-xs bg-base-100 text-xs font-semibold rounded-lg"
+              @change="toggleGigSort(($event.target as HTMLSelectElement).value as any)"
+            >
+              <option value="date">Datum</option>
+              <option value="venue">Spelplats</option>
+              <option value="city">Stad</option>
+              <option value="status">Status</option>
+            </select>
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs btn-square font-mono text-xs border border-primary/20"
+              :title="gigSortDir === 'desc' ? 'Senaste först' : 'Äldsta först'"
+              @click="gigSortDir = gigSortDir === 'desc' ? 'asc' : 'desc'"
+            >
+              {{ gigSortDir === 'desc' ? '↓' : '↑' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Gig Mobile Cards -->
+        <div
+          v-for="gig in sortedGigs"
+          :key="gig.id"
+          class="stage-card p-4 rounded-2xl border border-primary/25 space-y-3 shadow-xs bg-base-100"
+          :class="editingGig === gig.id ? 'border-primary ring-2 ring-primary/40' : ''"
+        >
+          <!-- Top Row: Venue + Status Badge -->
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-heading text-base font-bold text-primary leading-tight">
+                {{ gig.venue }}
+              </h3>
+              <p class="text-xs text-base-content/70 mt-0.5">
+                📍 {{ gig.city }}
+              </p>
+            </div>
+            <span
+              class="badge badge-sm font-bold uppercase text-[9px] flex-shrink-0"
+              :class="gig.status === 'sold_out' ? 'badge-error' : gig.status === 'free' ? 'badge-accent' : 'badge-primary'"
+            >
+              {{ gig.status === 'free' ? 'Fri entré' : gig.status === 'sold_out' ? 'Utsålt' : 'Kommande' }}
+            </span>
+          </div>
+
+          <!-- Date & Time Row -->
+          <div class="flex items-center gap-2 text-xs font-mono text-base-content/80 pt-1 border-t border-primary/10">
+            <span>🗓️</span>
+            <span>{{ new Date(gig.date).toLocaleDateString('sv-SE', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) }}</span>
+            <span class="text-base-content/60">kl {{ new Date(gig.date).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }) }}</span>
+          </div>
+
+          <!-- Actions Row -->
+          <div class="grid grid-cols-3 gap-2 pt-1 border-t border-primary/10">
+            <button
+              type="button"
+              class="btn btn-xs btn-outline btn-secondary rounded-xl font-bold flex items-center justify-center gap-1 py-1.5 h-auto cursor-pointer"
+              title="Dela giget till Facebook & Sociala medier"
+              @click="openShareGig(gig)"
+            >
+              <span>📱</span>
+              <span>Dela</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-xs btn-outline btn-primary rounded-xl font-bold flex items-center justify-center gap-1 py-1.5 h-auto cursor-pointer"
+              @click="openEditGig(gig)"
+            >
+              <span>✏️</span>
+              <span>Redigera</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-xs btn-outline btn-error rounded-xl font-bold flex items-center justify-center gap-1 py-1.5 h-auto cursor-pointer"
+              @click="deleteGig(gig.id)"
+            >
+              <span>🗑️</span>
+              <span>Ta bort</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gigs List Table with Interactive Sorting (Desktop & Tablet: hidden md:block) -->
+      <div class="hidden md:block overflow-x-auto rounded-2xl border border-primary/20 stage-card">
         <table class="table table-zebra w-full text-xs">
           <thead>
             <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">

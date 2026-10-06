@@ -58,7 +58,7 @@ const toggleNewsletterSetting = async () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 pt-3 pb-10 lg:px-10 space-y-6 font-sans">
     <!-- Toast Notification -->
     <div
       v-if="toastMessage"
@@ -122,8 +122,36 @@ class="p-6 rounded-2xl border stage-card shadow-lg flex flex-col md:flex-row ite
         </button>
       </div>
 
-      <!-- Subscribers Table -->
-      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card">
+      <!-- Mobile Subscribers Cards View (md:hidden) -->
+      <div class="block md:hidden space-y-2.5">
+        <div
+          v-for="sub in subscribersData || []"
+          :key="sub.id"
+          class="stage-card p-3.5 rounded-2xl border border-primary/20 space-y-2 bg-base-100 shadow-xs"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <span class="font-bold text-primary font-mono text-xs break-all">{{ sub.email }}</span>
+            <span
+              class="badge badge-xs font-bold uppercase text-[9px] flex-shrink-0"
+              :class="sub.status === 'subscribed' ? 'badge-success' : 'badge-ghost'"
+            >
+              {{ sub.status === 'subscribed' ? 'Aktiv' : 'Avregistrerad' }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-base-content/70 pt-1 border-t border-primary/10 font-mono">
+            <span>📅 {{ new Date(sub.subscribedAt).toLocaleDateString('sv-SE') }}</span>
+            <span class="badge badge-xs badge-outline text-[9px] text-emerald-400 border-emerald-500/40">
+              Synkad
+            </span>
+          </div>
+        </div>
+        <div v-if="!subscribersData || subscribersData.length === 0" class="text-center py-6 text-xs text-base-content/60 italic">
+          Inga prenumeranter ännu.
+        </div>
+      </div>
+
+      <!-- Subscribers Table (Desktop & Tablet: hidden md:block) -->
+      <div class="hidden md:block overflow-x-auto rounded-2xl border border-primary/20 stage-card">
         <table class="table table-zebra w-full text-xs">
           <thead>
             <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20">

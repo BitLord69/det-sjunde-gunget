@@ -69,6 +69,11 @@ const openAddAdmin = () => {
   newAdminForm.password = ''
   newAdminForm.avatarUrl = ''
   isAddAdminOpen.value = true
+  nextTick(() => {
+    if (import.meta.client) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  })
 }
 
 const saveNewAdmin = async () => {
@@ -107,17 +112,6 @@ const deleteAdminUser = async (admin: any) => {
     showToast(`⚠️ ${err?.data?.message || 'Kunde inte ta bort administratör'}`)
   }
 }
-
-// Navigation Guards
-onBeforeRouteLeave((to, from, next) => {
-  if (isAddAdminOpen.value) {
-    const answer = window.confirm('⚠️ Du har ett öppet formulär för att skapa administratör.\n\nVill du verkligen lämna sidan?')
-    if (answer) next()
-    else next(false)
-  } else {
-    next()
-  }
-})
 </script>
 
 <template>
@@ -131,7 +125,7 @@ onBeforeRouteLeave((to, from, next) => {
     </div>
 
     <!-- CMS Tab Navigation -->
-    <AdminNavBar :dirty="isAddAdminOpen" />
+    <AdminNavBar :dirty="isAddAdminOpen" @discard="isAddAdminOpen = false" />
 
     <!-- ADMINS & USER MANAGEMENT -->
     <div class="space-y-6">
@@ -210,8 +204,52 @@ onBeforeRouteLeave((to, from, next) => {
         </div>
       </div>
 
-      <!-- Admins List Table -->
-      <div class="overflow-x-auto rounded-2xl border border-primary/20 stage-card shadow-lg">
+      <!-- Mobile Admins Cards View (md:hidden) -->
+      <div class="block md:hidden space-y-3">
+        <div
+          v-for="admin in adminUsers || []"
+          :key="admin.id"
+          class="stage-card p-4 rounded-2xl border border-primary/20 space-y-3 bg-base-100 shadow-xs"
+          :class="admin.id === adminUser?.id ? 'border-primary/50 bg-primary/5' : ''"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="avatar placeholder">
+                <div class="w-8 h-8 rounded-full bg-primary text-primary-content text-xs font-bold overflow-hidden shadow">
+                  <NuxtImg v-if="admin.avatarUrl" :src="admin.avatarUrl" :alt="admin.name" class="w-full h-full object-cover" />
+                  <span v-else>{{ admin.name.charAt(0) }}</span>
+                </div>
+              </div>
+              <div>
+                <span class="font-bold text-primary block text-sm">{{ admin.name }}</span>
+                <span v-if="admin.id === adminUser?.id" class="badge badge-accent badge-xs font-bold text-[9px]">Du</span>
+              </div>
+            </div>
+            <span class="badge badge-sm font-bold text-[10px]">{{ admin.role }}</span>
+          </div>
+
+          <div class="text-xs space-y-1 pt-1 border-t border-primary/10 font-mono">
+            <div class="text-base-content/90 font-bold truncate">{{ admin.email }}</div>
+            <div class="flex items-center justify-between text-base-content/60 text-[11px]">
+              <span>Inloggning: {{ admin.provider }}</span>
+              <span>@{{ admin.username }}</span>
+            </div>
+          </div>
+
+          <div v-if="admin.id !== adminUser?.id" class="pt-1 border-t border-primary/10 flex justify-end">
+            <button
+              type="button"
+              class="btn btn-xs btn-outline btn-error rounded-xl font-bold cursor-pointer"
+              @click="deleteAdminUser(admin)"
+            >
+              Ta bort admin
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admins List Table (Desktop & Tablet: hidden md:block) -->
+      <div class="hidden md:block overflow-x-auto rounded-2xl border border-primary/20 stage-card shadow-lg">
         <table class="table table-zebra w-full text-xs">
           <thead>
             <tr class="text-secondary font-bold uppercase text-[10px] tracking-wider border-b border-primary/20 bg-base-300/50">
@@ -243,16 +281,16 @@ onBeforeRouteLeave((to, from, next) => {
               <td class="font-mono capitalize text-[10px]">
                 <span class="badge badge-ghost badge-xs">{{ admin.provider }}</span>
               </td>
-              <td class="text-right">
+              <td class="text-right whitespace-nowrap">
                 <button
                   v-if="admin.id !== adminUser?.id"
                   type="button"
-                  class="btn btn-xs btn-outline btn-error rounded cursor-pointer"
+                  class="btn btn-xs btn-outline btn-error rounded cursor-pointer whitespace-nowrap"
                   @click="deleteAdminUser(admin)"
                 >
                   Ta bort
                 </button>
-                <span v-else class="text-[10px] text-primary/70 font-semibold italic">Inloggad profil</span>
+                <span v-else class="text-[10px] text-primary/70 font-semibold italic whitespace-nowrap">Inloggad profil</span>
               </td>
             </tr>
           </tbody>

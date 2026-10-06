@@ -196,6 +196,14 @@ const nextGig = computed(() => gigsData.value?.upcoming?.[0] || null)
             {{ t('nav.gallery') }}
           </NuxtLink>
           <NuxtLink
+            class="transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary"
+            active-class="!text-primary !border-primary"
+            :to="localePath('/videos')"
+            :title="t('nav.hints.videos')"
+          >
+            {{ t('nav.videos') }}
+          </NuxtLink>
+          <NuxtLink
             class="group transition-colors hover:text-primary py-1 border-b-2 border-transparent hover:border-primary cursor-fan inline-flex items-center"
             active-class="!text-primary !border-primary"
             :to="localePath('/fancentral')"
@@ -317,6 +325,15 @@ const nextGig = computed(() => gigsData.value?.upcoming?.[0] || null)
               @click="isMobileMenuOpen = false"
             >
               <span>📷 {{ t('nav.gallery') }}</span>
+              <span class="text-xs text-base-content/40">›</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="localePath('/videos')"
+              class="flex items-center justify-between p-2 rounded-lg hover:bg-base-200 text-primary"
+              :title="t('nav.hints.videos')"
+              @click="isMobileMenuOpen = false"
+            >
+              <span>🎬 {{ t('nav.videos') }}</span>
               <span class="text-xs text-base-content/40">›</span>
             </NuxtLink>
             <NuxtLink

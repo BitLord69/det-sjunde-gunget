@@ -5,12 +5,14 @@ const endpoints = [
   '/about',
   '/gallery',
   '/fancentral',
+  '/videos',
   '/contact',
   '/admin',
   '/api/gigs',
   '/api/band',
   '/api/gallery',
   '/api/songs',
+  '/api/videos',
 ]
 
 for (const ep of endpoints) {

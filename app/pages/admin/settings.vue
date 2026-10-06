@@ -30,6 +30,11 @@ const { data: adminSettings, refresh: refreshSettings } = await useFetch<{
   discordNotifyGuestbook?: boolean
   socialMockMode?: boolean
   notificationEmail?: string
+  youtubeChannelId?: string
+  youtubeChannelIdResolved?: string
+  youtubeAutoImport?: boolean
+  youtubeAutoSocial?: boolean
+  youtubeLastSynced?: number | null
   settings?: Record<string, string>
 }>('/api/admin/settings')
 
@@ -45,6 +50,9 @@ const settingsForm = reactive({
   discordNotifyGuestbook: false,
   notificationEmail: 'info@det7egunget.se',
   socialMockMode: false,
+  youtubeChannelId: '@det7egunget',
+  youtubeAutoImport: true,
+  youtubeAutoSocial: true,
 })
 
 watch(
@@ -62,6 +70,9 @@ watch(
       settingsForm.discordNotifyGuestbook = newVal.discordNotifyGuestbook ?? false
       settingsForm.notificationEmail = newVal.notificationEmail || 'info@det7egunget.se'
       settingsForm.socialMockMode = newVal.socialMockMode ?? false
+      settingsForm.youtubeChannelId = newVal.youtubeChannelId || '@det7egunget'
+      settingsForm.youtubeAutoImport = newVal.youtubeAutoImport ?? true
+      settingsForm.youtubeAutoSocial = newVal.youtubeAutoSocial ?? true
     }
   },
   { immediate: true },
@@ -81,7 +92,10 @@ const isSettingsDirty = computed(() => {
     settingsForm.discordNotifyFanPhotos !== (orig.discordNotifyFanPhotos ?? false) ||
     settingsForm.discordNotifyGuestbook !== (orig.discordNotifyGuestbook ?? false) ||
     settingsForm.notificationEmail !== (orig.notificationEmail || 'info@det7egunget.se') ||
-    settingsForm.socialMockMode !== (orig.socialMockMode ?? false)
+    settingsForm.socialMockMode !== (orig.socialMockMode ?? false) ||
+    settingsForm.youtubeChannelId !== (orig.youtubeChannelId || '@det7egunget') ||
+    settingsForm.youtubeAutoImport !== (orig.youtubeAutoImport ?? true) ||
+    settingsForm.youtubeAutoSocial !== (orig.youtubeAutoSocial ?? true)
   )
 })
 
@@ -131,6 +145,27 @@ const testDiscordWebhook = async () => {
   }
 }
 
+const isSyncingYouTube = ref(false)
+const syncYouTubeNow = async () => {
+  isSyncingYouTube.value = true
+  try {
+    const res = await $fetch<{ success: boolean; addedCount: number; totalFound: number; skipped?: boolean }>('/api/admin/youtube/sync', {
+      method: 'POST',
+    })
+    await refreshSettings()
+    if (res.addedCount > 0) {
+      showToast(`🎬 ${res.addedCount} nya videor importerades från YouTube!`)
+    } else {
+      showToast(`✓ YouTube är redan uppdaterad (${res.totalFound || 0} videor hittades).`)
+    }
+  } catch (err: any) {
+    const msg = err?.data?.message || err?.message || 'Ett fel uppstod vid YouTube-synk'
+    showToast(`⚠️ ${msg}`)
+  } finally {
+    isSyncingYouTube.value = false
+  }
+}
+
 const isSavingSettings = ref(false)
 
 const saveSettings = async () => {
@@ -165,6 +200,9 @@ const resetSettings = () => {
     settingsForm.discordNotifyGuestbook = orig.discordNotifyGuestbook ?? false
     settingsForm.notificationEmail = orig.notificationEmail || 'info@det7egunget.se'
     settingsForm.socialMockMode = orig.socialMockMode ?? false
+    settingsForm.youtubeChannelId = orig.youtubeChannelId || '@det7egunget'
+    settingsForm.youtubeAutoImport = orig.youtubeAutoImport ?? true
+    settingsForm.youtubeAutoSocial = orig.youtubeAutoSocial ?? true
   }
 }
 </script>
@@ -358,6 +396,104 @@ const resetSettings = () => {
                   class="toggle toggle-warning toggle-md flex-shrink-0 mt-1"
                 >
               </label>
+            </div>
+          </div>
+
+          <!-- CARD: YOUTUBE INTEGRATION -->
+          <div class="stage-card p-6 rounded-3xl border border-primary/30 shadow-xl space-y-4 bg-base-100/95">
+            <div class="flex items-center justify-between gap-3 border-b border-primary/20 pb-3">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="text-xl flex-shrink-0">🎬</span>
+                <div class="min-w-0">
+                  <h3 class="font-heading text-base text-primary font-bold truncate">YouTube-integrering & Synk</h3>
+                  <p class="text-[11px] text-base-content/70 truncate">Automatisk videoimport och delning</p>
+                </div>
+              </div>
+              <span
+                class="badge badge-sm font-mono font-bold text-[11px] whitespace-nowrap flex-shrink-0 px-2.5 py-1"
+                :class="settingsForm.youtubeAutoImport ? 'badge-success text-success-content' : 'badge-ghost text-base-content/60'"
+              >
+                {{ settingsForm.youtubeAutoImport ? '🟢 Auto-import På' : '⚪ Auto-import Av' }}
+              </span>
+            </div>
+
+            <div class="space-y-3.5 text-xs">
+              <!-- Channel Handle / ID Input -->
+              <div>
+                <label class="block text-xs font-bold text-secondary mb-1">
+                  YouTube Kanal-ID eller @Handtag
+                </label>
+                <input
+                  v-model="settingsForm.youtubeChannelId"
+                  type="text"
+                  placeholder="@det7egunget eller UCFbpKRd0ggDlw4RPIXwIauQ"
+                  class="input input-bordered input-sm w-full bg-base-200 font-mono text-xs"
+                >
+                <p class="text-[10px] text-base-content/60 mt-1">
+                  Kopplad till <code>@det7egunget</code> (Kanal-ID: <code>UCFbpKRd0ggDlw4RPIXwIauQ</code>).
+                </p>
+              </div>
+
+              <!-- Toggle: Auto Import -->
+              <label class="flex items-start justify-between gap-4 cursor-pointer p-3 rounded-2xl bg-base-200/70 border border-primary/10 hover:border-primary/30 transition-all">
+                <div class="space-y-0.5">
+                  <span class="font-bold text-base-content block">
+                    🔄 Automatisk import (Dygnscron)
+                  </span>
+                  <p class="text-[11px] text-base-content/70 leading-relaxed">
+                    Sajten kontrollerar YouTube-kanalen automatiskt 1 gång per dygn via Vercel Cron och sparar nya videolänkar i databasen.
+                  </p>
+                </div>
+                <input
+                  v-model="settingsForm.youtubeAutoImport"
+                  type="checkbox"
+                  class="toggle toggle-primary toggle-sm flex-shrink-0 mt-1"
+                >
+              </label>
+
+              <!-- Toggle: Auto Post to Social Media -->
+              <label class="flex items-start justify-between gap-4 cursor-pointer p-3 rounded-2xl bg-base-200/70 border border-primary/10 hover:border-primary/30 transition-all">
+                <div class="space-y-0.5">
+                  <span class="font-bold text-base-content block">
+                    📢 Posta automatiskt till sociala medier
+                  </span>
+                  <p class="text-[11px] text-base-content/70 leading-relaxed">
+                    När en ny video upptäcks delas den direkt till Facebook och Instagram med titel, YouTube-länk och hashtags.
+                  </p>
+                </div>
+                <input
+                  v-model="settingsForm.youtubeAutoSocial"
+                  type="checkbox"
+                  class="toggle toggle-secondary toggle-sm flex-shrink-0 mt-1"
+                >
+              </label>
+
+              <!-- Manual Sync Action Bar -->
+              <div class="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-t border-primary/10">
+                <div>
+                  <span class="text-[11px] text-base-content/60 block">Senaste synkning:</span>
+                  <span class="text-xs font-mono font-bold text-base-content">
+                    {{
+                      adminSettings?.youtubeLastSynced
+                        ? new Date(adminSettings.youtubeLastSynced).toLocaleString('sv-SE', {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          })
+                        : 'Aldrig synkad'
+                    }}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-outline btn-primary btn-sm rounded-xl font-bold flex items-center gap-1.5 cursor-pointer shadow-sm w-full sm:w-auto"
+                  :disabled="isSyncingYouTube"
+                  @click="syncYouTubeNow"
+                >
+                  <span v-if="isSyncingYouTube" class="loading loading-spinner loading-xs"/>
+                  <span v-else>⚡</span>
+                  <span>{{ isSyncingYouTube ? 'Synkar från YouTube...' : 'Synka från YouTube nu' }}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

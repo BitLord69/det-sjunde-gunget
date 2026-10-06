@@ -4,24 +4,26 @@ import { createClient } from '@libsql/client'
 const remoteUrl = process.env.TURSO_REMOTE_URL || (!process.env.TURSO_DATABASE_URL?.startsWith('file:') ? process.env.TURSO_DATABASE_URL : null)
 const remoteAuthToken = process.env.TURSO_REMOTE_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN
 
-if (!remoteUrl) {
-  console.error('❌ Ingen TURSO_REMOTE_URL eller fjärrdatabas konfigurerad.')
-  console.log('Sätt dina inloggningsuppgifter i .env:')
-  console.log('   TURSO_REMOTE_URL=libsql://det-sjunde-gunget-...turso.io')
-  console.log('   TURSO_REMOTE_AUTH_TOKEN=...\n')
-  process.exit(1)
+const localUrl = process.env.TURSO_DATABASE_URL?.startsWith('file:') ? process.env.TURSO_DATABASE_URL : 'file:local.db'
+
+const targets = []
+if (localUrl) {
+  targets.push({
+    name: 'Lokal SQLite (' + localUrl + ')',
+    client: createClient({ url: localUrl }),
+  })
+}
+if (remoteUrl) {
+  targets.push({
+    name: 'Turso Cloud (' + remoteUrl.split('@').pop() + ')',
+    client: createClient({ url: remoteUrl, authToken: remoteAuthToken }),
+  })
 }
 
-console.log(`\n======================================================`)
-console.log(`🛡️  SÄKER SCHEMA- & FUNKTIONSSYNK: Turso Cloud (Prod)`)
-console.log(`======================================================`)
-console.log(`Mål: ${remoteUrl.split('@').pop()}`)
-console.log(`Regel: Befintlig data i produktion raderas eller skrivs ALDRIG över!\n`)
-
-const remoteClient = createClient({
-  url: remoteUrl,
-  authToken: remoteAuthToken,
-})
+if (targets.length === 0) {
+  console.error('❌ Ingen databas konfigurerad.')
+  process.exit(1)
+}
 
 // Definition av alla tabeller och deras kolumner enligt server/db/schema.ts
 const tables = [
@@ -700,6 +702,36 @@ const tables = [
       { name: 'updated_at', definition: 'integer DEFAULT (unixepoch() * 1000) NOT NULL' },
     ],
   },
+  {
+    name: 'videos',
+    createSql: `
+      CREATE TABLE IF NOT EXISTS videos (
+        id text PRIMARY KEY NOT NULL,
+        youtube_id text UNIQUE NOT NULL,
+        title text NOT NULL,
+        description text,
+        url text NOT NULL,
+        thumbnail_url text,
+        published_at integer,
+        is_active integer DEFAULT 1 NOT NULL,
+        sort_order integer DEFAULT 0 NOT NULL,
+        created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+        updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+      )
+    `,
+    columns: [
+      { name: 'youtube_id', definition: 'text UNIQUE NOT NULL DEFAULT ""' },
+      { name: 'title', definition: 'text NOT NULL DEFAULT ""' },
+      { name: 'description', definition: 'text' },
+      { name: 'url', definition: 'text NOT NULL DEFAULT ""' },
+      { name: 'thumbnail_url', definition: 'text' },
+      { name: 'published_at', definition: 'integer' },
+      { name: 'is_active', definition: 'integer DEFAULT 1 NOT NULL' },
+      { name: 'sort_order', definition: 'integer DEFAULT 0 NOT NULL' },
+      { name: 'created_at', definition: 'integer DEFAULT (unixepoch() * 1000) NOT NULL' },
+      { name: 'updated_at', definition: 'integer DEFAULT (unixepoch() * 1000) NOT NULL' },
+    ],
+  },
 ]
 
 // Lista över kolumner som explicit ska tas bort om de finns (t.ex. vid refaktorisering)
@@ -708,90 +740,95 @@ const columnsToDrop = [
 ]
 
 async function runSafeMigration() {
-  console.log('1️⃣  Verifierar och skapar tabeller & fält i Turso Cloud...')
+  for (const target of targets) {
+    console.log(`\n======================================================`)
+    console.log(`🛡️  SÄKER SCHEMA- & FUNKTIONSSYNK: ${target.name}`)
+    console.log(`======================================================`)
+    console.log(`Regel: Befintlig data raderas eller skrivs ALDRIG över!\n`)
 
-  for (const table of tables) {
-    // 1. Skapa tabellen om den saknas
-    await remoteClient.execute(table.createSql)
+    const client = target.client
 
-    // 2. Inspektera befintliga kolumner
-    const info = await remoteClient.execute(`PRAGMA table_info("${table.name}")`)
-    const existingCols = new Set(info.rows.map(r => r.name))
+    for (const table of tables) {
+      // 1. Skapa tabellen om den saknas
+      await client.execute(table.createSql)
 
-    // 3. Lägg till saknade kolumner
-    for (const col of table.columns) {
-      if (!existingCols.has(col.name)) {
-        console.log(`  ➕ Lägger till ny kolumn [${col.name}] i tabell [${table.name}]...`)
-        try {
-          await remoteClient.execute(`ALTER TABLE "${table.name}" ADD COLUMN "${col.name}" ${col.definition}`)
-          console.log(`     ✓ Kolumn [${col.name}] tillagd!`)
-        } catch (err) {
-          console.warn(`     ⚠️ Kunde inte lägga till [${col.name}]:`, err.message)
+      // 2. Inspektera befintliga kolumner
+      const info = await client.execute(`PRAGMA table_info("${table.name}")`)
+      const existingCols = new Set(info.rows.map(r => r.name))
+
+      // 3. Lägg till saknade kolumner
+      for (const col of table.columns) {
+        if (!existingCols.has(col.name)) {
+          console.log(`  ➕ Lägger till ny kolumn [${col.name}] i tabell [${table.name}]...`)
+          try {
+            await client.execute(`ALTER TABLE "${table.name}" ADD COLUMN "${col.name}" ${col.definition}`)
+            console.log(`     ✓ Kolumn [${col.name}] tillagd!`)
+          } catch (err) {
+            console.warn(`     ⚠️ Kunde inte lägga till [${col.name}]:`, err.message)
+          }
         }
       }
     }
-  }
 
-  // 4. Skapa unika index
-  try {
-    await remoteClient.execute(`CREATE UNIQUE INDEX IF NOT EXISTS subscribers_email_idx ON subscribers (email)`)
-  } catch {}
-  try {
-    await remoteClient.execute(`CREATE UNIQUE INDEX IF NOT EXISTS banned_emails_email_idx ON banned_emails (email)`)
-  } catch {}
+    // 4. Skapa unika index
+    try {
+      await client.execute(`CREATE UNIQUE INDEX IF NOT EXISTS subscribers_email_idx ON subscribers (email)`)
+    } catch {}
+    try {
+      await client.execute(`CREATE UNIQUE INDEX IF NOT EXISTS banned_emails_email_idx ON banned_emails (email)`)
+    } catch {}
 
-  // 5. Hantera eventuella kolumner som ska tas bort (DROP COLUMN)
-  if (columnsToDrop.length > 0) {
-    console.log('\n2️⃣  Kontrollerar förlegade kolumner att ta bort...')
-    for (const item of columnsToDrop) {
+    // 5. Hantera eventuella kolumner som ska tas bort (DROP COLUMN)
+    if (columnsToDrop.length > 0) {
+      console.log('\n2️⃣  Kontrollerar förlegade kolumner att ta bort...')
+      for (const item of columnsToDrop) {
+        try {
+          const info = await client.execute(`PRAGMA table_info("${item.table}")`)
+          const exists = info.rows.some(r => r.name === item.column)
+          if (exists) {
+            console.log(`  🗑️  Tar bort kolumn [${item.column}] från tabell [${item.table}]...`)
+            await client.execute(`ALTER TABLE "${item.table}" DROP COLUMN "${item.column}"`)
+            console.log(`     ✓ Kolumn [${item.column}] borttagen!`)
+          }
+        } catch (err) {
+          console.warn(`     ⚠️ Kunde inte ta bort [${item.column}]:`, err.message)
+        }
+      }
+    }
+
+    // 6. Kontrollera tabellernas status
+    console.log('\n3️⃣  Kontrollerar data per tabell (inga befintliga rader rörs):')
+    for (const table of tables) {
       try {
-        const info = await remoteClient.execute(`PRAGMA table_info("${item.table}")`)
-        const exists = info.rows.some(r => r.name === item.column)
-        if (exists) {
-          console.log(`  🗑️  Tar bort kolumn [${item.column}] från tabell [${item.table}]...`)
-          await remoteClient.execute(`ALTER TABLE "${item.table}" DROP COLUMN "${item.column}"`)
-          console.log(`     ✓ Kolumn [${item.column}] borttagen!`)
+        const countRes = await client.execute(`SELECT count(*) as count FROM "${table.name}"`)
+        const count = Number(countRes.rows[0].count)
+
+        if (count > 0) {
+          console.log(`  🔒 [${table.name.padEnd(20)}]: ${count} rader bevaras helt orörda`)
+        } else {
+          console.log(`  ⚪ [${table.name.padEnd(20)}]: 0 rader (tom tabell)`)
         }
       } catch (err) {
-        console.warn(`     ⚠️ Kunde inte ta bort [${item.column}]:`, err.message)
+        console.warn(`  ⚠️ Kunde inte läsa radantal för [${table.name}]:`, err.message)
       }
     }
-  }
 
-  // 6. Kontrollera tabellernas status och initiera endast HELT NYA funktioner (om tabellen är tom)
-  console.log('\n3️⃣  Kontrollerar produktionsdata per tabell (inga befintliga rader rörs):')
-
-  for (const table of tables) {
-    try {
-      const countRes = await remoteClient.execute(`SELECT count(*) as count FROM "${table.name}"`)
-      const count = Number(countRes.rows[0].count)
-
-      if (count > 0) {
-        console.log(`  🔒 [${table.name.padEnd(20)}]: ${count} rader bevaras helt orörda`)
-      } else {
-        console.log(`  ⚪ [${table.name.padEnd(20)}]: 0 rader (tom tabell i Prod)`)
-      }
-    } catch (err) {
-      console.warn(`  ⚠️ Kunde inte läsa radantal för [${table.name}]:`, err.message)
+    // 7. Säkerställ grundläggande nycklar i site_settings utan att skriva över befintliga
+    const now = Date.now()
+    const defaultSettings = [
+      { key: 'newsletter_enabled', value: 'true' },
+      { key: 'fan_central_enabled', value: 'true' },
+      { key: 'merch_enabled', value: 'true' },
+    ]
+    for (const s of defaultSettings) {
+      await client.execute({
+        sql: `INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at) VALUES (?, ?, ?, ?)`,
+        args: [s.key, s.value, now, now],
+      })
     }
-  }
 
-  // 7. Säkerställ grundläggande nycklar i site_settings utan att skriva över befintliga
-  const now = Date.now()
-  const defaultSettings = [
-    { key: 'newsletter_enabled', value: 'true' },
-    { key: 'fan_central_enabled', value: 'true' },
-    { key: 'merch_enabled', value: 'true' },
-  ]
-  for (const s of defaultSettings) {
-    await remoteClient.execute({
-      sql: `INSERT OR IGNORE INTO site_settings (key, value, created_at, updated_at) VALUES (?, ?, ?, ?)`,
-      args: [s.key, s.value, now, now],
-    })
+    console.log(`\n🎉 Säker schemamigrering slutförd för ${target.name}!\n`)
   }
-
-  console.log('\n🎉 Säker schemamigrering slutförd framgångsrikt!')
-  console.log('Ingen produktionsdata har raderats, modifierats eller skrivits över.\n')
 }
 
 runSafeMigration().catch((err) => {

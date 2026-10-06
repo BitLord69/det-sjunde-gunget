@@ -350,6 +350,20 @@ export const epkDocuments = sqliteTable('epk_documents', {
   ...timestamps,
 })
 
+export const videos = sqliteTable('videos', {
+  id: text('id').primaryKey(),
+  youtubeId: text('youtube_id').notNull().unique(),
+  title: text('title').notNull(),
+  description: text('description'),
+  url: text('url').notNull(),
+  thumbnailUrl: text('thumbnail_url'),
+  publishedAt: integer('published_at', { mode: 'timestamp_ms' }),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  ...timestamps,
+})
+
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),

@@ -6,6 +6,7 @@
     "lyrics": "Lyrics",
     "band": "The band",
     "gallery": "Gallery",
+    "videos": "Videos",
     "fan_central": "Fan Central",
     "merch": "Merch",
     "book": "Book us",
@@ -15,6 +16,7 @@
       "lyrics": "Lyrics, verses and chords for the band's songs",
       "band": "Meet the band members & see their stage gear",
       "gallery": "Live stage photos, rehearsals & memories",
+      "videos": "Live concert clips, music videos and YouTube footage",
       "fan_central": "Electric desk fans, audience & loyal fans",
       "merch": "Official merch store on Spreadshop (opens new tab)",
       "book": "Send a booking request for parties, festivals or clubs"
@@ -42,6 +44,10 @@
     "contact_desc": "Book Det 7:e Gunget for festivals, clubs, or private parties. Send your booking request directly to the band.",
     "contact_og_title": "Book Det 7:e Gunget — Contact & Gig Inquiries",
     "contact_og_desc": "Looking for genuine blues & rock 'n' roll for your venue or party? Send a booking inquiry today!",
+    "videos_title": "Videos & Live Clips | Det 7:e Gunget",
+    "videos_desc": "Watch music videos, live performances and YouTube clips with Det 7:e Gunget.",
+    "videos_og_title": "Videos & Live Clips — Det 7:e Gunget",
+    "videos_og_desc": "Watch Det 7:e Gunget live on stage! Official videos and concert recordings.",
     "privacy_title": "Privacy Policy & Cookies | Det 7:e Gunget",
     "privacy_desc": "Read how Det 7:e Gunget manages personal data and cookies on this website."
   },
@@ -193,6 +199,17 @@
     "title": "Moments & stage shots",
     "desc": "Polaroids, live snapshots and sweat from stages in Skåne.",
     "all_gallery": "Open picture gallery"
+  },
+  "videos": {
+    "section_tag": "YouTube & Live",
+    "title": "Videos & Live Clips",
+    "desc": "Groovy live recordings, official music videos, and behind-the-scenes moments directly from our YouTube channel.",
+    "empty": "No videos published yet. Check back soon!",
+    "watch_on_youtube": "Watch on YouTube ↗",
+    "subscribe_channel": "See more clips on our YouTube channel ↗",
+    "play_video": "Play video",
+    "close_video": "Close",
+    "channel_sub_badge": "Official YouTube Channel"
   },
   "fan_central": {
     "section_tag": "The community",

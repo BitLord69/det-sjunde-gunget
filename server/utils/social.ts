@@ -5,7 +5,7 @@ import { db } from '../db/client'
 import { siteSettings } from '../db/schema'
 
 export interface SocialPostParams {
-  type: 'gig' | 'song' | 'news' | 'gallery'
+  type: 'gig' | 'song' | 'news' | 'gallery' | 'video'
   title: string
   subtitle?: string
   venue?: string
@@ -13,6 +13,7 @@ export interface SocialPostParams {
   date?: string | Date
   ticketUrl?: string
   embedUrl?: string
+  videoUrl?: string
   imageUrl?: string
   notes?: string
   hashtags?: string[]
@@ -73,6 +74,41 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
     return {
       facebookText: fbLines.join('\n'),
       instagramText: igLines.join('\n'),
+    }
+  }
+
+  if (params.type === 'video') {
+    const vUrl = params.videoUrl || params.embedUrl || 'https://det7egunget.se/videos'
+    const fbText = [
+      `🎬 NY VIDEO FRÅN DET 7:e GUNGET! 🎬`,
+      '',
+      `"${params.title}"`,
+      params.notes ? `\n"${params.notes}"` : '',
+      '',
+      `Kolla in videon här: ${vUrl}`,
+      'Eller spana in vårt videogalleri på hemsidan: https://det7egunget.se/videos',
+      '',
+      `Dela gärna och höj volymen! 🎸💥`,
+      `${activeTags}`,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    const igText = [
+      `🎬 NY VIDEO! "${params.title}" 🎬`,
+      '',
+      params.notes ? `"${params.notes}"\n` : '',
+      `Se hela videon på YouTube eller i vårt videogalleri via länken i bio! 🎶👇`,
+      `https://det7egunget.se/videos`,
+      '',
+      `${activeTags}`,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    return {
+      facebookText: fbText,
+      instagramText: igText,
     }
   }
 

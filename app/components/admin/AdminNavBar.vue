@@ -41,6 +41,7 @@ const navItems = computed(() => [
   { path: '/admin/band', label: 'Bandet', icon: '👥' },
   { path: '/admin/setlist', label: 'Setlist', icon: '📋' },
   { path: '/admin/gallery', label: 'Galleri', icon: '📷' },
+  { path: '/admin/videos', label: 'Videor', icon: '🎬' },
   {
     path: '/admin/fancentral',
     label: 'Fan Central',

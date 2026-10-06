@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../../../db/client'
-import { galleryItems, gigs, songs } from '../../../db/schema'
+import { galleryItems, gigs, songs, videos } from '../../../db/schema'
 import { requireAdminAuth } from '../../../utils/auth'
 import { publishToSocialMedia, type SocialPostParams } from '../../../utils/social'
 
@@ -53,6 +53,20 @@ export default defineEventHandler(async (event) => {
       embedUrl: song.embedUrl,
       imageUrl: song.coverImage || undefined,
       notes: body.customNotes || undefined,
+      hashtags: body.hashtags,
+    }
+  } else if (body.type === 'video') {
+    const videoRows = await db.select().from(videos).where(eq(videos.id, body.id)).limit(1)
+    const vid = videoRows[0]
+    if (!vid) throw createError({ statusCode: 404, message: 'Videon hittades inte' })
+
+    postParams = {
+      type: 'video',
+      title: vid.title,
+      videoUrl: vid.url,
+      embedUrl: `https://www.youtube.com/embed/${vid.youtubeId}`,
+      imageUrl: vid.thumbnailUrl || undefined,
+      notes: body.customNotes || vid.description || undefined,
       hashtags: body.hashtags,
     }
   }

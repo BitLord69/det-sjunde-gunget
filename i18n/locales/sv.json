@@ -6,6 +6,7 @@
     "lyrics": "Låttexter",
     "band": "Bandet",
     "gallery": "Galleri",
+    "videos": "Videor",
     "fan_central": "Fan Central",
     "merch": "Merch",
     "book": "Boka oss",
@@ -15,6 +16,7 @@
       "lyrics": "Låttexter, verser och ackordskisser till bandets låtar",
       "band": "Möt bandmedlemmarna & se deras utrustning",
       "gallery": "Scenbilder, replokalsfoton & ögonblick",
+      "videos": "Liveupptagningar, musikvideor och YouTube-klipp",
       "fan_central": "Bordsfläktar, publikbilder & Gunget-fans",
       "merch": "Officiell merch-butik på Spreadshop (öppnas i ny flik)",
       "book": "Skicka bokningsförfrågan för fest, festival eller klubb"
@@ -42,6 +44,10 @@
     "contact_desc": "Boka Det 7:e Gunget till festival, klubb eller privat fest. Skicka förfrågan direkt till bandet.",
     "contact_og_title": "Boka Det 7:e Gunget — Kontakt & Spelförfrågan",
     "contact_og_desc": "Vill du ha svängig blues och rock på din klubb eller fest? Skicka en bokningsförfrågan direkt!",
+    "videos_title": "Videor & Liveklipp | Det 7:e Gunget",
+    "videos_desc": "Se musikvideor, liveupptagningar och YouTube-klipp med Det 7:e Gunget.",
+    "videos_og_title": "Videor & Liveklipp — Det 7:e Gunget",
+    "videos_og_desc": "Se Det 7:e Gunget live på scen! Officiella videor och konsertklipp.",
     "privacy_title": "Integritetspolicy & Cookies | Det 7:e Gunget",
     "privacy_desc": "Läs om hur Det 7:e Gunget hanterar personuppgifter och cookies på webbplatsen."
   },
@@ -193,6 +199,17 @@
     "title": "Ögonblick & scenbilder",
     "desc": "Polaroider, liveögonblick och svett från scener i Skåne.",
     "all_gallery": "Öppna bildgalleri"
+  },
+  "videos": {
+    "section_tag": "YouTube & Live",
+    "title": "Videor & Liveklipp",
+    "desc": "Svängiga liveupptagningar, officiella musikvideor och glimtar från scenen direkt från vår YouTube-kanal.",
+    "empty": "Inga videor har publicerats än. Kika in snart igen!",
+    "watch_on_youtube": "Öppna på YouTube ↗",
+    "subscribe_channel": "Se fler klipp på vår YouTube-kanal ↗",
+    "play_video": "Spela video",
+    "close_video": "Stäng",
+    "channel_sub_badge": "Officiell YouTube-kanal"
   },
   "fan_central": {
     "section_tag": "Gemenskapen",

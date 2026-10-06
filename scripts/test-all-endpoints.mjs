@@ -18,6 +18,8 @@
  * - Låt-idéer / Voice Memos (skapa & uppdatera)
  * - Adminprofil (uppdatera namn & avatar)
  * - Publika formulär (Kontakt/Bokning, Nyhetsbrev)
+ * - Videohantering & YouTube (hämta, skapa, ta bort, oEmbed, manuell synk & daglig cron)
+ * - Databastabell [videos] & formulärskydd på 11 adminsidor
  */
 
 import { spawn } from 'node:child_process'
@@ -65,7 +67,7 @@ async function ensureServer() {
     })
   }
 
-  const maxAttempts = 35
+  const maxAttempts = 60
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise((r) => setTimeout(r, 1000))
     try {
@@ -76,7 +78,7 @@ async function ensureServer() {
       }
     } catch (_) {}
   }
-  throw new Error(`Kunde inte få kontakt med test-servern på ${BASE_URL} inom 35s.`)
+  throw new Error(`Kunde inte få kontakt med test-servern på ${BASE_URL} inom 60s.`)
 }
 
 function assert(condition, name, details = '') {
@@ -673,8 +675,90 @@ async function run() {
     assert(false, 'Nyhetsbrev test misslyckades', err.message)
   }
 
-  // 18. FORMULÄRSKYDD & ENHETLIG ADMIN-NAVIGERING
-  console.log('\n▶ [18/18] Formulärskydd & Enhetlig Admin-navigering (Dirty & Discard på alla formulärsidor)')
+  // 18. VIDEOHANTERING & YOUTUBE (GET /api/videos, POST & DELETE /api/admin/videos, oEmbed, Sync & Cron)
+  console.log('\n▶ [18/19] Videohantering, YouTube & Cron (GET /api/videos, /api/admin/videos, oEmbed, Sync, Cron, DB)')
+  let testVideoId = null
+  try {
+    // A. Kontrollera tabellen 'videos' i databasen
+    const dbVideos = await dbClient.execute('SELECT count(*) as count FROM videos')
+    assert(Number(dbVideos.rows[0]?.count) >= 0, `Tabellen videos existerar i databasen (nuvarande rader: ${dbVideos.rows[0]?.count})`)
+
+    // B. Publik endpoint
+    const pubVidRes = await fetch(`${BASE_URL}/api/videos`)
+    const pubVidData = await pubVidRes.json()
+    assert(pubVidRes.status === 200 && Array.isArray(pubVidData), 'Hämta publika videor (GET /api/videos) returnerar lista (200)')
+
+    // C. Skapa video manuellt
+    const createVidRes = await fetch(`${BASE_URL}/api/admin/videos`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        title: 'Test Livevideo från Replokalen',
+        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        description: 'En svängig bluesjam i 12-takt.',
+        isActive: true,
+        sortOrder: 1,
+      }),
+    })
+    const createVidData = await createVidRes.json()
+    assert(createVidRes.status === 200 && createVidData.success, 'Skapa video (POST /api/admin/videos) lyckades (200)')
+    testVideoId = createVidData.id
+
+    // D. Verifiera i adminlistan
+    const adminVidRes = await fetch(`${BASE_URL}/api/admin/videos`, { headers: authHeaders })
+    const adminVidData = await adminVidRes.json()
+    assert(adminVidRes.status === 200 && adminVidData.some((v) => v.id === testVideoId), 'Skapad video hittades i adminlistan (GET /api/admin/videos)')
+
+    // E. Hämta YouTube oEmbed metadata
+    try {
+      const oembedRes = await fetch(`${BASE_URL}/api/admin/youtube/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D5G4vHoiPvi4`, {
+        headers: authHeaders,
+      })
+      const oembedData = await oembedRes.json()
+      assert(oembedRes.status === 200 && oembedData.success && oembedData.data?.title, 'Hämta video-metadata via oEmbed (GET /api/admin/youtube/oembed) lyckades (200)')
+    } catch (oembedErr) {
+      assert(false, 'YouTube oEmbed-anrop misslyckades', oembedErr.message)
+    }
+
+    // F. Manuell YouTube-synk endpoint
+    try {
+      const syncRes = await fetch(`${BASE_URL}/api/admin/youtube/sync`, {
+        method: 'POST',
+        headers: authHeaders,
+      })
+      const syncData = await syncRes.json()
+      assert(syncRes.status === 200 && (typeof syncData.syncedCount === 'number' || typeof syncData.addedCount === 'number'), 'Manuell YouTube-synk (POST /api/admin/youtube/sync) lyckades (200)')
+    } catch (syncErr) {
+      assert(false, 'Manuell YouTube-synk misslyckades', syncErr.message)
+    }
+
+    // G. Gemensam daglig cron-endpoint (/api/cron/daily-sync)
+    try {
+      const cronHeaders = process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.CRON_SECRET}` } : {}
+      const cronRes = await fetch(`${BASE_URL}/api/cron/daily-sync`, {
+        headers: cronHeaders,
+      })
+      const cronData = await cronRes.json()
+      assert(cronRes.status === 200 && cronData.job === 'daily-sync' && cronData.youtube !== undefined, 'Gemensam daglig cron (GET /api/cron/daily-sync) lyckades (200)')
+    } catch (cronErr) {
+      assert(false, 'Daglig cron-endpoint misslyckades', cronErr.message)
+    }
+
+    // H. Ta bort testvideon
+    const delVidRes = await fetch(`${BASE_URL}/api/admin/videos`, {
+      method: 'DELETE',
+      headers: authHeaders,
+      body: JSON.stringify({ id: testVideoId }),
+    })
+    const delVidData = await delVidRes.json()
+    assert(delVidRes.status === 200 && delVidData.success, 'Ta bort video (DELETE /api/admin/videos) lyckades (200)')
+    testVideoId = null
+  } catch (err) {
+    assert(false, 'Videohantering & YouTube test misslyckades', err.message)
+  }
+
+  // 19. FORMULÄRSKYDD & ENHETLIG ADMIN-NAVIGERING
+  console.log('\n▶ [19/19] Formulärskydd & Enhetlig Admin-navigering (Dirty & Discard på alla formulärsidor)')
   try {
     // A. Kontrollera att AdminNavBar har den nya in-app modalen och emit('discard')
     const navBarContent = readFileSync('app/components/admin/AdminNavBar.vue', 'utf8')
@@ -686,13 +770,14 @@ async function run() {
       'AdminNavBar.vue har fullständig in-app bekräftelsedialog, showLeaveModal och emit("discard")'
     )
 
-    // B. Kontrollera att samtliga 10 admin-sidor med formulär har BÅDE :dirty och @discard deklarerade
+    // B. Kontrollera att samtliga 11 admin-sidor med formulär har BÅDE :dirty och @discard deklarerade
     const formPages = [
       { file: 'app/pages/admin/gigs.vue', name: 'Gigs / Spelningar' },
       { file: 'app/pages/admin/songs.vue', name: 'Låtar & Jukebox' },
       { file: 'app/pages/admin/band.vue', name: 'Bandmedlemmar' },
       { file: 'app/pages/admin/setlist.vue', name: 'Setlist & Repertoar' },
       { file: 'app/pages/admin/gallery.vue', name: 'Galleri & Dokument' },
+      { file: 'app/pages/admin/videos.vue', name: 'Videor & YouTube' },
       { file: 'app/pages/admin/admins.vue', name: 'Administratörer' },
       { file: 'app/pages/admin/hashtags.vue', name: 'Sociala Hashtaggar' },
       { file: 'app/pages/admin/settings.vue', name: 'Sajtinställningar' },
@@ -710,7 +795,7 @@ async function run() {
         console.error(`  ✕ ${p.name} (${p.file}) saknar :dirty eller @discard`)
       }
     }
-    assert(allPagesConfigured, 'Samtliga 10 admin-formulärsidor har :dirty och @discard synkroniserat med AdminNavBar')
+    assert(allPagesConfigured, 'Samtliga 11 admin-formulärsidor har :dirty och @discard synkroniserat med AdminNavBar')
 
     // C. Verifiera att hjälpmanualen innehåller information om formulärskyddet
     const helpPageContent = readFileSync('app/pages/admin/help.vue', 'utf8')
@@ -735,6 +820,7 @@ async function run() {
     await dbClient.execute({ sql: 'DELETE FROM fan_submissions WHERE id = ?', args: [testSubId] })
     await dbClient.execute({ sql: 'DELETE FROM banned_emails WHERE email = ?', args: [spammerEmail] })
     await dbClient.execute({ sql: 'DELETE FROM voice_memos WHERE id = ?', args: [testIdeaId] })
+    if (testVideoId) await dbClient.execute({ sql: 'DELETE FROM videos WHERE id = ?', args: [testVideoId] })
     if (createdAdminId) {
       await dbClient.execute({ sql: 'DELETE FROM admins WHERE id = ?', args: [createdAdminId] })
     }

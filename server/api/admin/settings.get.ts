@@ -25,6 +25,11 @@ export default defineEventHandler(async (event) => {
     discordNotifyGuestbook: map.discord_notify_guestbook === 'true',
     notificationEmail: map.notification_email || process.env.BREVO_CONTACT_EMAIL || 'info@det7egunget.se',
     socialMockMode: map.social_mock_mode !== undefined ? map.social_mock_mode === 'true' : isMockDefault,
+    youtubeChannelId: map.youtube_channel_id || '@det7egunget',
+    youtubeChannelIdResolved: map.youtube_channel_id_resolved || 'UCFbpKRd0ggDlw4RPIXwIauQ',
+    youtubeAutoImport: map.youtube_auto_import !== 'false',
+    youtubeAutoSocial: map.youtube_auto_social !== 'false',
+    youtubeLastSynced: map.youtube_last_synced ? parseInt(map.youtube_last_synced, 10) : null,
     settings: map,
   }
 })

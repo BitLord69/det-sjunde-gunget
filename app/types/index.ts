@@ -1,4 +1,4 @@
-import type { gigs, songs, galleryItems, bandMembers, newsPosts, setlistItems } from '~~/server/db/schema'
+import type { gigs, songs, galleryItems, bandMembers, newsPosts, setlistItems, videos } from '~~/server/db/schema'
 
 export type Gig = typeof gigs.$inferSelect & {
   setlistItems?: (typeof setlistItems.$inferSelect)[]
@@ -7,6 +7,8 @@ export type Gig = typeof gigs.$inferSelect & {
 export type Song = typeof songs.$inferSelect
 
 export type GalleryItem = typeof galleryItems.$inferSelect
+
+export type VideoItem = typeof videos.$inferSelect
 
 export type BandMember = typeof bandMembers.$inferSelect
 

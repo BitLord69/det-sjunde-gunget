@@ -25,6 +25,13 @@ export interface SongSocialParams {
   tags?: string[]
 }
 
+export interface VideoSocialParams {
+  title?: string | null
+  url?: string | null
+  notes?: string | null
+  tags?: string[]
+}
+
 export function useSocialSharePost() {
   const formatGigSocialPost = (params: GigSocialParams): string => {
     const venue = params.venue || 'Spelplats'
@@ -103,9 +110,36 @@ export function useSocialSharePost() {
     return lines.join('\n').trim()
   }
 
+  const formatVideoSocialPost = (params: VideoSocialParams): string => {
+    const title = params.title || 'Ny video'
+    const tagsStr = params.tags && params.tags.length > 0 ? params.tags.join(' ') : '#DetSjundeGunget #BluesRock #LiveMusik'
+
+    const lines = [
+      '🎬 NY VIDEO FRÅN DET 7:e GUNGET! 🎬',
+      '',
+      `"${title}"`,
+    ]
+
+    if (params.notes && params.notes.trim()) {
+      lines.push('', `"${params.notes.trim()}"`)
+    }
+
+    lines.push(
+      '',
+      params.url ? `Kolla in videon här: ${params.url}` : 'Se videon direkt i vårt galleri på hemsidan!',
+      'https://det7egunget.se/videos',
+      '',
+      'Dela gärna och höj volymen till 11! 🎸💥',
+      tagsStr,
+    )
+
+    return lines.join('\n').trim()
+  }
+
   return {
     formatGigSocialPost,
     formatGallerySocialPost,
     formatSongSocialPost,
+    formatVideoSocialPost,
   }
 }

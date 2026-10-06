@@ -1,7 +1,7 @@
 <script setup lang="ts">
 interface Props {
   modelValue: boolean
-  type: 'gig' | 'gallery' | 'song'
+  type: 'gig' | 'gallery' | 'song' | 'video'
   item: any
 }
 
@@ -42,12 +42,20 @@ watch(
     publishResult.value = null
     if (!newItem) return
     selectedTags.value = availableTags.value.map((t) => t.tag)
-    customNotes.value = props.type === 'gig' ? (newItem.notesSv || '') : props.type === 'gallery' ? (newItem.captionSv || '') : ''
+    customNotes.value =
+      props.type === 'gig'
+        ? newItem.notesSv || ''
+        : props.type === 'gallery'
+          ? newItem.captionSv || ''
+          : props.type === 'video'
+            ? newItem.description || ''
+            : ''
   },
   { immediate: true },
 )
 
-const { formatGigSocialPost, formatGallerySocialPost, formatSongSocialPost } = useSocialSharePost()
+const { formatGigSocialPost, formatGallerySocialPost, formatSongSocialPost, formatVideoSocialPost } =
+  useSocialSharePost()
 
 const previewText = computed(() => {
   if (!props.item) return ''
@@ -75,6 +83,15 @@ const previewText = computed(() => {
       title: props.item.title,
       originalArtist: props.item.originalArtist,
       isOriginal: props.item.isOriginal,
+      notes: customNotes.value,
+      tags: selectedTags.value,
+    })
+  }
+
+  if (props.type === 'video') {
+    return formatVideoSocialPost({
+      title: props.item.title,
+      url: props.item.url,
       notes: customNotes.value,
       tags: selectedTags.value,
     })

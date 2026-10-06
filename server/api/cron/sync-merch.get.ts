@@ -14,11 +14,18 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const result = await syncMerchFromSpreadshop()
+  const merchResult = await syncMerchFromSpreadshop()
+  let youtubeResult = null
+  try {
+    youtubeResult = await syncYouTubeVideos()
+  } catch (err: any) {
+    console.error('[Cron sync-merch] YouTube sync failed:', err?.message || err)
+  }
 
   return {
     job: 'sync-merch',
     timestamp: new Date().toISOString(),
-    ...result,
+    merch: merchResult,
+    youtube: youtubeResult,
   }
 })

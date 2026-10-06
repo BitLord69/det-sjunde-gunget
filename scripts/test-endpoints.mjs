@@ -32,7 +32,23 @@ if (process.env.BREVO_API_KEY) {
 }
 
 // 2. Check Database Tables
-const tables = ['songs', 'messages', 'subscribers', 'gigs', 'band_members', 'admins']
+const tables = [
+  'songs',
+  'messages',
+  'subscribers',
+  'gigs',
+  'band_members',
+  'admins',
+  'videos',
+  'merch_products',
+  'gallery_items',
+  'site_settings',
+  'social_hashtags',
+  'setlist_items',
+  'epk_documents',
+  'voice_memos',
+  'fan_submissions',
+]
 for (const table of tables) {
   try {
     const countRes = await client.execute(`SELECT count(*) as count FROM ${table}`)

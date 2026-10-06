@@ -262,6 +262,22 @@ await client.execute(`
   )
 `)
 
+await client.execute(`
+  CREATE TABLE IF NOT EXISTS videos (
+    id text PRIMARY KEY NOT NULL,
+    youtube_id text UNIQUE NOT NULL,
+    title text NOT NULL,
+    description text,
+    url text NOT NULL,
+    thumbnail_url text,
+    published_at integer,
+    is_active integer DEFAULT 1 NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+  )
+`)
+
 // Clean up existing data to prevent unique constraint conflicts
 try {
   await client.execute('DELETE FROM admin_sessions')
@@ -273,6 +289,7 @@ try {
   await client.execute('DELETE FROM social_hashtags')
   await client.execute('DELETE FROM setlist_items')
   await client.execute('DELETE FROM site_settings')
+  await client.execute('DELETE FROM videos')
 } catch (e) {
   console.log('Error cleaning tables:', e.message)
 }
@@ -740,6 +757,20 @@ const defaultSetlist = [
   { id: 'set-9', title: 'Rock Me Baby', artist: 'B.B. King', isOriginal: false, setName: 'Extranummer / Encores', notes: 'Långt jammigt avslut med publikkontakt', sortOrder: 9 },
 ]
 
+const defaultVideos = [
+  {
+    id: 'video-premiar-youtube',
+    youtubeId: '5G4vHoiPvi4',
+    title: 'Det 7:e Gunget - Live i Skåne',
+    description: 'Officiell presentationsvideo och livegung med Det 7:e Gunget.',
+    url: 'https://www.youtube.com/watch?v=5G4vHoiPvi4',
+    thumbnailUrl: 'https://i.ytimg.com/vi/5G4vHoiPvi4/hqdefault.jpg',
+    publishedAt: new Date('2026-01-01T12:00:00Z').getTime(),
+    isActive: 1,
+    sortOrder: 0,
+  },
+]
+
 await client.batch(
   [
     ...gigs.map((g) => ({
@@ -831,12 +862,41 @@ await client.batch(
         values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [s.id, s.title, s.artist, s.isOriginal ? 1 : 0, s.setName, s.notes, s.sortOrder, now, now],
     })),
+    ...defaultVideos.map((v) => ({
+      sql: `insert into videos (id, youtube_id, title, description, url, thumbnail_url, published_at, is_active, sort_order, created_at, updated_at)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        v.id,
+        v.youtubeId,
+        v.title,
+        v.description,
+        v.url,
+        v.thumbnailUrl,
+        v.publishedAt,
+        v.isActive,
+        v.sortOrder,
+        now,
+        now,
+      ],
+    })),
     {
       sql: `insert or replace into site_settings (key, value, created_at, updated_at) values (?, ?, ?, ?)`,
       args: ['newsletter_enabled', 'false', now, now],
+    },
+    {
+      sql: `insert or replace into site_settings (key, value, created_at, updated_at) values (?, ?, ?, ?)`,
+      args: ['youtube_channel_handle', '@det7egunget', now, now],
+    },
+    {
+      sql: `insert or replace into site_settings (key, value, created_at, updated_at) values (?, ?, ?, ?)`,
+      args: ['youtube_auto_import', 'true', now, now],
+    },
+    {
+      sql: `insert or replace into site_settings (key, value, created_at, updated_at) values (?, ?, ?, ?)`,
+      args: ['youtube_auto_post_social', 'false', now, now],
     },
   ],
   'write',
 )
 
-console.log(`Seeded ${admins.length} admins, ${gigs.length} gigs, ${members.length} band members, ${gallery.length} gallery items, ${songs.length} songs, ${defaultHashtags.length} hashtags, and ${defaultSetlist.length} setlist tracks.`)
+console.log(`Seeded ${admins.length} admins, ${gigs.length} gigs, ${members.length} band members, ${gallery.length} gallery items, ${songs.length} songs, ${defaultHashtags.length} hashtags, ${defaultSetlist.length} setlist tracks, and ${defaultVideos.length} videos.`)

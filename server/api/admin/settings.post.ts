@@ -73,6 +73,18 @@ export default defineEventHandler(async (event) => {
     tasks.push(upsertSetting('social_mock_mode', body.socialMockMode ? 'true' : 'false'))
   }
 
+  if (body.youtubeChannelId !== undefined) {
+    tasks.push(upsertSetting('youtube_channel_id', body.youtubeChannelId.trim()))
+  }
+
+  if (body.youtubeAutoImport !== undefined) {
+    tasks.push(upsertSetting('youtube_auto_import', body.youtubeAutoImport ? 'true' : 'false'))
+  }
+
+  if (body.youtubeAutoSocial !== undefined) {
+    tasks.push(upsertSetting('youtube_auto_social', body.youtubeAutoSocial ? 'true' : 'false'))
+  }
+
   if (tasks.length > 0) {
     await Promise.all(tasks)
   }

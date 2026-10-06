@@ -118,6 +118,7 @@ const handleNewsletter = async () => {
           <li><NuxtLink :to="localePath('/lyrics')" class="hover:text-primary transition-colors">📜 Låttexter & ackord →</NuxtLink></li>
           <li><NuxtLink :to="localePath('/about')" class="hover:text-primary transition-colors">{{ t('nav.band') }} →</NuxtLink></li>
           <li><NuxtLink :to="localePath('/gallery')" class="hover:text-primary transition-colors">{{ t('nav.gallery') }} →</NuxtLink></li>
+          <li><NuxtLink :to="localePath('/videos')" class="hover:text-primary transition-colors">{{ t('nav.videos') }} →</NuxtLink></li>
           <li><NuxtLink :to="localePath('/fancentral')" class="hover:text-primary transition-colors">{{ t('nav.fan_central') }} →</NuxtLink></li>
           <li><NuxtLink :to="localePath('/epk')" class="hover:text-primary transition-colors text-primary/90 font-medium">🎤 Presskit & Tech Rider →</NuxtLink></li>
           <li>

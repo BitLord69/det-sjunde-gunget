@@ -210,6 +210,14 @@ const scrollTo = (id: string) => {
               </td>
             </tr>
             <tr class="hover:bg-base-100/50">
+              <td class="font-bold text-primary px-4 py-3">Videor & Liveklipp</td>
+              <td class="font-mono text-secondary px-4 py-3">/videos</td>
+              <td class="px-4 py-3">Officiellt videogalleri med bandets YouTube-klipp, liveupptagningar och musikvideor. Spelarna är skyddade med GDPR- och cookie-samtycke.</td>
+              <td class="px-4 py-3 text-right">
+                <NuxtLink to="/videos" target="_blank" class="btn btn-ghost btn-xs text-primary underline">Öppna ↗</NuxtLink>
+              </td>
+            </tr>
+            <tr class="hover:bg-base-100/50">
               <td class="font-bold text-primary px-4 py-3">Fan Central</td>
               <td class="font-mono text-secondary px-4 py-3">/fancentral</td>
               <td class="px-4 py-3">Anslagstavla i kork med träram och nålade foton där besökare kan ladda upp konsertminnen och hälsningar. Maskinfläktar är diskret inblandade som en kul överraskning.</td>
@@ -301,10 +309,10 @@ const scrollTo = (id: string) => {
           <span>Mobiloptimerad Layout & Säkert Formulärskydd</span>
         </div>
         <p class="text-xs sm:text-sm text-base-content/85 leading-relaxed">
-          Adminpanelen är helt anpassad för mobiler och datorer. Högst upp hittar du en ren mobilheader med snabbknapp för mörkt/ljust läge samt en utfällbar användarmeny (profil, länk till sajten, manual och utloggning). På mobilen visas den aktiva adminsektionen i ett kompakt fält, och samtliga 14 adminmoduler nås snabbt och överskådligt via hamburgermenyn (<strong>☰</strong>).
+          Adminpanelen är helt anpassad för mobiler och datorer. Högst upp hittar du en ren mobilheader med snabbknapp för mörkt/ljust läge samt en utfällbar användarmeny (profil, länk till sajten, manual och utloggning). På mobilen visas den aktiva adminsektionen i ett kompakt fält, och samtliga 15 adminmoduler nås snabbt och överskådligt via hamburgermenyn (<strong>☰</strong>).
         </p>
         <p class="text-xs sm:text-sm text-base-content/85 leading-relaxed">
-          <strong>🛡️ Enhetligt och pålitligt formulärskydd:</strong> När du öppnar eller redigerar ett formulär (gig, låtar, bandmedlemmar, setlist, galleri, taggar, inställningar etc.) markeras sektionen som aktiv med en pulserande varningsindikator. Om du klickar på en annan sektion i menyn eller på den aktiva sektionen för att avbryta, visas en garanterad in-app dialog (<em>Osparade ändringar</em>). Du kan välja att stanna kvar och fortsätta spara eller godkänna att lämna formuläret och kasta ändringarna direkt. Dialogen är inbyggd i gränssnittet och blockeras aldrig av webbläsarens popup-skydd.
+          <strong>🛡️ Enhetligt och pålitligt formulärskydd:</strong> När du öppnar eller redigerar ett formulär (gig, låtar, bandmedlemmar, setlist, galleri, videor, taggar, inställningar etc.) markeras sektionen som aktiv med en pulserande varningsindikator. Om du klickar på en annan sektion i menyn eller på den aktiva sektionen för att avbryta, visas en garanterad in-app dialog (<em>Osparade ändringar</em>). Du kan välja att stanna kvar och fortsätta spara eller godkänna att lämna formuläret och kasta ändringarna direkt. Dialogen är inbyggd i gränssnittet och blockeras aldrig av webbläsarens popup-skydd.
         </p>
       </div>
 
@@ -377,7 +385,7 @@ const scrollTo = (id: string) => {
           </NuxtLink>
         </div>
 
-        <!-- Galleri & Fan Central -->
+        <!-- Galleri & Presskit -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
           <div class="space-y-2">
             <div class="flex items-center justify-between">
@@ -391,6 +399,23 @@ const scrollTo = (id: string) => {
           </div>
           <NuxtLink to="/admin/gallery" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Galleri & Presskit →
+          </NuxtLink>
+        </div>
+
+        <!-- Videor & YouTube -->
+        <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="badge badge-primary font-mono font-bold text-xs">/admin/videos</span>
+              <span class="text-xl">🎬</span>
+            </div>
+            <h3 class="font-heading text-lg font-bold text-primary">Videor & YouTube</h3>
+            <p class="text-xs text-base-content/80">
+              Automatisk dygnssynkning från YouTube-kanalens öppna RSS-feed via Vercel Cron samt snabbknapp (<strong>⚡ Synka från YouTube</strong>). Lägg till valfria videor manuellt via länk med auto-hämtning av titel och miniatyrbild (oEmbed). Innehåller även direktknappen (<strong>📢 Dela</strong>) för att publicera eller schemalägga inlägg till Facebook & Instagram med hashtags.
+            </p>
+          </div>
+          <NuxtLink to="/admin/videos" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
+            Gå till Videor →
           </NuxtLink>
         </div>
 
@@ -505,7 +530,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Inställningar & Notiser</h3>
             <p class="text-xs text-base-content/80">
-              Ställ in Discord-aviseringar, officiell kontakt-e-post (styr dynamiskt e-postadressen i sidfot, kontaktsida, integritetspolicy och EPK), Google Gemini API-nyckel för AI-skivomslag, startsidans innehåll samt slå på/av testläge (Mock Mode) för sociala medier!
+              Ställ in Discord-aviseringar, officiell kontakt-e-post (styr dynamiskt e-postadressen i sidfot, kontaktsida, integritetspolicy och EPK), Google Gemini API-nyckel för AI-skivomslag, startsidans innehåll, testläge (Mock Mode) för sociala medier samt YouTube-integrering (kanal-ID/handtag, auto-import med dygnscron, auto-posting till sociala medier och manuell synkknapp)!
             </p>
           </div>
           <NuxtLink to="/admin/settings" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">

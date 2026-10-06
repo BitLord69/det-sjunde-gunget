@@ -9,8 +9,9 @@
  * 5. Setlist (/admin/setlist) - Klicka "+ Ny låt i setlistan", fyll i titel, klicka "Spara i setlistan", verifiera tabell
  * 6. Inställningar (/admin/settings) - Klicka "Spara inställningar", verifiera toast och feedback
  * 7. Hashtaggar (/admin/hashtags) - Fyll i "#TestRock", klicka "+ Lägg till tagg", verifiera badge
- * 8. Publikt bokningsformulär (/contact) - Fyll i bokningsformuläret och verifiera bekräftelse
- * 9. Formulärskydd & In-App Dialog-navigering (/admin/gigs) - Verifiera in-app modal, stanna kvar, navigera och discard vid klick i menyn
+ * 8. Videor & YouTube (/admin/videos & /videos) - Verifiera admin-knappar, modal samt publik videosida
+ * 9. Publikt bokningsformulär (/contact) - Fyll i bokningsformuläret och verifiera bekräftelse
+ * 10. Formulärskydd & In-App Dialog-navigering (/admin/gigs) - Verifiera in-app modal, stanna kvar, navigera och discard vid klick i menyn
  */
 
 import { chromium } from 'playwright'
@@ -255,8 +256,38 @@ async function run() {
       }
     }
 
-    // 8. PUBLIKT BOKNINGSFORMULÄR
-    console.log('\n▶ [8/8] Publikt Bokningsformulär (/contact)')
+    // 8. VIDEOR & YOUTUBE UI (/admin/videos & /videos)
+    console.log('\n▶ [8/10] Videor & YouTube UI (/admin/videos & /videos)')
+    await page.goto(`${BASE_URL}/admin/videos`, { waitUntil: 'networkidle' })
+
+    const addVideoBtn = await page.$('button:has-text("+ Ny video")')
+    const syncVideoBtn = await page.$('button:has-text("Synka från YouTube")')
+    assert(Boolean(addVideoBtn && syncVideoBtn), 'Knapparna "+ Ny video" och "Synka från YouTube" hittades på /admin/videos')
+
+    if (addVideoBtn) {
+      await addVideoBtn.click()
+      await page.waitForTimeout(400)
+      const modalHeader = await page.$('text=Lägg till video')
+      assert(Boolean(modalHeader), 'Modalfönstret "Lägg till video" öppnades vid klick på "+ Ny video"')
+
+      // Avbryt och stäng modalen
+      const cancelModalBtn = await page.$('button:has-text("Avbryt")')
+      if (cancelModalBtn) {
+        await cancelModalBtn.click()
+        await page.waitForTimeout(300)
+      }
+    }
+
+    // Besök publika videosidan
+    await page.goto(`${BASE_URL}/videos`, { waitUntil: 'networkidle' })
+    const videosPageBody = await page.innerText('body')
+    assert(
+      videosPageBody.includes('Det 7:e Gunget på YouTube') || videosPageBody.includes('Videor'),
+      'Publika videosidan (/videos) laddades framgångsrikt och visade videoinnehåll'
+    )
+
+    // 9. PUBLIKT BOKNINGSFORMULÄR
+    console.log('\n▶ [9/10] Publikt Bokningsformulär (/contact)')
     await page.goto(`${BASE_URL}/contact`, { waitUntil: 'networkidle' })
     const testBookingEmail = `bokning-ui-${Date.now()}@festivalen.se`
 
@@ -284,8 +315,8 @@ async function run() {
       }
     }
 
-    // 9. FORMULÄRSKYDD & DIALOG-NAVIGERING VID OSPARADE ÄNDRINGAR
-    console.log('\n▶ [9/9] Formulärskydd & In-App Dialog-navigering (/admin/gigs)')
+    // 10. FORMULÄRSKYDD & DIALOG-NAVIGERING VID OSPARADE ÄNDRINGAR
+    console.log('\n▶ [10/10] Formulärskydd & In-App Dialog-navigering (/admin/gigs)')
     await page.goto(`${BASE_URL}/admin/gigs`, { waitUntil: 'networkidle' })
 
     const newGigBtn = await page.$('button:has-text("+ Nytt gig")')

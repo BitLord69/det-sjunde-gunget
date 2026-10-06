@@ -326,7 +326,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Spelningar & Gigs</h3>
             <p class="text-xs text-base-content/80">
-              Lägg till nya spelningar, uppdatera tider, spelställe, ort och biljettlänkar. Spelningar genererar automatiskt strukturerad data (Schema.org Event) för Google Rich Results. Innehåller även autopost samt en direktknapp (<strong>📱 Dela</strong>) för att publicera valfritt sparat gig direkt till Facebook & Instagram med valbara hashtags och förhandsgranskning.
+              Lägg till nya spelningar, uppdatera tider, spelställe, ort och biljettlänkar samt sätt status (<strong>Kommande</strong>, <strong>Fri entré</strong>, <strong>Utsålt</strong>, <strong>Avklarat</strong> eller <strong>Inställt</strong>). Spelningar markerade som avklarade flyttas automatiskt till arkivet/tidigare spelningar. Spelningar genererar automatiskt strukturerad data (Schema.org Event) för Google Rich Results. Innehåller även autopost samt en direktknapp (<strong>📱 Dela</strong>) för att publicera valfritt sparat gig direkt till Facebook & Instagram med valbara hashtags och förhandsgranskning.
             </p>
           </div>
           <NuxtLink to="/admin/gigs" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">

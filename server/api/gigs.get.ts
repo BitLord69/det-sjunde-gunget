@@ -27,8 +27,8 @@ export default defineEventHandler(async (event) => {
   }))
 
   const now = new Date().getTime()
-  const upcoming = formattedGigs.filter((g) => new Date(g.date).getTime() >= now - 24 * 60 * 60 * 1000)
-  const past = formattedGigs.filter((g) => new Date(g.date).getTime() < now - 24 * 60 * 60 * 1000).reverse()
+  const upcoming = formattedGigs.filter((g) => g.status !== 'completed' && new Date(g.date).getTime() >= now - 24 * 60 * 60 * 1000)
+  const past = formattedGigs.filter((g) => g.status === 'completed' || new Date(g.date).getTime() < now - 24 * 60 * 60 * 1000).reverse()
 
   if (query.type === 'upcoming') return upcoming
   if (query.type === 'past') return past

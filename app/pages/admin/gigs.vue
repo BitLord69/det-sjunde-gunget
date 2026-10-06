@@ -255,6 +255,38 @@ const sortedGigs = computed(() => {
     return 0
   })
 })
+
+const getGigStatusLabel = (status: string | null | undefined) => {
+  switch (status) {
+    case 'free':
+      return 'Fri entré'
+    case 'sold_out':
+      return 'Utsålt'
+    case 'completed':
+      return 'Avklarat'
+    case 'cancelled':
+      return 'Inställt'
+    case 'upcoming':
+    default:
+      return 'Kommande'
+  }
+}
+
+const getGigStatusBadgeClass = (status: string | null | undefined) => {
+  switch (status) {
+    case 'free':
+      return 'badge-accent font-bold'
+    case 'sold_out':
+      return 'badge-error font-bold text-white'
+    case 'completed':
+      return 'badge-ghost border border-base-content/25 text-base-content/75 font-bold'
+    case 'cancelled':
+      return 'badge-warning font-bold text-black'
+    case 'upcoming':
+    default:
+      return 'badge-primary font-bold'
+  }
+}
 </script>
 
 <template>
@@ -326,6 +358,7 @@ const sortedGigs = computed(() => {
               <option value="free">Fri entré</option>
               <option value="sold_out">Utsålt</option>
               <option value="completed">Avklarat</option>
+              <option value="cancelled">Inställt</option>
             </select>
           </div>
           <div class="sm:col-span-2">
@@ -548,10 +581,10 @@ const sortedGigs = computed(() => {
               </p>
             </div>
             <span
-              class="badge badge-sm font-bold uppercase text-[9px] flex-shrink-0"
-              :class="gig.status === 'sold_out' ? 'badge-error' : gig.status === 'free' ? 'badge-accent' : 'badge-primary'"
+              class="badge badge-sm uppercase text-[9px] flex-shrink-0"
+              :class="getGigStatusBadgeClass(gig.status)"
             >
-              {{ gig.status === 'free' ? 'Fri entré' : gig.status === 'sold_out' ? 'Utsålt' : 'Kommande' }}
+              {{ getGigStatusLabel(gig.status) }}
             </span>
           </div>
 
@@ -740,10 +773,10 @@ const sortedGigs = computed(() => {
               <td>{{ gig.city }}</td>
               <td>
                 <span
-                  class="badge badge-xs font-bold uppercase text-[9px]"
-                  :class="gig.status === 'sold_out' ? 'badge-error' : gig.status === 'free' ? 'badge-accent' : 'badge-primary'"
+                  class="badge badge-xs uppercase text-[9px]"
+                  :class="getGigStatusBadgeClass(gig.status)"
                 >
-                  {{ gig.status === 'free' ? 'Fri entré' : gig.status === 'sold_out' ? 'Utsålt' : 'Kommande' }}
+                  {{ getGigStatusLabel(gig.status) }}
                 </span>
               </td>
               <td class="text-right whitespace-nowrap">

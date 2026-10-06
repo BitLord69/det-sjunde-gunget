@@ -343,7 +343,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Låtar & Repertoar</h3>
             <p class="text-xs text-base-content/80">
-              Hantera hela repertoaren. Ange text & ackord, AI Single Cover Studio för vintage vinylomslag, samt direktknappen (<strong>📱 Dela</strong>) för att dela valfri låt direkt till Facebook.
+              Hantera hela repertoaren. Ladda upp egna ljudfiler (MP3, WAV, AAC, M4A upp till 50 MB) för oberoende uppspelning i sajtens jukebox, ange text & ackord, skapa vintage vinylomslag i AI Single Cover Studio samt dela valfri låt direkt till Facebook.
             </p>
           </div>
           <NuxtLink to="/admin/songs" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">

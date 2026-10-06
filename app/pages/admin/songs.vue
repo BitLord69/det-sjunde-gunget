@@ -47,6 +47,15 @@ const uploadFile = async (event: Event, targetCallback: (url: string) => void) =
   const file = input.files[0]
   if (!file) return
 
+  // Klientvalidering: Max 50 MB
+  const maxBytes = 50 * 1024 * 1024
+  if (file.size > maxBytes) {
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(1)
+    showToast(`⚠️ Filen är för stor (${sizeMb} MB). Maximal tillåten storlek är 50 MB.`)
+    input.value = ''
+    return
+  }
+
   const formData = new FormData()
   formData.append('file', file)
   isUploading.value = true
@@ -61,8 +70,9 @@ const uploadFile = async (event: Event, targetCallback: (url: string) => void) =
       showToast('✓ Filen har laddats upp!')
     }
   } catch (err: unknown) {
+    console.error('[Upload Failed]:', err)
     const errorObj = err as { data?: { message?: string }; message?: string }
-    showToast(`⚠️ Uppladdning misslyckades: ${errorObj?.data?.message || errorObj?.message || 'Fel'}`)
+    showToast(`⚠️ Uppladdning misslyckades: ${errorObj?.data?.message || errorObj?.message || 'Serverfel vid uppladdning'}`)
   } finally {
     isUploading.value = false
     input.value = ''

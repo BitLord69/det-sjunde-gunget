@@ -41,6 +41,23 @@ const { data: hashtagsData } = await useFetch<AdminHashtag[]>('/api/admin/hashta
 const { data: songsStatsData } = await useFetch<{ stats: SongStatEntry[]; lookupById: Record<string, number>; lookupByTitle: Record<string, number> }>('/api/admin/songs/stats')
 
 const { isUploading, uploadProgress, uploadAdminFile } = useAdminUpload()
+const { translate, isFieldTranslating } = useTranslation()
+
+const translateField = async (sourceText: string, targetSetter: (val: string) => void, fieldId: string) => {
+  if (!sourceText || !sourceText.trim()) {
+    showToast('⚠️ Fyll i den svenska texten först!')
+    return
+  }
+  try {
+    showToast('⏳ Översätter låttext till engelska med AI...')
+    const res = await translate(sourceText, fieldId)
+    targetSetter(res)
+    showToast('✓ Översatt till engelska!')
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Kunde inte översätta'
+    showToast(`⚠️ ${msg}`)
+  }
+}
 
 const uploadFile = async (event: Event, targetCallback: (url: string) => void) => {
   const input = event.target as HTMLInputElement
@@ -612,7 +629,20 @@ const sortedSongs = computed(() => {
             <textarea v-model="songForm.lyrics" rows="3" placeholder="Sjunger om regnet i Malmö..." class="textarea textarea-bordered w-full bg-base-200 text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Lyrics (English)</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-secondary">Lyrics (English)</label>
+              <button
+                type="button"
+                class="btn btn-ghost btn-xs text-primary hover:bg-primary/20 p-1 h-auto text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                :disabled="isFieldTranslating('lyricsEn') || !songForm.lyrics"
+                title="Översätt låttext från svenska med AI"
+                @click="translateField(songForm.lyrics, (res) => songForm.lyricsEn = res, 'lyricsEn')"
+              >
+                <span v-if="isFieldTranslating('lyricsEn')" class="loading loading-spinner loading-xs" />
+                <span v-else>✨</span>
+                <span>Översätt från svenska</span>
+              </button>
+            </div>
             <textarea v-model="songForm.lyricsEn" rows="3" placeholder="English lyrics..." class="textarea textarea-bordered w-full bg-base-200 text-sm" />
           </div>
           <div class="sm:col-span-2">

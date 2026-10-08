@@ -28,6 +28,24 @@ const { data: hashtagsData } = await useFetch<any[]>('/api/admin/hashtags', { de
 
 const activeGigSetTab = ref<string>('Set 1')
 
+const { translate, isFieldTranslating } = useTranslation()
+
+const translateField = async (sourceText: string, targetSetter: (val: string) => void, fieldId: string) => {
+  if (!sourceText || !sourceText.trim()) {
+    showToast('⚠️ Fyll i det svenska fältet först!')
+    return
+  }
+  try {
+    showToast('⏳ Översätter till engelska med AI...')
+    const res = await translate(sourceText, fieldId)
+    targetSetter(res)
+    showToast('✓ Översatt till engelska!')
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Kunde inte översätta'
+    showToast(`⚠️ ${msg}`)
+  }
+}
+
 // ---------------- GIGS CRUD ----------------
 const editingGig = ref<any | null>(null)
 const gigForm = reactive({
@@ -361,9 +379,26 @@ const getGigStatusBadgeClass = (status: string | null | undefined) => {
               <option value="cancelled">Inställt</option>
             </select>
           </div>
-          <div class="sm:col-span-2">
+          <div>
             <label class="block text-xs font-bold text-secondary mb-1">Anteckningar / mellansnack (svenska)</label>
             <textarea v-model="gigForm.notesSv" rows="2" placeholder="Dörrarna öppnar 18:30..." class="textarea textarea-bordered w-full bg-base-200 text-sm" />
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-secondary">Notes / promo info (English)</label>
+              <button
+                type="button"
+                class="btn btn-ghost btn-xs text-primary hover:bg-primary/20 p-1 h-auto text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                :disabled="isFieldTranslating('gigNotesEn') || !gigForm.notesSv"
+                title="Översätt anteckningar från svenska med AI"
+                @click="translateField(gigForm.notesSv, (res) => gigForm.notesEn = res, 'gigNotesEn')"
+              >
+                <span v-if="isFieldTranslating('gigNotesEn')" class="loading loading-spinner loading-xs" />
+                <span v-else>✨</span>
+                <span>Översätt från svenska</span>
+              </button>
+            </div>
+            <textarea v-model="gigForm.notesEn" rows="2" placeholder="Doors open 18:30..." class="textarea textarea-bordered w-full bg-base-200 text-sm" />
           </div>
 
           <!-- Per-Gig Setlist / Song List Manager -->

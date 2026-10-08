@@ -168,6 +168,23 @@ const autoDetectResolution = async () => {
 }
 
 const { isUploading, uploadProgress, uploadAdminFile } = useAdminUpload()
+const { translate, isFieldTranslating } = useTranslation()
+
+const translateField = async (sourceText: string, targetSetter: (val: string) => void, fieldId: string) => {
+  if (!sourceText || !sourceText.trim()) {
+    showToast('⚠️ Fyll i det svenska fältet först!')
+    return
+  }
+  try {
+    showToast('⏳ Översätter till engelska med AI...')
+    const res = await translate(sourceText, fieldId)
+    targetSetter(res)
+    showToast('✓ Översatt till engelska!')
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Kunde inte översätta'
+    showToast(`⚠️ ${msg}`)
+  }
+}
 
 const uploadFile = async (event: Event, targetCallback: (url: string) => void) => {
   const input = event.target as HTMLInputElement
@@ -622,7 +639,20 @@ const deleteGalleryItem = async (id: string) => {
             <input v-model="galForm.captionSv" type="text" placeholder="Hela gänget samlat inför sommarsäsongen..." class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Bildtext (engelska / English)</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-secondary">Bildtext (engelska / English)</label>
+              <button
+                type="button"
+                class="btn btn-ghost btn-xs text-primary hover:bg-primary/20 p-1 h-auto text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                :disabled="isFieldTranslating('captionEn') || !galForm.captionSv"
+                title="Översätt från svenska bildtexten med AI"
+                @click="translateField(galForm.captionSv, (res) => galForm.captionEn = res, 'captionEn')"
+              >
+                <span v-if="isFieldTranslating('captionEn')" class="loading loading-spinner loading-xs" />
+                <span v-else>✨</span>
+                <span>Översätt från svenska</span>
+              </button>
+            </div>
             <input v-model="galForm.captionEn" type="text" placeholder="The whole band gathered before the summer season..." class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
@@ -630,7 +660,20 @@ const deleteGalleryItem = async (id: string) => {
             <input v-model="galForm.altTextSv" type="text" placeholder="Det 7:e Gunget live på scen" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Alt-text (engelska / accessibility)</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-secondary">Alt-text (engelska / accessibility)</label>
+              <button
+                type="button"
+                class="btn btn-ghost btn-xs text-primary hover:bg-primary/20 p-1 h-auto text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                :disabled="isFieldTranslating('altTextEn') || !galForm.altTextSv"
+                title="Översätt från svenska alt-texten med AI"
+                @click="translateField(galForm.altTextSv, (res) => galForm.altTextEn = res, 'altTextEn')"
+              >
+                <span v-if="isFieldTranslating('altTextEn')" class="loading loading-spinner loading-xs" />
+                <span v-else>✨</span>
+                <span>Översätt från svenska</span>
+              </button>
+            </div>
             <input v-model="galForm.altTextEn" type="text" placeholder="Det 7:e Gunget performing live on stage" class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
 
@@ -653,7 +696,20 @@ const deleteGalleryItem = async (id: string) => {
                 <input v-model="galForm.epkTitleSv" type="text" placeholder="T.ex. Bandfoto (Liggande)" class="input input-bordered w-full bg-base-200 input-sm" >
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-warning mb-1">EPK-titel (engelska)</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[11px] font-bold text-warning">EPK-titel (engelska)</label>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-xs text-warning hover:bg-warning/20 p-0.5 h-auto text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                    :disabled="isFieldTranslating('epkTitleEn') || !galForm.epkTitleSv"
+                    title="Översätt EPK-titel från svenska"
+                    @click="translateField(galForm.epkTitleSv, (res) => galForm.epkTitleEn = res, 'epkTitleEn')"
+                  >
+                    <span v-if="isFieldTranslating('epkTitleEn')" class="loading loading-spinner loading-xs" />
+                    <span v-else>✨</span>
+                    <span>Översätt</span>
+                  </button>
+                </div>
                 <input v-model="galForm.epkTitleEn" type="text" placeholder="E.g. Band Portrait (Landscape)" class="input input-bordered w-full bg-base-200 input-sm" >
               </div>
               <div>
@@ -889,7 +945,20 @@ const deleteGalleryItem = async (id: string) => {
               <input v-model="docForm.titleSv" type="text" placeholder="T.ex. Officiell Konsertaffisch (A3-mall)" class="input input-bordered w-full bg-base-200 input-sm" >
             </div>
             <div>
-              <label class="block text-xs font-bold text-secondary mb-1">Dokumenttitel (engelska)</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-bold text-secondary">Dokumenttitel (engelska)</label>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-xs text-secondary hover:bg-secondary/20 p-1 h-auto text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                  :disabled="isFieldTranslating('docTitleEn') || !docForm.titleSv"
+                  title="Översätt dokumenttitel från svenska"
+                  @click="translateField(docForm.titleSv, (res) => docForm.titleEn = res, 'docTitleEn')"
+                >
+                  <span v-if="isFieldTranslating('docTitleEn')" class="loading loading-spinner loading-xs" />
+                  <span v-else>✨</span>
+                  <span>Översätt från svenska</span>
+                </button>
+              </div>
               <input v-model="docForm.titleEn" type="text" placeholder="E.g. Official Concert Poster Template" class="input input-bordered w-full bg-base-200 input-sm" >
             </div>
 
@@ -913,7 +982,20 @@ const deleteGalleryItem = async (id: string) => {
               <textarea v-model="docForm.descriptionSv" rows="2" placeholder="Kort instruktion till arrangören..." class="textarea textarea-bordered w-full bg-base-200 text-xs"/>
             </div>
             <div>
-              <label class="block text-xs font-bold text-secondary mb-1">Beskrivning (engelska)</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-bold text-secondary">Beskrivning (engelska)</label>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-xs text-secondary hover:bg-secondary/20 p-1 h-auto text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                  :disabled="isFieldTranslating('docDescEn') || !docForm.descriptionSv"
+                  title="Översätt beskrivning från svenska"
+                  @click="translateField(docForm.descriptionSv, (res) => docForm.descriptionEn = res, 'docDescEn')"
+                >
+                  <span v-if="isFieldTranslating('docDescEn')" class="loading loading-spinner loading-xs" />
+                  <span v-else>✨</span>
+                  <span>Översätt från svenska</span>
+                </button>
+              </div>
               <textarea v-model="docForm.descriptionEn" rows="2" placeholder="Brief note for promoters in English..." class="textarea textarea-bordered w-full bg-base-200 text-xs"/>
             </div>
 

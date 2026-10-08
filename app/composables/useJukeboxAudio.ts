@@ -323,29 +323,31 @@ export function useJukeboxAudio() {
       htmlAudio.addEventListener('ended', () => {
         if (isRepeatEnabled.value && htmlAudio) {
           htmlAudio.currentTime = 0
-          htmlAudio.play()
+          htmlAudio.play().catch(() => {})
         } else {
           pauseTrack()
           currentTime.value = 0
         }
       })
 
-      // Brief lead-in delay to let the needle drop and vinyl rasp play on the lead-in groove!
-      setTimeout(() => {
-        if (isAudioPlaying.value && htmlAudio) {
-          htmlAudio.play().catch((err) => {
-            console.warn('[JukeboxAudio] HTML5 audio error, falling back to blues synth:', err)
-            startBluesSynth(song.code || 'A1')
-          })
-        }
-      }, 1000)
-    } else {
-      // Start synthesised blues groove after lead-in crackle
-      setTimeout(() => {
+      htmlAudio.addEventListener('error', (err) => {
+        console.error('[JukeboxAudio] HTML5 audio error loading song:', song.audioUrl, err)
+        // If file fails completely, fall back to synth
         if (isAudioPlaying.value) {
           startBluesSynth(song.code || 'A1')
         }
-      }, 1000)
+      })
+
+      // IMPORTANT: Invoke play() IMMEDIATELY so the browser preserves User Activation gesture!
+      // Delaying play() inside a 1000ms setTimeout causes mobile & strict desktop browsers
+      // to reject the promise with NotAllowedError, which caused the blues synth fallback!
+      htmlAudio.play().catch((err) => {
+        console.warn('[JukeboxAudio] HTML5 audio direct play failed, trying fallback:', err)
+        startBluesSynth(song.code || 'A1')
+      })
+    } else {
+      // No MP3 audio file uploaded for this track -> play blues synth groove
+      startBluesSynth(song.code || 'A1')
     }
   }
 
@@ -368,18 +370,26 @@ export function useJukeboxAudio() {
     const targetSong = song || currentPlayingSong
     if (!targetSong) return
 
+    // If htmlAudio has not been loaded yet, or song changed, start proper track playback!
+    if (targetSong.audioUrl && (!htmlAudio || currentPlayingSong?.id !== targetSong.id)) {
+      playTrack(targetSong)
+      return
+    }
+
     currentPlayingSong = targetSong
     isAudioPlaying.value = true
 
     if (htmlAudio && audioSourceType.value === 'file') {
       htmlAudio.play().catch((err) => {
-        console.warn('[JukeboxAudio] Error resuming HTML5 audio, restarting track:', err)
+        console.warn('[JukeboxAudio] Error resuming HTML5 audio, reloading track:', err)
         playTrack(targetSong)
       })
       if (crackleAudio) {
         crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
         crackleAudio.play().catch(() => {})
       }
+    } else if (targetSong.audioUrl) {
+      playTrack(targetSong)
     } else {
       startBluesSynth(targetSong.code || 'A1')
       if (crackleAudio) {

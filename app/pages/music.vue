@@ -76,10 +76,21 @@ const filteredSongs = computed(() => {
 
 const route = useRoute()
 
-// Active song state
-const activeSongId = ref<string | null>('song-det-sjunde-gunget')
+// Active song state (dynamically defaults to first available track)
+const activeSongId = ref<string | null>(null)
 const credits = ref(5)
 const coinAnimation = ref(false)
+
+// Keep activeSongId synchronized with loaded songs
+watch(
+  songsWithCodes,
+  (songs) => {
+    if (!activeSongId.value && songs.length > 0) {
+      activeSongId.value = songs[0].id
+    }
+  },
+  { immediate: true }
+)
 
 const currentSong = computed(() => {
   return songsWithCodes.value.find((s: any) => s.id === activeSongId.value) || songsWithCodes.value[0] || null
@@ -108,14 +119,23 @@ const selectSong = (songId: string) => {
   activeSongId.value = songId
   const song = songsWithCodes.value.find((s: any) => s.id === songId)
   if (song) {
-    playTrack(song)
+    if (!song.audioUrl && song.embedUrl) {
+      // If no direct MP3 exists, smoothly switch to embedded Spotify/YouTube player
+      playerDisplayMode.value = 'embed'
+      pauseTrack()
+    } else {
+      playerDisplayMode.value = 'vinyl'
+      playTrack(song)
+    }
   }
 }
 
 onMounted(() => {
   const querySong = (route.query.song as string) || (route.hash ? route.hash.replace('#', '') : '')
   if (querySong && songsWithCodes.value.some((s: any) => s.id === querySong)) {
-    selectSong(querySong)
+    activeSongId.value = querySong
+  } else if (!activeSongId.value && songsWithCodes.value.length > 0) {
+    activeSongId.value = songsWithCodes.value[0].id
   }
 })
 
@@ -128,7 +148,13 @@ const togglePlay = (songId?: string) => {
   if (isAudioPlaying.value) {
     pauseTrack()
   } else if (currentSong.value) {
-    resumeTrack(currentSong.value)
+    if (!currentSong.value.audioUrl && currentSong.value.embedUrl) {
+      playerDisplayMode.value = 'embed'
+      pauseTrack()
+    } else {
+      playerDisplayMode.value = 'vinyl'
+      resumeTrack(currentSong.value)
+    }
   }
 }
 
@@ -406,6 +432,17 @@ const formatTime = (secs: number) => {
                 </div>
                 <div class="text-xs text-base-content/60 truncate">
                   {{ currentSong?.isOriginal ? `Det 7:e Gunget (${t('music.original_track')})` : `${t('music.cover_of')} ${currentSong?.originalArtist}` }}
+                </div>
+                <!-- Shortcut to embed player if no direct audio file uploaded -->
+                <div v-if="!currentSong?.audioUrl && currentSong?.embedUrl" class="pt-2">
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-outline btn-secondary rounded-full font-bold px-3 py-1 text-[11px] gap-1 cursor-pointer"
+                    @click="playerDisplayMode = 'embed'"
+                  >
+                    <span>🎧</span>
+                    <span>Lyssna via {{ currentSong.embedProvider || 'inbäddad spelare' }}</span>
+                  </button>
                 </div>
               </div>
 

@@ -269,7 +269,7 @@ const scrollTo = (id: string) => {
             <h3 class="font-heading text-base font-bold text-primary">Retro Title Strips & Jukebox-knappsats</h3>
           </div>
           <p class="text-xs sm:text-sm text-base-content/80">
-            På musiksidan sorteras låtarna som i en klassisk Wurlitzer-jukebox: A-sidor (egna låtar) till vänster och B-sidor (covers) till höger. Besökare kan knappa in A1, B2 osv. på knappsatsen för att välja spår.
+            På musiksidan sorteras låtarna som i en klassisk Wurlitzer-jukebox: A-sidor (egna låtar) till vänster och B-sidor (covers) till höger. Besökare kan knappa in A1, B2 osv. på knappsatsen för att välja spår. Uppladdade ljudfiler spelas direkt på den snurrande skivtallriken med vinylknaster, och för låtar med streaminglänk växlar jukeboxen smidigt till den inbäddade spelaren (Spotify/YouTube).
           </p>
         </div>
 
@@ -343,7 +343,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Låtar & Repertoar</h3>
             <p class="text-xs text-base-content/80">
-              Hantera hela repertoaren. Ladda upp egna ljudfiler (MP3, WAV, AAC, M4A upp till 50 MB) med snabb direktuppladdning från webbläsaren till Vercel Blob med procentindikator, ange text & ackord, skapa vintage vinylomslag i AI Single Cover Studio samt dela valfri låt direkt till Facebook.
+              Hantera hela repertoaren. Ladda upp egna ljudfiler (MP3, WAV, AAC, M4A upp till 50 MB) med snabb direktuppladdning från webbläsaren till Vercel Blob med procentindikator, ange text & ackord med snabbknapp (<strong>✨ Översätt från svenska</strong>) för engelsk låttext, skapa vintage vinylomslag i AI Single Cover Studio samt dela valfri låt direkt till Facebook.
             </p>
           </div>
           <NuxtLink to="/admin/songs" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -394,7 +394,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Galleri, Presskit & Dokument</h3>
             <p class="text-xs text-base-content/80">
-              Ladda upp foton med ramstilar (Polaroid, tejp etc.) samt hantera officiellt arrangörsmaterial på <NuxtLink to="/epk" target="_blank" class="text-primary font-bold underline">/epk</NuxtLink>. Innehåller separata flikar för <strong>Alla bilder</strong>, <strong>Presskit / Foton</strong> (med 1-klicks <strong>⭐ EPK</strong> snabbknapp) och <strong>Arrangörsdokument / PDF</strong> (tryckfärdiga affischer, rider-bilagor och pressmeddelanden). Systemet läser dessutom av bilders pixelupplösning och filstorlek automatiskt (t.ex. <em>4240 × 2832 px • 4.3 MB • 300 DPI</em>). Innehåller även knappen (<strong>📱 Dela</strong>) för sociala medier.
+              Ladda upp foton med ramstilar (Polaroid, tejp etc.) samt hantera officiellt arrangörsmaterial på <NuxtLink to="/epk" target="_blank" class="text-primary font-bold underline">/epk</NuxtLink>. Innehåller separata flikar för <strong>Alla bilder</strong>, <strong>Presskit / Foton</strong> (med 1-klicks <strong>⭐ EPK</strong> snabbknapp) och <strong>Arrangörsdokument / PDF</strong> (tryckfärdiga affischer, rider-bilagor och pressmeddelanden). Tvåspråkiga fält (bildtext, alt-text, EPK-titel och dokumentbeskrivning) har direktknappar (<strong>✨ Översätt från svenska</strong>) för snabb översättning med AI. Systemet läser dessutom av bilders pixelupplösning och filstorlek automatiskt (t.ex. <em>4240 × 2832 px • 4.3 MB • 300 DPI</em>). Innehåller även knappen (<strong>📱 Dela</strong>) för sociala medier.
             </p>
           </div>
           <NuxtLink to="/admin/gallery" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -513,7 +513,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Bandmedlemmar</h3>
             <p class="text-xs text-base-content/80">
-              Uppdatera medlemmarnas presentationer, instrument, utrustning och profilbilder på "Om oss"-sidan.
+              Uppdatera medlemmarnas presentationer, instrument, utrustning och profilbilder på "Om oss"-sidan. Innehåller snabbknappar (<strong>✨ Översätt från svenska</strong>) för att automatiskt översätta biografier och utrustningslistor till engelska med AI.
             </p>
           </div>
           <NuxtLink to="/admin/band" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">

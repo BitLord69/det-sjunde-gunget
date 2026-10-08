@@ -23,6 +23,23 @@ const { data: bandMembers, refresh: refreshBand } = await useFetch<any[]>('/api/
 })
 
 const { isUploading, uploadAdminFile } = useAdminUpload()
+const { translate, isFieldTranslating } = useTranslation()
+
+const translateField = async (sourceText: string, targetSetter: (val: string) => void, fieldId: string) => {
+  if (!sourceText || !sourceText.trim()) {
+    showToast('⚠️ Fyll i det svenska fältet först!')
+    return
+  }
+  try {
+    showToast('⏳ Översätter till engelska med AI...')
+    const res = await translate(sourceText, fieldId)
+    targetSetter(res)
+    showToast('✓ Översatt till engelska!')
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Kunde inte översätta'
+    showToast(`⚠️ ${msg}`)
+  }
+}
 const uploadFile = async (event: Event, targetCallback: (url: string) => void) => {
   const input = event.target as HTMLInputElement
   if (!input.files || input.files.length === 0) return
@@ -175,7 +192,20 @@ const saveMember = async () => {
             <textarea v-model="memberForm.bioSv" rows="3" class="textarea textarea-bordered w-full bg-base-200 text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Biography (English)</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-secondary">Biography (English)</label>
+              <button
+                type="button"
+                class="btn btn-ghost btn-xs text-primary hover:bg-primary/20 p-1 h-auto text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                :disabled="isFieldTranslating('bioEn') || !memberForm.bioSv"
+                title="Översätt biografi från svenska"
+                @click="translateField(memberForm.bioSv, (res) => memberForm.bioEn = res, 'bioEn')"
+              >
+                <span v-if="isFieldTranslating('bioEn')" class="loading loading-spinner loading-xs" />
+                <span v-else>✨</span>
+                <span>Översätt från svenska</span>
+              </button>
+            </div>
             <textarea v-model="memberForm.bioEn" rows="3" placeholder="English presentation..." class="textarea textarea-bordered w-full bg-base-200 text-sm" />
           </div>
 
@@ -185,7 +215,20 @@ const saveMember = async () => {
             <input v-model="memberForm.gearSv" type="text" placeholder="T.ex. Hohner Marine Band..." class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
           <div>
-            <label class="block text-xs font-bold text-secondary mb-1">Gear / instruments (English)</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-secondary">Gear / instruments (English)</label>
+              <button
+                type="button"
+                class="btn btn-ghost btn-xs text-primary hover:bg-primary/20 p-1 h-auto text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                :disabled="isFieldTranslating('gearEn') || !memberForm.gearSv"
+                title="Översätt utrustning från svenska"
+                @click="translateField(memberForm.gearSv, (res) => memberForm.gearEn = res, 'gearEn')"
+              >
+                <span v-if="isFieldTranslating('gearEn')" class="loading loading-spinner loading-xs" />
+                <span v-else>✨</span>
+                <span>Översätt från svenska</span>
+              </button>
+            </div>
             <input v-model="memberForm.gearEn" type="text" placeholder="E.g. Fender Stratocaster 1968..." class="input input-bordered w-full bg-base-200 input-sm" >
           </div>
 

@@ -28,7 +28,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Seed Local DB for Build Verification
-        run: node scripts/seed-db.mjs
+        run: |
+          node scripts/sync-database.mjs
+          node scripts/seed-db.mjs
 
       - name: Build Nuxt Application
         run: pnpm build

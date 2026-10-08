@@ -272,26 +272,20 @@ const drawVisualizer = () => {
 }
 
 // ----------------- UPLOAD AUDIO (RECORDED OR FILE) -----------------
+const { uploadAdminFile } = useAdminUpload()
+
 const uploadRecordedBlob = async (): Promise<string | null> => {
   if (!recordedBlob.value) return null
 
-  const formData = new FormData()
   const ext = recordedBlob.value.type.includes('mp4') ? 'm4a' : 'webm'
   const file = new File([recordedBlob.value], `riff-${Date.now()}.${ext}`, { type: recordedBlob.value.type })
-  formData.append('file', file)
 
   isUploadingAudio.value = true
   try {
-    const res = await $fetch<{ success: boolean; url: string }>('/api/admin/upload', {
-      method: 'POST',
-      body: formData,
-    })
-    if (res.success && res.url) {
-      return res.url
-    }
-    return null
+    const url = await uploadAdminFile(file)
+    return url
   } catch (err: any) {
-    showToast(`⚠️ Uppladdning av ljud misslyckades: ${err?.data?.statusMessage || err?.message}`)
+    showToast(`⚠️ Uppladdning av inspelning misslyckades: ${err?.message || 'Serverfel'}`)
     return null
   } finally {
     isUploadingAudio.value = false
@@ -304,24 +298,18 @@ const handleFileUpload = async (event: Event) => {
   const file = input.files[0]
   if (!file) return
 
-  const formData = new FormData()
-  formData.append('file', file)
   isUploadingAudio.value = true
 
   try {
-    const res = await $fetch<{ success: boolean; url: string }>('/api/admin/upload', {
-      method: 'POST',
-      body: formData,
-    })
-    if (res.success && res.url) {
-      ideaForm.value.audioUrl = res.url
-      if (!ideaForm.value.title) {
-        ideaForm.value.title = file.name.replace(/\.[^/.]+$/, '')
-      }
-      showToast('✓ Ljudfilen har laddats upp!')
+    showToast(`⏳ Laddar upp ${file.name}...`)
+    const url = await uploadAdminFile(file)
+    ideaForm.value.audioUrl = url
+    if (!ideaForm.value.title) {
+      ideaForm.value.title = file.name.replace(/\.[^/.]+$/, '')
     }
+    showToast('✓ Ljudfilen har laddats upp!')
   } catch (err: any) {
-    showToast(`⚠️ Filuppladdning misslyckades: ${err?.data?.statusMessage || err?.message}`)
+    showToast(`⚠️ Filuppladdning misslyckades: ${err?.message || 'Kunde inte ladda upp filen'}`)
   } finally {
     isUploadingAudio.value = false
     input.value = ''

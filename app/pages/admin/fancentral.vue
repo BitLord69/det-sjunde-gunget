@@ -205,27 +205,23 @@ const adminNewPhoto = reactive({
 })
 
 const isUploadingAdmin = ref(false)
+const { uploadAdminFile: doUploadFile } = useAdminUpload()
+
 const uploadAdminFile = async (event: Event) => {
   const input = event.target as HTMLInputElement
   if (!input.files || input.files.length === 0) return
   const file = input.files[0]
   if (!file) return
 
-  const formData = new FormData()
-  formData.append('file', file)
   isUploadingAdmin.value = true
 
   try {
-    const res = await $fetch<{ success: boolean; url: string }>('/api/admin/upload', {
-      method: 'POST',
-      body: formData,
-    })
-    if (res.success && res.url) {
-      adminNewPhoto.mediaUrl = res.url
-      showToast('✓ Bilden har laddats upp!')
-    }
+    showToast(`⏳ Laddar upp ${file.name}...`)
+    const url = await doUploadFile(file)
+    adminNewPhoto.mediaUrl = url
+    showToast('✓ Bilden har laddats upp!')
   } catch (err: any) {
-    showToast(`⚠️ Uppladdning misslyckades: ${err?.data?.message || err?.message || 'Fel'}`)
+    showToast(`⚠️ Uppladdning misslyckades: ${err?.message || 'Fel vid uppladdning'}`)
   } finally {
     isUploadingAdmin.value = false
     input.value = ''

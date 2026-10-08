@@ -343,7 +343,7 @@ const scrollTo = (id: string) => {
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Låtar & Repertoar</h3>
             <p class="text-xs text-base-content/80">
-              Hantera hela repertoaren. Ladda upp egna ljudfiler (MP3, WAV, AAC, M4A upp till 50 MB) för oberoende uppspelning i sajtens jukebox, ange text & ackord, skapa vintage vinylomslag i AI Single Cover Studio samt dela valfri låt direkt till Facebook.
+              Hantera hela repertoaren. Ladda upp egna ljudfiler (MP3, WAV, AAC, M4A upp till 50 MB) med snabb direktuppladdning från webbläsaren till Vercel Blob med procentindikator, ange text & ackord, skapa vintage vinylomslag i AI Single Cover Studio samt dela valfri låt direkt till Facebook.
             </p>
           </div>
           <NuxtLink to="/admin/songs" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -694,7 +694,7 @@ const scrollTo = (id: string) => {
           </li>
           <li><strong>Automatisk CI & Git Pre-commit Spärr (Regressionsskydd):</strong> En Git pre-commit-hook (<code class="text-secondary font-mono text-xs">.githooks/pre-commit</code>) och GitHub Actions CI-pipeline (<code class="text-secondary font-mono text-xs">.github/workflows/ci.yml</code>) körs automatiskt vid varje commit och pull request. Om någon sparfunktion någonsin skulle sluta fungera avbryts åtgärden omedelbart för att förhindra att trasig kod når produktion.</li>
           <li><strong>Realtidsuppdateringar i Admin & Cache-skydd:</strong> Samtliga administrationssidor använder dubbelspärr mot webbläsarcachning (<code class="text-secondary font-mono text-xs">Cache-Control: no-store, no-cache</code>) så att sparade ändringar på bandmedlemmar, gig, låtar och setlists alltid syns omedelbart och består vid omladdning.</li>
-          <li><strong>Hosting:</strong> Sidan driftas på Vercels globala servrar med automatisk SSL-kryptering (HTTPS) och automatisk optimering av alla bilder.</li>
+          <li><strong>Hosting & Lagring (Vercel Blob Client Uploads):</strong> Sidan driftas på Vercels globala servrar med automatisk SSL-kryptering (HTTPS). Ljudfiler och stora mediefiler upp till 50 MB laddas upp direkt från webbläsaren till Vercel Blob via säkrade engångstoken, vilket kringgår Vercels serverless-gräns på 4.5 MB och ger blixtsnabb uppladdning med realtidsprocent och tydliga felmeddelanden på svenska.</li>
           <li><strong>Nyhetsbrev & E-post:</strong> Formulär på sajten skickar bekräftelser och sparar prenumeranter via Brevo.</li>
           <li><strong>Ingen kod i vardagen:</strong> Allt innehåll uppdateras via detta administrationsgränssnitt!</li>
         </ul>

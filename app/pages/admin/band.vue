@@ -22,30 +22,21 @@ const { data: bandMembers, refresh: refreshBand } = await useFetch<any[]>('/api/
   headers: { 'Cache-Control': 'no-cache' },
 })
 
-const isUploading = ref(false)
+const { isUploading, uploadAdminFile } = useAdminUpload()
 const uploadFile = async (event: Event, targetCallback: (url: string) => void) => {
   const input = event.target as HTMLInputElement
   if (!input.files || input.files.length === 0) return
   const file = input.files[0]
   if (!file) return
 
-  const formData = new FormData()
-  formData.append('file', file)
-  isUploading.value = true
-
   try {
-    const res = await $fetch<{ success: boolean; url: string }>('/api/admin/upload', {
-      method: 'POST',
-      body: formData,
-    })
-    if (res.success && res.url) {
-      targetCallback(res.url)
-      showToast('✓ Bilden har laddats upp!')
-    }
+    showToast(`⏳ Laddar upp ${file.name}...`)
+    const url = await uploadAdminFile(file)
+    targetCallback(url)
+    showToast('✓ Bilden har laddats upp!')
   } catch (err: any) {
-    showToast(`⚠️ Uppladdning misslyckades: ${err?.data?.message || err?.message || 'Fel'}`)
+    showToast(`⚠️ Uppladdning misslyckades: ${err?.message || 'Fel vid uppladdning'}`)
   } finally {
-    isUploading.value = false
     input.value = ''
   }
 }

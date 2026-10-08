@@ -79,28 +79,24 @@ watch(
   { immediate: true },
 )
 
+const { uploadAdminFile } = useAdminUpload()
+
 const handleAvatarUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement
   if (!input.files || input.files.length === 0) return
   const file = input.files[0]
   if (!file) return
 
-  const formData = new FormData()
-  formData.append('file', file)
   isUploadingAvatar.value = true
 
   try {
-    const res = await $fetch<{ success: boolean; url: string }>('/api/admin/upload', {
-      method: 'POST',
-      body: formData,
-    })
-    if (res.success && res.url) {
-      profileForm.avatarUrl = res.url
-      showToast('✓ Profilbild uppladdad!')
-    }
+    showToast(`⏳ Laddar upp ${file.name}...`)
+    const url = await uploadAdminFile(file)
+    profileForm.avatarUrl = url
+    showToast('✓ Profilbild uppladdad!')
   } catch (err: unknown) {
-    const errorObj = err as { data?: { message?: string }; message?: string }
-    showToast(`⚠️ Uppladdning misslyckades: ${errorObj?.data?.message || errorObj?.message || 'Fel'}`)
+    const msg = err instanceof Error ? err.message : 'Fel vid uppladdning'
+    showToast(`⚠️ Uppladdning misslyckades: ${msg}`)
   } finally {
     isUploadingAvatar.value = false
     input.value = ''

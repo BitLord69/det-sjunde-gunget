@@ -7,4 +7,5 @@
 4. **Continuous Help Page Synchronization:** Whenever functionality, admin routes, settings, or workflows are added, modified, moved, or removed, the band manual on the help page ([app/pages/admin/help.vue](file:///c:/Vue%20projects/DetSjundeGunget/app/pages/admin/help.vue)) MUST always be updated in the same step.
 5. **Explicit Git Push Only:** NEVER commit or push to git automatically. Only execute `git commit` or `git push` when the user explicitly requests it (e.g. "pusha till git", "push it").
 6. **/prestanda Command Integration:** Whenever the user invokes `/prestanda` or asks for a performance, architecture, security, or quality check, follow the `prestanda` skill protocol to conduct a thorough four-pillar audit (Modularity, Code Quality, Security, Performance) and present the results in a copyable markdown codeblock without making any code modifications prior to explicit user approval.
+7. **Always Assume Production Environment:** Always assume that tests, uploads, behaviors, and user reports refer to the live production environment (Vercel) unless the user explicitly states otherwise.
 

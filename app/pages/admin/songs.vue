@@ -40,41 +40,30 @@ const { data: songsData, refresh: refreshSongs } = await useFetch<Song[]>('/api/
 const { data: hashtagsData } = await useFetch<AdminHashtag[]>('/api/admin/hashtags', { default: () => [] })
 const { data: songsStatsData } = await useFetch<{ stats: SongStatEntry[]; lookupById: Record<string, number>; lookupByTitle: Record<string, number> }>('/api/admin/songs/stats')
 
-const isUploading = ref(false)
+const { isUploading, uploadProgress, uploadAdminFile } = useAdminUpload()
+
 const uploadFile = async (event: Event, targetCallback: (url: string) => void) => {
   const input = event.target as HTMLInputElement
   if (!input.files || input.files.length === 0) return
   const file = input.files[0]
   if (!file) return
 
-  // Klientvalidering: Max 50 MB
-  const maxBytes = 50 * 1024 * 1024
-  if (file.size > maxBytes) {
-    const sizeMb = (file.size / (1024 * 1024)).toFixed(1)
-    showToast(`⚠️ Filen är för stor (${sizeMb} MB). Maximal tillåten storlek är 50 MB.`)
-    input.value = ''
-    return
-  }
-
-  const formData = new FormData()
-  formData.append('file', file)
-  isUploading.value = true
-
   try {
-    const res = await $fetch<{ success: boolean; url: string }>('/api/admin/upload', {
-      method: 'POST',
-      body: formData,
+    showToast(`⏳ Laddar upp ${file.name}...`)
+    const url = await uploadAdminFile(file, {
+      onProgress: (p) => {
+        if (p > 0 && p < 100) {
+          showToast(`⏳ Laddar upp ${file.name} (${p}%)...`)
+        }
+      },
     })
-    if (res.success && res.url) {
-      targetCallback(res.url)
-      showToast('✓ Filen har laddats upp!')
-    }
+    targetCallback(url)
+    showToast('✓ Filen har laddats upp!')
   } catch (err: unknown) {
     console.error('[Upload Failed]:', err)
-    const errorObj = err as { data?: { message?: string }; message?: string }
-    showToast(`⚠️ Uppladdning misslyckades: ${errorObj?.data?.message || errorObj?.message || 'Serverfel vid uppladdning'}`)
+    const msg = err instanceof Error ? err.message : 'Kunde inte ladda upp filen'
+    showToast(`⚠️ Uppladdning misslyckades: ${msg}`)
   } finally {
-    isUploading.value = false
     input.value = ''
   }
 }
@@ -524,7 +513,8 @@ const sortedSongs = computed(() => {
                 class="input input-bordered w-full flex-grow bg-base-200 input-sm font-mono text-xs"
               >
               <label class="btn btn-primary btn-sm rounded-lg cursor-pointer whitespace-nowrap justify-center w-full sm:w-auto" :class="isUploading ? 'loading' : ''">
-                <span>📁 Ladda upp ljudfil</span>
+                <span v-if="isUploading && uploadProgress > 0">⏳ Laddar upp ({{ uploadProgress }}%)...</span>
+                <span v-else>📁 Ladda upp ljudfil</span>
                 <input
                   type="file"
                   accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg"
@@ -570,7 +560,8 @@ const sortedSongs = computed(() => {
 
                 <!-- Manual File Upload -->
                 <label class="btn btn-outline btn-secondary btn-sm rounded-lg cursor-pointer whitespace-nowrap justify-center" :class="isUploading ? 'loading' : ''">
-                  <span>📷 Ladda upp</span>
+                  <span v-if="isUploading && uploadProgress > 0">⏳ ({{ uploadProgress }}%)</span>
+                  <span v-else>📷 Ladda upp</span>
                   <input
                     type="file"
                     accept="image/*"

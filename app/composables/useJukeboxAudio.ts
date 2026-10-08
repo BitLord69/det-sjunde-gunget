@@ -49,6 +49,7 @@ export function useJukeboxAudio() {
   let crackleAudio: HTMLAudioElement | null = null
   let htmlAudio: HTMLAudioElement | null = null
   let crackleFadeTimeout: any = null
+  let leadInTimeout: any = null
 
   // Ensure AudioContext is initialized on user interaction
   const getAudioContext = () => {
@@ -147,21 +148,24 @@ export function useJukeboxAudio() {
       if (!crackleAudio) {
         crackleAudio = new Audio('/audio/vinyl-crackle.mp3')
         crackleAudio.loop = true
+        crackleAudio.preload = 'auto'
       }
       crackleAudio.currentTime = 0
-      // Start with prominent lead-in level
-      crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.75)
-      crackleAudio.play().catch(() => {
+      // Full prominent lead-in level (100% volume) so the authentic vinyl needle drop and groove rasp is clearly heard
+      crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 1.0)
+      crackleAudio.play().catch((err) => {
+        console.warn('[JukeboxAudio] crackleAudio.play failed, falling back to synth needle drop:', err)
         playSynthNeedleDrop()
       })
 
-      // After 2 seconds of lead-in, smoothly reduce to warm background bed level
+      // After 1.6s of lead-in groove, smoothly transition to a warm background bed level that remains distinctly audible (70% volume)
       crackleFadeTimeout = setTimeout(() => {
         if (crackleAudio && isAudioPlaying.value) {
-          crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.3)
+          crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.70)
         }
-      }, 2000)
-    } catch {
+      }, 1600)
+    } catch (err) {
+      console.warn('[JukeboxAudio] playNeedleDrop caught error:', err)
       playSynthNeedleDrop()
     }
   }
@@ -304,14 +308,19 @@ export function useJukeboxAudio() {
       htmlAudio = null
     }
 
-    // Play tactile needle drop & continuous vinyl rasp
+    // Play tactile needle drop & continuous vinyl rasp immediately
     playNeedleDrop()
     isAudioPlaying.value = true
 
     if (song.audioUrl) {
       audioSourceType.value = 'file'
       htmlAudio = new Audio(song.audioUrl)
-      htmlAudio.volume = isMuted.value ? 0 : volume.value
+      htmlAudio.preload = 'auto'
+
+      // Start at 0 volume so the vinyl needle drop & lead-in groove rasp is heard ALONE (1.6s),
+      // while simultaneously invoking play() inside the synchronous user-gesture turn so mobile & desktop
+      // browsers grant autoplay permission without delays or promise rejections!
+      htmlAudio.volume = 0
 
       htmlAudio.addEventListener('timeupdate', () => {
         if (htmlAudio) {
@@ -338,22 +347,36 @@ export function useJukeboxAudio() {
         }
       })
 
-      // IMPORTANT: Invoke play() IMMEDIATELY so the browser preserves User Activation gesture!
-      // Delaying play() inside a 1000ms setTimeout causes mobile & strict desktop browsers
-      // to reject the promise with NotAllowedError, which caused the blues synth fallback!
+      // Capture browser gesture permission immediately
       htmlAudio.play().catch((err) => {
         console.warn('[JukeboxAudio] HTML5 audio direct play failed, trying fallback:', err)
         startBluesSynth(song.code || 'A1')
       })
+
+      // After 1.6s authentic needle lead-in rasp, start the song from 0.0s with full volume!
+      leadInTimeout = setTimeout(() => {
+        if (htmlAudio && isAudioPlaying.value) {
+          htmlAudio.currentTime = 0
+          htmlAudio.volume = isMuted.value ? 0 : volume.value
+        }
+      }, 1600)
     } else {
-      // No MP3 audio file uploaded for this track -> play blues synth groove
-      startBluesSynth(song.code || 'A1')
+      // No MP3 audio file uploaded for this track -> play blues synth groove after lead-in
+      leadInTimeout = setTimeout(() => {
+        if (isAudioPlaying.value) {
+          startBluesSynth(song.code || 'A1')
+        }
+      }, 1600)
     }
   }
 
   const pauseTrack = () => {
     isAudioPlaying.value = false
     stopSynth()
+    if (leadInTimeout) {
+      clearTimeout(leadInTimeout)
+      leadInTimeout = null
+    }
     if (htmlAudio) {
       htmlAudio.pause()
     }
@@ -380,12 +403,13 @@ export function useJukeboxAudio() {
     isAudioPlaying.value = true
 
     if (htmlAudio && audioSourceType.value === 'file') {
+      htmlAudio.volume = isMuted.value ? 0 : volume.value
       htmlAudio.play().catch((err) => {
         console.warn('[JukeboxAudio] Error resuming HTML5 audio, reloading track:', err)
         playTrack(targetSong)
       })
       if (crackleAudio) {
-        crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
+        crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.70)
         crackleAudio.play().catch(() => {})
       }
     } else if (targetSong.audioUrl) {
@@ -393,7 +417,7 @@ export function useJukeboxAudio() {
     } else {
       startBluesSynth(targetSong.code || 'A1')
       if (crackleAudio) {
-        crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
+        crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.70)
         crackleAudio.play().catch(() => {})
       }
     }
@@ -405,7 +429,7 @@ export function useJukeboxAudio() {
       htmlAudio.volume = isMuted.value ? 0 : volume.value
     }
     if (crackleAudio) {
-      crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.22)
+      crackleAudio.volume = isMuted.value ? 0 : Math.min(1, volume.value * 0.70)
     }
     if (synthGainNode && audioCtx) {
       synthGainNode.gain.setValueAtTime(isMuted.value ? 0 : volume.value * 0.22, audioCtx.currentTime)
@@ -441,6 +465,10 @@ export function useJukeboxAudio() {
     if (crackleFadeTimeout) {
       clearTimeout(crackleFadeTimeout)
       crackleFadeTimeout = null
+    }
+    if (leadInTimeout) {
+      clearTimeout(leadInTimeout)
+      leadInTimeout = null
     }
   })
 

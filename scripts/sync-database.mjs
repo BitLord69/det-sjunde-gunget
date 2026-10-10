@@ -325,6 +325,7 @@ const tables = [
         epk_title_sv text,
         epk_title_en text,
         epk_resolution text,
+        show_on_band_page integer DEFAULT 0 NOT NULL,
         created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
         updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
       )
@@ -343,6 +344,7 @@ const tables = [
       { name: 'epk_title_sv', definition: 'text' },
       { name: 'epk_title_en', definition: 'text' },
       { name: 'epk_resolution', definition: 'text' },
+      { name: 'show_on_band_page', definition: 'integer DEFAULT 0 NOT NULL' },
       { name: 'created_at', definition: 'integer DEFAULT (unixepoch() * 1000) NOT NULL' },
       { name: 'updated_at', definition: 'integer DEFAULT (unixepoch() * 1000) NOT NULL' },
     ],

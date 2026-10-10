@@ -32,6 +32,7 @@ export default defineEventHandler(async (event) => {
         epkTitleSv: body.epkTitleSv || null,
         epkTitleEn: body.epkTitleEn || null,
         epkResolution: body.epkResolution || null,
+        showOnBandPage: Boolean(body.showOnBandPage),
         updatedAt: now,
       })
       .where(eq(galleryItems.id, body.id))
@@ -52,6 +53,7 @@ export default defineEventHandler(async (event) => {
       epkTitleSv: body.epkTitleSv || null,
       epkTitleEn: body.epkTitleEn || null,
       epkResolution: body.epkResolution || null,
+      showOnBandPage: Boolean(body.showOnBandPage),
       createdAt: now,
       updatedAt: now,
     })

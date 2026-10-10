@@ -157,7 +157,7 @@ export const galleryItems = sqliteTable('gallery_items', {
   }).notNull(),
   mediaUrl: text('media_url').notNull(),
   frameStyle: text('frame_style', {
-    enum: ['polaroid', 'taped', 'grunge', 'wood', 'pinned', 'random'],
+    enum: ['polaroid', 'black', 'taped', 'grunge', 'wood', 'pinned', 'random'],
   }).default('random'),
   rotation: integer('rotation').default(0),
   captionSv: text('caption_sv'),
@@ -169,6 +169,7 @@ export const galleryItems = sqliteTable('gallery_items', {
   epkTitleSv: text('epk_title_sv'),
   epkTitleEn: text('epk_title_en'),
   epkResolution: text('epk_resolution'),
+  showOnBandPage: integer('show_on_band_page', { mode: 'boolean' }).notNull().default(false),
   ...timestamps,
 })
 

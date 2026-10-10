@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { GalleryItem } from '~/types'
+
 const { t, locale } = useI18n()
 
 useSeoMeta({
@@ -7,6 +9,25 @@ useSeoMeta({
 })
 
 const { data: bandMembers } = await useFetch('/api/band')
+
+// Hämta/återanvänd bildpoolen från den globala storen
+const { bandPhotos, fetchBandPhotos } = useBandPhotos()
+await fetchBandPhotos()
+
+// Välj ett slumpmässigt foto ur poolen varje gång sidan renderas / laddas
+const currentPhoto = ref<GalleryItem | null>(null)
+
+if (bandPhotos.value && bandPhotos.value.length > 0) {
+  const initialIndex = Math.floor(Math.random() * bandPhotos.value.length)
+  currentPhoto.value = bandPhotos.value[initialIndex] || null
+}
+
+onMounted(() => {
+  if (bandPhotos.value && bandPhotos.value.length > 0) {
+    const randomIndex = Math.floor(Math.random() * bandPhotos.value.length)
+    currentPhoto.value = bandPhotos.value[randomIndex] || null
+  }
+})
 </script>
 
 <template>
@@ -33,14 +54,15 @@ const { data: bandMembers } = await useFetch('/api/band')
         </div>
       </div>
 
+      <!-- Slumpad bild i klassisk träram från bandets bildpool (eller fallback) -->
       <div class="frame-wood rounded-2xl overflow-hidden shadow-2xl">
         <NuxtImg
-          src="/media/band/1..7de Gunget photoshoot1 21-6 26-21.jpg"
-          :alt="t('common.band_photo_alt')"
+          :src="currentPhoto?.mediaUrl || '/media/band/1..7de Gunget photoshoot1 21-6 26-21.jpg'"
+          :alt="locale === 'en' && currentPhoto?.altTextEn ? currentPhoto.altTextEn : (currentPhoto?.altTextSv || t('common.band_photo_alt'))"
           class="w-full aspect-[4/3] object-cover filter contrast-105"
         />
         <div class="p-3 text-center text-xs font-heading font-bold text-primary bg-neutral">
-          {{ t('about.photo_caption') }}
+          {{ (locale === 'en' && currentPhoto?.captionEn ? currentPhoto.captionEn : currentPhoto?.captionSv) || t('about.photo_caption') }}
         </div>
       </div>
     </div>

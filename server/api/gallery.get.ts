@@ -12,6 +12,15 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const category = query.category as 'photo' | 'video' | 'fan_central' | undefined
   const epk = query.epk === 'true'
+  const band = query.band === 'true'
+
+  if (band) {
+    return await db
+      .select()
+      .from(galleryItems)
+      .where(eq(galleryItems.showOnBandPage, true))
+      .orderBy(desc(galleryItems.createdAt))
+  }
 
   if (epk) {
     return await db

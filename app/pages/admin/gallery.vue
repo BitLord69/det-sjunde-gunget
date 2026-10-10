@@ -47,6 +47,7 @@ const galForm = reactive({
   epkTitleSv: '',
   epkTitleEn: '',
   epkResolution: '',
+  showOnBandPage: false,
   postToSocials: false,
 })
 
@@ -216,7 +217,7 @@ const uploadFile = async (event: Event, targetCallback: (url: string) => void) =
 }
 
 // ---------------- GALLERY FILTER & EPK ----------------
-const activeFilter = ref<'all' | 'epk' | 'documents'>('all')
+const activeFilter = ref<'all' | 'epk' | 'band' | 'documents'>('all')
 
 // ---------------- EPK DOCUMENTS (PDF & PROMOTER ASSETS) ----------------
 const { data: epkDocs, refresh: refreshDocs } = await useFetch<any[]>('/api/admin/epk/documents')
@@ -333,11 +334,18 @@ const filteredGalleryItems = computed(() => {
   if (activeFilter.value === 'epk') {
     return items.filter((item: any) => item.isEpk)
   }
+  if (activeFilter.value === 'band') {
+    return items.filter((item: any) => item.showOnBandPage)
+  }
   return items
 })
 
 const epkCount = computed(() => {
   return (galleryItems.value || []).filter((item: any) => item.isEpk).length
+})
+
+const bandPageCount = computed(() => {
+  return (galleryItems.value || []).filter((item: any) => item.showOnBandPage).length
 })
 
 const toggleEpk = async (item: any) => {
@@ -363,6 +371,23 @@ const toggleEpk = async (item: any) => {
     }
   } catch (err: any) {
     showToast(`⚠️ Kunde inte uppdatera EPK-status: ${err.message}`)
+  }
+}
+
+const toggleBandPage = async (item: any) => {
+  try {
+    const res = await $fetch<{ success: boolean; showOnBandPage: boolean }>('/api/admin/gallery/toggle-band-page', {
+      method: 'POST',
+      body: { id: item.id },
+    })
+    if (res.success) {
+      item.showOnBandPage = res.showOnBandPage
+      const { fetchBandPhotos } = useBandPhotos()
+      await fetchBandPhotos(true)
+      showToast(res.showOnBandPage ? '✓ Bilden är nu markerad för Bandsidan!' : '✓ Bilden togs bort från Bandsidan.')
+    }
+  } catch (err: any) {
+    showToast(`⚠️ Kunde inte uppdatera Bandsidan-status: ${err.message}`)
   }
 }
 
@@ -392,6 +417,7 @@ const openAddGal = () => {
   galForm.epkTitleSv = ''
   galForm.epkTitleEn = ''
   galForm.epkResolution = ''
+  galForm.showOnBandPage = activeFilter.value === 'band'
   galForm.postToSocials = false
   selectedGalTags.value = availableGalTags.value.map((t) => t.tag)
   editingGal.value = 'new'
@@ -420,6 +446,7 @@ const openEditGal = (g: any) => {
   galForm.epkTitleSv = g.epkTitleSv || ''
   galForm.epkTitleEn = g.epkTitleEn || ''
   galForm.epkResolution = g.epkResolution || ''
+  galForm.showOnBandPage = Boolean(g.showOnBandPage)
   galForm.postToSocials = false
   selectedGalTags.value = availableGalTags.value.map((t) => t.tag)
   editingGal.value = g.id
@@ -444,6 +471,8 @@ const saveGalleryItem = async () => {
   })
   editingGal.value = null
   await refreshGallery()
+  const { fetchBandPhotos } = useBandPhotos()
+  await fetchBandPhotos(true)
   if (res?.social) {
     if (res.social.success) {
       showToast(`✓ Bilden sparades! 📱 ${res.social.message}`)
@@ -563,6 +592,14 @@ const deleteGalleryItem = async (id: string) => {
         <button
           type="button"
           class="btn btn-sm rounded-xl cursor-pointer whitespace-nowrap"
+          :class="activeFilter === 'band' ? 'btn-accent font-bold text-accent-content shadow-md' : 'btn-ghost text-base-content/70'"
+          @click="activeFilter = 'band'"
+        >
+          🎸 Bandsidan ({{ bandPageCount }})
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm rounded-xl cursor-pointer whitespace-nowrap"
           :class="activeFilter === 'documents' ? 'btn-secondary font-bold text-secondary-content shadow-md' : 'btn-ghost text-base-content/70'"
           @click="activeFilter = 'documents'"
         >
@@ -594,6 +631,8 @@ const deleteGalleryItem = async (id: string) => {
             >
               <FramedPhoto
                 :media-url="galForm.mediaUrl"
+                :caption-sv="galForm.captionSv"
+                :caption-en="galForm.captionEn"
                 :frame-style="galForm.frameStyle || 'random'"
                 :rotation="galForm.rotation || 0"
                 pin-color="gold"
@@ -625,6 +664,7 @@ const deleteGalleryItem = async (id: string) => {
               <option value="random">🎲 Slumpad ramstil (Auto-variation)</option>
               <option value="pinned">📌 Nålat (3D Kartnål / Pushpin)</option>
               <option value="polaroid">📷 Vintage Polaroid (med tejp)</option>
+              <option value="black">🖤 Stilren svart ram</option>
               <option value="taped">🏷️ Scenprint (mörk med tejpade hörn)</option>
               <option value="grunge">🎞️ Sliten mörkrumskant (grunge)</option>
               <option value="wood">🖼️ Klassisk trä- & mässingsram</option>
@@ -747,6 +787,21 @@ const deleteGalleryItem = async (id: string) => {
             </div>
           </div>
 
+          <!-- Bandsidan Slumpgenerator Toggle -->
+          <div class="sm:col-span-2 p-4 bg-accent/10 rounded-xl border border-accent/30 space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="font-bold text-xs text-accent flex items-center gap-1.5">
+                  <span>🎸</span> Visa på Bandsidan (/about)
+                </span>
+                <p class="text-[11px] text-base-content/70">
+                  Markerade bilder ingår i bandets bildpool och slumpas automatiskt som huvudbild när besökare besöker om-oss-sidan.
+                </p>
+              </div>
+              <input v-model="galForm.showOnBandPage" type="checkbox" class="toggle toggle-accent toggle-sm" >
+            </div>
+          </div>
+
           <!-- Social Sharing & Hashtags Toggle -->
           <div class="sm:col-span-2 p-4 bg-base-200/80 rounded-xl border border-primary/20 space-y-3">
             <div class="flex items-center justify-between">
@@ -826,12 +881,15 @@ const deleteGalleryItem = async (id: string) => {
               />
             </div>
             <div class="flex items-center justify-between gap-2 mb-2">
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="badge badge-xs font-mono font-bold uppercase text-[9px]">
                   {{ item.category }}
                 </span>
                 <span v-if="item.isEpk" class="badge badge-warning badge-xs font-mono font-bold text-[9px]">
                   ⭐ EPK
+                </span>
+                <span v-if="item.showOnBandPage" class="badge badge-accent badge-xs font-mono font-bold text-[9px]">
+                  🎸 Bandsidan
                 </span>
               </div>
               <span class="text-[10px] font-mono text-secondary">
@@ -858,6 +916,7 @@ const deleteGalleryItem = async (id: string) => {
                 <option value="random">🎲 Slumpad</option>
                 <option value="pinned">📌 Nålat</option>
                 <option value="polaroid">📷 Polaroid</option>
+                <option value="black">🖤 Svart</option>
                 <option value="taped">🏷️ Tejpat</option>
                 <option value="grunge">🎞️ Grunge</option>
                 <option value="wood">🖼️ Träram</option>
@@ -866,6 +925,16 @@ const deleteGalleryItem = async (id: string) => {
 
             <!-- Action buttons (Right side) -->
             <div class="flex flex-wrap items-center gap-1.5 justify-end">
+              <button
+                type="button"
+                class="btn btn-xs rounded cursor-pointer inline-flex items-center gap-1 font-sans whitespace-nowrap"
+                :class="item.showOnBandPage ? 'btn-accent font-bold text-accent-content' : 'btn-ghost border border-base-content/20 text-base-content/70'"
+                :title="item.showOnBandPage ? 'Ta bort från bandsidan' : 'Visa på bandsidan'"
+                @click="toggleBandPage(item)"
+              >
+                <span>🎸</span>
+                <span>{{ item.showOnBandPage ? 'Bandsidan' : '+ Bandsidan' }}</span>
+              </button>
               <button
                 type="button"
                 class="btn btn-xs rounded cursor-pointer inline-flex items-center gap-1 font-sans whitespace-nowrap"

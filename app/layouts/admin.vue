@@ -2,29 +2,12 @@
 const { adminUser, logout } = useAdminAuth()
 const route = useRoute()
 
-// Dedicated cookie-based theme persistence for Admin
-const adminTheme = useCookie<'dark' | 'light'>('admin_theme', {
-  maxAge: 60 * 60 * 24 * 365,
-  default: () => 'dark',
-})
-
-const applyTheme = (theme: 'dark' | 'light') => {
-  adminTheme.value = theme
-  if (import.meta.client) {
-    document.documentElement.setAttribute('data-theme', theme)
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark')
-      document.documentElement.classList.remove('light')
-    } else {
-      document.documentElement.classList.add('light')
-      document.documentElement.classList.remove('dark')
-    }
-  }
-}
+const colorMode = useColorMode()
+const isDark = computed(() => colorMode.value === 'dark')
 
 const toggleTheme = () => {
-  const next = adminTheme.value === 'dark' ? 'light' : 'dark'
-  applyTheme(next)
+  const next = isDark.value ? 'light' : 'dark'
+  colorMode.preference = next
 }
 
 const isProfilePage = computed(() => route.path === '/admin/profile')
@@ -48,10 +31,6 @@ const handleMobileLogout = async () => {
 // Auto-close menu when changing route
 watch(() => route.path, () => {
   isMobileUserMenuOpen.value = false
-})
-
-onMounted(() => {
-  applyTheme(adminTheme.value || 'dark')
 })
 </script>
 
@@ -110,20 +89,23 @@ onMounted(() => {
             <span class="text-[10px]" :class="isProfilePage ? 'text-primary-content' : 'text-primary/70'">⚙️</span>
           </NuxtLink>
 
-          <!-- Light / Dark Mode Toggle with Dedicated Cookie -->
+          <!-- Light / Dark Mode Toggle with Nuxt Color Mode (Icon only) -->
           <ClientOnly>
             <button
               type="button"
-              class="btn btn-sm rounded-full gap-2 transition-all duration-300 font-bold border"
-              :class="adminTheme === 'dark'
+              class="btn btn-sm btn-circle transition-all duration-300 font-bold border"
+              :class="isDark
                 ? 'bg-base-200 text-yellow-300 border-primary/30 hover:border-primary hover:bg-base-300'
                 : 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200 shadow-sm'"
-              :title="adminTheme === 'dark' ? 'Växla till ljust läge' : 'Växla till mörkt läge'"
+              :title="isDark ? 'Växla till ljust läge' : 'Växla till mörkt läge'"
+              aria-label="Växla mörkt och ljust läge"
               @click="toggleTheme"
             >
-              <span class="text-base">{{ adminTheme === 'dark' ? '🌙' : '☀️' }}</span>
-              <span class="text-xs font-mono hidden lg:inline">{{ adminTheme === 'dark' ? 'Mörkt' : 'Ljust' }}</span>
+              <span class="text-base">{{ isDark ? '🌙' : '☀️' }}</span>
             </button>
+            <template #fallback>
+              <div class="w-8 h-8 rounded-full flex items-center justify-center border border-primary/20 text-sm">🌙</div>
+            </template>
           </ClientOnly>
 
           <!-- Back to Public Site -->
@@ -152,14 +134,18 @@ onMounted(() => {
             <button
               type="button"
               class="w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 cursor-pointer text-sm"
-              :class="adminTheme === 'dark'
+              :class="isDark
                 ? 'bg-base-200 text-yellow-300 border-primary/30 active:scale-95'
                 : 'bg-amber-100 text-amber-900 border-amber-300 active:scale-95 shadow-xs'"
-              :title="adminTheme === 'dark' ? 'Växla till ljust läge' : 'Växla till mörkt läge'"
+              :title="isDark ? 'Växla till ljust läge' : 'Växla till mörkt läge'"
+              aria-label="Växla mörkt och ljust läge"
               @click="toggleTheme"
             >
-              <span>{{ adminTheme === 'dark' ? '🌙' : '☀️' }}</span>
+              <span>{{ isDark ? '🌙' : '☀️' }}</span>
             </button>
+            <template #fallback>
+              <div class="w-9 h-9 rounded-full flex items-center justify-center border border-primary/20 text-sm">🌙</div>
+            </template>
           </ClientOnly>
 
           <!-- Mobile User Menu Button -->

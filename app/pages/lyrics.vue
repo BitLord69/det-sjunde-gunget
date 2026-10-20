@@ -139,7 +139,8 @@ interface LyricBlock {
 
 const parseLyricsBlocks = (text: string | null): LyricBlock[] => {
   if (!text) return []
-  const rawBlocks = text.split(/\n\s*\n/)
+  const cleanedText = stripLrcTimestamps(text)
+  const rawBlocks = cleanedText.split(/\n\s*\n/)
   const blocks: LyricBlock[] = []
 
   for (const raw of rawBlocks) {

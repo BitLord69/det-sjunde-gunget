@@ -228,7 +228,15 @@ const scrollTo = (id: string) => {
             <tr class="hover:bg-base-100/50">
               <td class="font-bold text-primary px-4 py-3">Presskit & Tech Rider (EPK)</td>
               <td class="font-mono text-secondary px-4 py-3">/epk</td>
-              <td class="px-4 py-3">Dedikerad arrangörs- och pressresurs. Innehåller högupplösta pressfoton (300 DPI som styrs dynamiskt från bildgalleriet i CMS:en), logotyper, kort/lång presstext med 1-klicks kopiering, visuell scenplot, 13-kanalers patchlista (input list), hospitality rider, textfilsexport (.txt) och ren A4-utskrift (@media print).</td>
+              <td class="px-4 py-3">
+                <p class="font-medium text-base-content/90 mb-1">Dedikerad arrangörs- och pressresurs med allt på ett ställe:</p>
+                <ul class="text-xs space-y-1 text-base-content/80 list-disc list-inside">
+                  <li>Pressfoton (300 DPI) & logotyper</li>
+                  <li>Kort & lång presstext med 1-klicks kopiering</li>
+                  <li>Visuell scenplot, 13-kanalers patchlista & hospitality rider</li>
+                  <li>Textfilsexport (.txt) & ren, bläckbesparande A4-utskrift (@media print)</li>
+                </ul>
+              </td>
               <td class="px-4 py-3 text-right">
                 <NuxtLink to="/epk" target="_blank" class="btn btn-ghost btn-xs text-primary underline">Öppna ↗</NuxtLink>
               </td>
@@ -263,14 +271,28 @@ const scrollTo = (id: string) => {
           </p>
         </div>
 
-        <div class="bg-base-200/60 p-5 rounded-2xl border border-primary/20 space-y-2">
+        <div class="bg-base-200/60 p-5 rounded-2xl border border-primary/20 space-y-2.5">
           <div class="flex items-center gap-2">
             <span class="text-xl">📻</span>
             <h3 class="font-heading text-base font-bold text-primary">Retro Title Strips & Jukebox-knappsats</h3>
           </div>
-          <p class="text-xs sm:text-sm text-base-content/80">
-            På musiksidan sorteras låtarna som i en klassisk Wurlitzer-jukebox: A-sidor (egna låtar) till vänster och B-sidor (covers) till höger. Besökare kan knappa in A1, B2 osv. på knappsatsen för att välja spår. Uppladdade ljudfiler spelas direkt på den snurrande skivtallriken med vinylknaster, och för låtar med streaminglänk växlar jukeboxen smidigt till den inbäddade spelaren (Spotify/YouTube).
+          <p class="text-xs sm:text-sm text-base-content/85">
+            Musiksidan fungerar som en klassisk vintage Wurlitzer-jukebox med interaktiv kontroll:
           </p>
+          <ul class="text-xs sm:text-sm text-base-content/80 space-y-1 pl-1">
+            <li class="flex items-start gap-1.5">
+              <span class="text-primary font-bold">•</span>
+              <span><strong>A- & B-sidor:</strong> Egna låtar till vänster (A-sidor) och covers till höger (B-sidor).</span>
+            </li>
+            <li class="flex items-start gap-1.5">
+              <span class="text-primary font-bold">•</span>
+              <span><strong>Knappsats:</strong> Välj spår via knapparna (A1, B2 osv.) precis som på en riktig jukebox.</span>
+            </li>
+            <li class="flex items-start gap-1.5">
+              <span class="text-primary font-bold">•</span>
+              <span><strong>Skivtallrik:</strong> Uppladdade låtar snurrar med vintage vinylknaster; streaminglänkar växlar till Spotify/YouTube.</span>
+            </li>
+          </ul>
         </div>
 
         <div class="bg-base-200/60 p-5 rounded-2xl border border-primary/20 space-y-2">
@@ -303,31 +325,52 @@ const scrollTo = (id: string) => {
       </div>
 
       <!-- Mobilanpassning & Säkert Formulärskydd Info -->
-      <div class="bg-primary/10 p-4 sm:p-5 rounded-2xl border border-primary/30 space-y-2">
+      <div class="bg-primary/10 p-4 sm:p-5 rounded-2xl border border-primary/30 space-y-3">
         <div class="flex items-center gap-2 font-bold text-primary text-sm sm:text-base">
           <span>📱</span>
           <span>Mobiloptimerad Layout & Säkert Formulärskydd</span>
         </div>
         <p class="text-xs sm:text-sm text-base-content/85 leading-relaxed">
-          Adminpanelen är helt anpassad för mobiler och datorer. Högst upp hittar du en ren mobilheader med snabbknapp för mörkt/ljust läge samt en utfällbar användarmeny (profil, länk till sajten, manual och utloggning). På mobilen visas den aktiva adminsektionen i ett kompakt fält, och samtliga 15 adminmoduler nås snabbt och överskådligt via hamburgermenyn (<strong>☰</strong>).
+          Adminpanelen är helt anpassad för både mobiler och datorer med ett enhetligt, lättnavigerat gränssnitt:
         </p>
-        <p class="text-xs sm:text-sm text-base-content/85 leading-relaxed">
-          <strong>🛡️ Enhetligt och pålitligt formulärskydd:</strong> När du öppnar eller redigerar ett formulär (gig, låtar, bandmedlemmar, setlist, galleri, videor, taggar, inställningar etc.) markeras sektionen som aktiv med en pulserande varningsindikator. Om du klickar på en annan sektion i menyn eller på den aktiva sektionen för att avbryta, visas en garanterad in-app dialog (<em>Osparade ändringar</em>). Du kan välja att stanna kvar och fortsätta spara eller godkänna att lämna formuläret och kasta ändringarna direkt. Dialogen är inbyggd i gränssnittet och blockeras aldrig av webbläsarens popup-skydd.
-        </p>
+        <ul class="space-y-1.5 text-xs sm:text-sm text-base-content/85 pl-1">
+          <li class="flex items-start gap-2">
+            <span class="text-primary font-bold">🍔</span>
+            <span><strong>Enkel mobilmeny:</strong> Högst upp finns snabbväxling för mörkt/ljust läge och användarmeny. Alla 15 moduler nås smidigt via hamburgermenyn (<strong>☰</strong>).</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-primary font-bold">🛡️</span>
+            <span><strong>Garanterat formulärskydd:</strong> Vid redigering markeras formuläret med en pulserande varningsindikator. Om du klickar på en annan menyflik utan att spara visas en tydlig dialog där du kan välja att stanna kvar eller kasta ändringarna.</span>
+          </li>
+        </ul>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- Spelningar -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/gigs</span>
               <span class="text-xl">🗓️</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Spelningar & Gigs</h3>
-            <p class="text-xs text-base-content/80">
-              Lägg till nya spelningar, uppdatera tider, spelställe, ort och biljettlänkar samt sätt status (<strong>Kommande</strong>, <strong>Fri entré</strong>, <strong>Utsålt</strong>, <strong>Avklarat</strong> eller <strong>Inställt</strong>). Spelningar markerade som avklarade flyttas automatiskt till arkivet/tidigare spelningar. Spelningar genererar automatiskt strukturerad data (Schema.org Event) för Google Rich Results. Innehåller även autopost samt en direktknapp (<strong>📱 Dela</strong>) för att publicera valfritt sparat gig direkt till Facebook & Instagram med valbara hashtags och förhandsgranskning.
+            <p class="text-xs text-base-content/90 font-medium">
+              Lägg upp nya spelningar, uppdatera tider, spelställen och hantera biljettlänkar.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>Spelstatus:</strong> Välj <em>Kommande</em>, <em>Fri entré</em>, <em>Utsålt</em>, <em>Inställt</em> eller <em>Avklarat</em> (flyttas automatiskt till arkivet).</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>Google Rich Results:</strong> Genererar automatiskt Schema.org Event-data för sökmotorer.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📱 Dela:</strong> Posta eller förhandsgranska giget direkt till Facebook & Instagram med valda hashtags.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/gigs" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Spelningar →
@@ -336,15 +379,41 @@ const scrollTo = (id: string) => {
 
         <!-- Låtar & Repertoar -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/songs</span>
               <span class="text-xl">🎵</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Låtar & Repertoar</h3>
-            <p class="text-xs text-base-content/80">
-              Hantera hela repertoaren. Ladda upp egna ljudfiler (MP3, WAV, AAC, M4A upp till 50 MB) med snabb direktuppladdning från webbläsaren till Vercel Blob med procentindikator, ange text & ackord med snabbknapp (<strong>✨ Översätt från svenska</strong>) för engelsk låttext, skapa vintage vinylomslag i AI Single Cover Studio samt dela valfri låt direkt till Facebook.
+            <p class="text-xs text-base-content/90 font-medium">
+              Hantera hela repertoaren, egna ljudfiler och vintage vinylsingelomslag.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🎙️ Egen ljuduppladdning:</strong> MP3, WAV, AAC m.fl. upp till 50 MB direkt till Vercel Blob.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>✨ Text & Ackord:</strong> Sökbar låtbank med automatisk engelsk AI-översättning via snabbknapp.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🎨 Cover Studio:</strong> Stämplar automatiskt bandnamn, titel och slumpat retro-katalognummer på 7"-singelomslag.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>⏱️ Synka text (Tap-to-sync & AI):</strong> Stämpla textrader i takt till musiken med mellanslag eller låt Gemini AI generera tidsstämplar (LRC) för Jukeboxens rullande teleprompter med stöd för intro och solopauser.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📸 Flexibla bildkällor:</strong> Välj ur bandets 7 photoshoot-bilder, sajtens galleri, eget foto eller AI.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🔍 Förstora & Dela:</strong> Klicka på förhandsvisningsbilden för högupplöst granskning, eller dela direkt till sociala medier.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/songs" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Låtar →
@@ -353,15 +422,33 @@ const scrollTo = (id: string) => {
 
         <!-- Setlist & Scenpapper -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/setlist</span>
               <span class="text-xl">📋</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Setlist & Scenpapper</h3>
-            <p class="text-xs text-base-content/80">
-              Dra & släpp låtar i önskad ordning. Se beräknad total speltid, exportera ren textfil (.txt) eller skriv ut anpassat A4-scenpapper för monitorerna!
+            <p class="text-xs text-base-content/90 font-medium">
+              Bygg och strukturera låtordningen inför konserter och jam.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>✋ Dra & släpp:</strong> Ändra enkelt låtordning med musen på datorn eller fingret på mobilen.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>⏱️ Total speltid:</strong> Räknar automatiskt ut konsertens beräknade längd.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🖨️ A4-scenpapper:</strong> Skriv ut tydliga monitorpapper med extra stora och läsbara titlar.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📋 Exportera text:</strong> Kopiera eller spara som ren textfil (.txt) till bandchatten.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/setlist" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Setlist →
@@ -370,15 +457,29 @@ const scrollTo = (id: string) => {
 
         <!-- Riff & Idébanken -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/ideas</span>
               <span class="text-xl">🎙️</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Riff- & Idébanken</h3>
-            <p class="text-xs text-base-content/80">
-              Replokalsarkivet! Spela in röstmemo med live VU-mätare direkt i mobilen. Innehåller tap-tempo, tonartsväljare och 0.75x slow-down för att planka licks.
+            <p class="text-xs text-base-content/90 font-medium">
+              Bandets digitala replokalsarkiv för snabba musikaliska idéer och jam.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🎙️ Röstmemo:</strong> Spela in ljudidéer direkt i mobilen med grafisk live VU-mätare.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🥁 Tap Tempo:</strong> Fånga låtens BPM genom att klicka i takt, och ange grundton.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🐢 0.75x Slow-down:</strong> Spela upp i långsammare tempo för att enkelt planka licks hemma.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/ideas" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Idébanken →
@@ -387,15 +488,37 @@ const scrollTo = (id: string) => {
 
         <!-- Galleri & Presskit -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/gallery</span>
               <span class="text-xl">📷</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Galleri, Presskit & Dokument</h3>
-            <p class="text-xs text-base-content/80">
-              Ladda upp foton med anpassade ramstilar (Polaroid, Stilren svart ram, Tejp, Grunge, Träram etc.) samt hantera officiellt arrangörsmaterial på <NuxtLink to="/epk" target="_blank" class="text-primary font-bold underline">/epk</NuxtLink>. Innehåller separata flikar för <strong>Alla bilder</strong>, <strong>⭐ Presskit / Foton</strong> (med 1-klicks snabbknapp), <strong>🎸 Bandsidan</strong> (1-klicksknapp för att styra vilka foton som slumpas fram på <NuxtLink to="/about" target="_blank" class="text-primary font-bold underline">/about</NuxtLink>) och <strong>Arrangörsdokument / PDF</strong>. Alla ramstilar har automatisk kontrastanpassning så att bildtext skrivs i krispigt vitt mot svarta/mörka bakgrunder och mörk tusch mot ljus Polaroid. Tvåspråkiga fält har direktknappar (<strong>✨ Översätt från svenska</strong>) med AI, och bilders dimensioner läses av automatiskt. Innehåller även knappen (<strong>📱 Dela</strong>) för sociala medier.
+            <p class="text-xs text-base-content/90 font-medium">
+              Hantera foton, ramstilar, arrangörsmaterial och officiell EPK på <NuxtLink to="/epk" target="_blank" class="text-primary font-bold underline">/epk</NuxtLink>.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🖼️ Retro Ramstilar:</strong> Polaroid, Stilren svart ram, Tejp, Grunge och Träram med automatisk kontrast.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>⭐ Presskit (EPK):</strong> 1-klicksknapp för att styra vilka 300 DPI-foton som ingår för arrangörer.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🎸 Bandsidan:</strong> 1-klicksknapp för att styra vilka bilder som slumpas fram på <NuxtLink to="/about" target="_blank" class="text-primary font-bold underline">/about</NuxtLink>.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📄 PDF & Dokument:</strong> Ladda upp A3-affischer, riderbilagor och pressmeddelanden.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>✨ AI & Dela:</strong> Snabbknapp för engelsk bildtext och direktpublicering till sociala medier.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/gallery" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Galleri & Presskit →
@@ -404,15 +527,33 @@ const scrollTo = (id: string) => {
 
         <!-- Videor & YouTube -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/videos</span>
               <span class="text-xl">🎬</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Videor & YouTube</h3>
-            <p class="text-xs text-base-content/80">
-              Automatisk dygnssynkning från YouTube-kanalens öppna RSS-feed via Vercel Cron samt snabbknapp (<strong>⚡ Synka från YouTube</strong>). Lägg till valfria videor manuellt via länk med auto-hämtning av titel och miniatyrbild (oEmbed). Innehåller även direktknappen (<strong>📢 Dela</strong>) för att publicera eller schemalägga inlägg till Facebook & Instagram med hashtags.
+            <p class="text-xs text-base-content/90 font-medium">
+              Hantera liveklipp, musikvideor och synkning mot bandets YouTube-kanal.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>⚡ YouTube-synk:</strong> Automatisk dygnsimport via Vercel Cron samt manuell direktknapp.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🔗 Enkel länkning:</strong> Klistra in en YouTube-länk med automatisk hämtning av titel och miniatyr.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🛡️ Cookie-samtycke:</strong> Inbyggt GDPR-skydd för alla inbäddade videospelare.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📢 Dela:</strong> Publicera eller schemalägg videoinlägg direkt till Facebook & Instagram med taggar.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/videos" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Videor →
@@ -421,15 +562,29 @@ const scrollTo = (id: string) => {
 
         <!-- Fan Central & Moderering -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/fancentral</span>
               <span class="text-xl">📌</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Fan Central & Moderering</h3>
-            <p class="text-xs text-base-content/80">
-              Granska besökarnas inskickade bilder i <strong>Granskningskön (Staging)</strong>. Systemet kontrollerar automatiskt filformat och storlek (max 10 MB, godkända bildformat .jpg, .png, .webp, .avif) samt skyddar mot spam via IP-frekvensbegränsning (max 5 uppladdningar per 10 minuter). Godkänn foton för anslagstavlan, anpassa nålfärg och vinkel, eller avvisa och spärra olämpliga e-postadresser.
+            <p class="text-xs text-base-content/90 font-medium">
+              Granska och moderera konsertbilder och hälsningar från besökare.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📌 Granskningskö:</strong> Granska foto, fotograf, plats och hälsning före publicering på korktavlan.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📍 Nålfärg & Vinkel:</strong> Välj nålfärg och rotation för en snygg vintagekänsla.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🛡️ Spamskydd:</strong> Automatisk filvalidering (max 10 MB), IP-frekvensbegränsning och 1-klicks e-postspärr.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/fancentral" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Fan Central →
@@ -438,15 +593,25 @@ const scrollTo = (id: string) => {
 
         <!-- Sociala Taggar & Inlägg -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/hashtags</span>
               <span class="text-xl">🏷️</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Sociala Medier & Taggar</h3>
-            <p class="text-xs text-base-content/80">
-              Kategoriserade hashtags för Facebook & Instagram. Välj relevanta taggar och kopiera komplett inläggstext med ett enda klick.
+            <p class="text-xs text-base-content/90 font-medium">
+              Organisera och hantera bandets officiella hashtags för Facebook och Instagram.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🏷️ Kategorier:</strong> Sortera taggar efter gig, låtar, merch eller allmänt bandliv.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📋 1-klicks kopiering:</strong> Markera relevanta taggar och kopiera komplett inläggstext direkt till urklipp.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/hashtags" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Taggar →
@@ -455,15 +620,33 @@ const scrollTo = (id: string) => {
 
         <!-- Bokningsförfrågningar -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/messages</span>
               <span class="text-xl">📬</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Bokningar & Meddelanden</h3>
-            <p class="text-xs text-base-content/80">
-              Inkorg för alla inkommande förfrågningar från kontaktformuläret (kontaktperson, datum, typ, spelställe, adress med Google Maps-länk samt arrangörens webbadress/länk). Formuläret är skyddat mot spam och massutskick via både osynlig bot-fälla och automatisk IP-frekvensbegränsning (max 5 förfrågningar per 10 minuter). Hantera bokningsstatus (<strong>Oläst</strong>, <strong>Väntar på svar</strong>, <strong>Accepterad</strong>, <strong>Avböjd</strong>, <strong>Arkiverad</strong>), filtrera listan samt för interna anteckningar om överenskommelser (t.ex. gage, tider eller orsak till avböjning). Arrangörens e-postadress kopieras enkelt med knappen <strong>📋 Kopiera</strong>.
+            <p class="text-xs text-base-content/90 font-medium">
+              Inkorg för inkommande boknings- och arrangörsförfrågningar från kontaktformuläret.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📬 Detaljer:</strong> Datum, spelställe, gage, kontaktperson, länk och adress med Google Maps.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🚦 Statusflöde:</strong> Sätt status (<em>Oläst</em>, <em>Väntar på svar</em>, <em>Accepterad</em>, <em>Avböjd</em>, <em>Arkiverad</em>).</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📝 Interna anteckningar:</strong> Spara anteckningar om tider, logi, gage eller orsak till avböjning.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🛡️ Spamskydd:</strong> Osynlig bot-fälla, IP-begränsning och 1-klicks kopiering av e-post.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/messages" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Bokningar →
@@ -472,15 +655,25 @@ const scrollTo = (id: string) => {
 
         <!-- Nyhetsbrev -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/subscribers</span>
               <span class="text-xl">💌</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Nyhetsbrevsprenumeranter</h3>
-            <p class="text-xs text-base-content/80">
-              Lista på alla fans som registrerat sig för nyhetsbrevet. Skyddad med IP-frekvensbegränsning och bot-fälla, och synkroniseras automatiskt med e-postplattformen Brevo.
+            <p class="text-xs text-base-content/90 font-medium">
+              Lista och översikt över alla fans som registrerat sig för bandets digitala nyhetsbrev.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>💌 Automatisk synk:</strong> Synkroniseras direkt med nyhetsbrevsplattformen Brevo.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🛡️ Spamskydd:</strong> Verifierad inskrivning med IP-frekvensbegränsning och bot-fälla.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/subscribers" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Nyhetsbrev →
@@ -489,15 +682,25 @@ const scrollTo = (id: string) => {
 
         <!-- Merch -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/merch</span>
               <span class="text-xl">👕</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Merch & Produkter</h3>
-            <p class="text-xs text-base-content/80">
-              Hantera visning av bandets t-shirts, kepsar och muggar. Klicka på "Synka nu" för att direkt hämta in aktuella artiklar, priser och direktlänkar från Spreadshop. Synkroniseringen sker även automatiskt i bakgrunden.
+            <p class="text-xs text-base-content/90 font-medium">
+              Hantera visning av bandets officiella t-shirts, kepsar och muggar.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>👕 Spreadshop-koppling:</strong> Synkroniseras automatiskt i bakgrunden med Spreadshop.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🔄 Synka nu:</strong> Manuell snabbknapp för att direkt hämta in nya artiklar, priser och direktlänkar.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/merch" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Merch →
@@ -506,15 +709,29 @@ const scrollTo = (id: string) => {
 
         <!-- Bandprofiler -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/band</span>
               <span class="text-xl">👥</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Bandmedlemmar</h3>
-            <p class="text-xs text-base-content/80">
-              Uppdatera medlemmarnas presentationer, instrument, utrustning och profilbilder på "Om oss"-sidan. Innehåller snabbknappar (<strong>✨ Översätt från svenska</strong>) för att automatiskt översätta biografier och utrustningslistor till engelska med AI.
+            <p class="text-xs text-base-content/90 font-medium">
+              Uppdatera medlemmarnas presentationer, instrument, utrustning och profilbilder.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>👥 Medlemsprofiler:</strong> Janis, Marcus, Bosse och Jonas på "Om oss"-sidan.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🎸 Utrustningslistor:</strong> Gitarrer, förstärkare, trumset och munspel.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>✨ AI-översättning:</strong> 1-klicksknapp för att automatiskt översätta biografier till engelska.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/band" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Bandmedlemmar →
@@ -523,15 +740,37 @@ const scrollTo = (id: string) => {
 
         <!-- Sajtinställningar -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/settings</span>
               <span class="text-xl">⚙️</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Inställningar & Notiser</h3>
-            <p class="text-xs text-base-content/80">
-              Ställ in Discord-aviseringar, officiell kontakt-e-post (styr dynamiskt e-postadressen i sidfot, kontaktsida, integritetspolicy och EPK), Google Gemini API-nyckel för AI-skivomslag, startsidans innehåll, testläge (Mock Mode) för sociala medier samt YouTube-integrering (kanal-ID/handtag, auto-import med dygnscron, auto-posting till sociala medier och manuell synkknapp)!
+            <p class="text-xs text-base-content/90 font-medium">
+              Bandets centrala kontrollpanel för tekniska kopplingar och notiser.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🔔 Discord-aviseringar:</strong> Få notiser i bandets Discord vid nya bokningar och fan-foton.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📧 Kontakt-e-post:</strong> Styr dynamiskt bandets e-postadress i sidfot, formulär och EPK.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🤖 Google Gemini AI:</strong> API-nyckel för AI-skivomslag och översättningar.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🧪 Testläge (Mock Mode):</strong> Testa sociala medie-delningar utan att posta skarpt.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📺 YouTube:</strong> Konfigurera kanal-ID, dygnscron och auto-posting.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/settings" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Inställningar →
@@ -540,15 +779,25 @@ const scrollTo = (id: string) => {
 
         <!-- Administratörer -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/admins</span>
               <span class="text-xl">👥</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Administratörer & Konton</h3>
-            <p class="text-xs text-base-content/80">
-              Översikt över bandets alla administratörer och behörigheter. Här kan du bjuda in nya bandmedlemmar eller ta bort tidigare konton.
+            <p class="text-xs text-base-content/90 font-medium">
+              Översikt över bandets alla administratörer och inloggningsbehörigheter.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>👥 Konton:</strong> Se alla som har tillgång till administrationspanelen.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>✉️ Hantering:</strong> Bjud in nya bandmedlemmar via e-post eller ta bort tidigare konton.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/admins" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Admins →
@@ -557,15 +806,29 @@ const scrollTo = (id: string) => {
 
         <!-- Min Profil & Kontoinställningar -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="badge badge-primary font-mono font-bold text-xs">/admin/profile</span>
               <span class="text-xl">👤</span>
             </div>
             <h3 class="font-heading text-lg font-bold text-primary">Min Profil & Inloggningar</h3>
-            <p class="text-xs text-base-content/80">
-              Ändra din egen inloggnings-e-post, namn, profilbild, byt lösenord samt koppla Google-, GitHub- och Facebook-konton.
+            <p class="text-xs text-base-content/90 font-medium">
+              Personliga kontoinställningar för din egen inloggning i kontrollrummet.
             </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>👤 Profil:</strong> Ändra namn, inloggnings-e-post och profilbild.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🔑 Lösenord:</strong> Byt lösenord eller skicka säker återställningslänk.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🔗 Social login:</strong> Koppla personligt Google-, GitHub- eller Facebook-konto för 1-klicks inloggning.</span>
+              </li>
+            </ul>
           </div>
           <NuxtLink to="/admin/profile" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Min Profil →
@@ -665,6 +928,42 @@ const scrollTo = (id: string) => {
             <li><strong>Hantera pressbilder & PDF-dokument:</strong> Gå till <NuxtLink to="/admin/gallery" class="text-primary font-bold underline">Galleri (/admin/gallery)</NuxtLink>. Under fliken <strong>⭐ Presskit / Foton</strong> växlar du med ett klick vilka bilder som ingår. Under fliken <strong>📄 Arrangörsdokument / PDF</strong> kan ni ladda upp tryckfärdiga affischer (A3), avtalsbilagor eller pressmeddelanden som omedelbart blir nedladdningsbara för arrangören.</li>
             <li><strong>Ljudtekniker:</strong> Under fliken <em>Teknisk Rider & Scenplot</em> finns en visuell scenöversikt (placering av de 4 musikerna, monitorer och 230V strömuttag) samt en komplett 13-kanalers patchlista (input list).</li>
             <li><strong>Utskrift & mejl:</strong> Klicka på <strong>Ladda ner Tech Rider (.txt)</strong> för att snabbt mejla en ren textfil till arrangören, eller <strong>Skriv ut (A4)</strong> för en bläckbesparande svartvit utskrift direkt till mixerbordet.</li>
+          </ol>
+        </div>
+
+        <!-- Scenario G -->
+        <div class="bg-base-200/60 p-5 rounded-2xl border border-primary/20 space-y-2">
+          <div class="flex items-center gap-2 font-bold text-primary">
+            <span class="badge badge-primary badge-sm">Scenario G</span>
+            <h3 class="font-heading text-base">"Hur skapar vi ett snyggt vinylsingelomslag till en låt i Cover Studio?"</h3>
+          </div>
+          <ol class="list-decimal list-inside text-xs sm:text-sm text-base-content/90 space-y-1.5 pl-2">
+            <li>Gå till <NuxtLink to="/admin/songs" class="text-primary font-bold underline">Låtar (/admin/songs)</NuxtLink> och klicka på <strong>Redigera</strong> på låten, eller skapa en ny.</li>
+            <li>Klicka på knappen <strong>🎨 Cover Studio</strong>.</li>
+            <li><strong>Välj bildkälla:</strong> Välj ur bandets officiella photoshoot (7 foton), bläddra i sajtens galleri, ladda upp ett eget foto eller skapa ett motiv med AI.</li>
+            <li><strong>Anpassa stil & detaljer:</strong> Välj layoutmall (t.ex. Topp/botten, Diagonal hörnremsa, Blue Note-kolumn eller Skivbolag) och vinylringseffekt.</li>
+            <li><strong>Slumpa & Förstora:</strong> Klicka på <strong>🎲 Slumpa stil</strong> för att testa olika färg- och typsnittskombinationer, eller <strong>🎲 Slumpa</strong> för ett unikt katalognummer. Klicka på förhandsvisningsbilden för att granska detaljerna i fullskärm.</li>
+            <li>Klicka på <strong>Spara ändringar</strong> – omslaget appliceras direkt på låten och visas i jukeboxen!</li>
+          </ol>
+        </div>
+
+        <!-- Scenario H -->
+        <div class="bg-base-200/60 p-5 rounded-2xl border border-primary/20 space-y-2">
+          <div class="flex items-center gap-2 font-bold text-primary">
+            <span class="badge badge-primary badge-sm">Scenario H</span>
+            <h3 class="font-heading text-base">"Hur synkar vi låttexten till musiken (LRC/karaoke) i Jukeboxen?"</h3>
+          </div>
+          <ol class="list-decimal list-inside text-xs sm:text-sm text-base-content/90 space-y-1.5 pl-2">
+            <li>Gå till <NuxtLink to="/admin/songs" class="text-primary font-bold underline">Låtar (/admin/songs)</NuxtLink> och redigera en låt som har en ljudfil uppladdad eller länkad.</li>
+            <li>Vid fältet <strong>Låttext (svenska)</strong> hittar du två knappar:
+              <ul class="list-disc list-inside ml-4 my-1 space-y-0.5 text-xs text-base-content/80">
+                <li><strong>✨ AI-synka:</strong> Låter Gemini AI analysera texten och generera färdiga tidsstämplar automatiskt med 1 klick.</li>
+                <li><strong>⏱️ Synka (Tap-to-sync):</strong> Öppnar den inbyggda synkstudion där du stämplar texten manuellt till musiken i realtid.</li>
+              </ul>
+            </li>
+            <li><strong>I Tap-to-sync Studion:</strong> Starta musiken. När sångaren sjunger första ordet på aktuell markerad rad trycker du på <strong>Mellanslag</strong> (eller klickar på den stora stämpelknappen). Raden får en tidsstämpel och studion hoppar direkt till nästa rad.</li>
+            <li><strong>Solon & pauser:</strong> Kommer ett gitarr- eller munspelssolo? Klicka på <strong>🎷 Infoga solo / paus</strong> så vet telepromptern att det är paus fram till nästa vers. Råkade du trycka fel? Klicka på <strong>↩ Ångra</strong> för att backa en rad.</li>
+            <li>Klicka på <strong>Spara & Använd</strong> och spara sedan låten. Nu rullar texten synkroniserat i jukeboxen med intro- och solomarkörer, och besökare kan klicka på valfri rad för att hoppa direkt i låten!</li>
           </ol>
         </div>
       </div>

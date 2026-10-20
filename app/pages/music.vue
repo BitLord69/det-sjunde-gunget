@@ -232,29 +232,81 @@ const needleAngle = computed(() => {
   return 12.5 + prog * 18.5
 })
 
-const lyricsLines = computed(() => {
-  if (!currentSong.value?.lyrics) return []
-  return currentSong.value.lyrics.split('\n')
-})
+const lyricsLines = computed(() => parsedLyrics.value.lines)
+const parsedLyrics = computed(() => parseLrc(currentSong.value?.lyrics))
+const hasLrcTimestamps = computed(() => parsedLyrics.value.hasTimestamps)
 
+// Determine which line is currently active
 const currentLyricIndex = computed(() => {
-  if (!lyricsLines.value.length) return 0
-  const maxDur = duration.value > 0 ? duration.value : (currentSong.value?.duration || 30)
-  const prog = Math.min(1, Math.max(0, currentTime.value / maxDur))
-  return Math.min(lyricsLines.value.length - 1, Math.floor(prog * lyricsLines.value.length))
+  if (!lyricsLines.value.length) return -1
+  const t = currentTime.value
+
+  if (hasLrcTimestamps.value) {
+    // Find the latest line whose time <= currentTime
+    let active = -1
+    for (let i = 0; i < lyricsLines.value.length; i++) {
+      const line = lyricsLines.value[i]
+      if (line && line.time !== undefined) {
+        if (t >= line.time) {
+          active = i
+        } else {
+          break
+        }
+      }
+    }
+    return active
+  }
+
+  return -1
 })
 
-// Auto-scroll the teleprompter smoothly as playback advances
+// Check if currently playing an intro before first lyric
+const isIntroPhase = computed(() => {
+  if (!hasLrcTimestamps.value || !isAudioPlaying.value) return false
+  if (parsedLyrics.value.firstTimestamp === undefined) return false
+  return currentTime.value < parsedLyrics.value.firstTimestamp
+})
+
+// Check if in an instrumental solo break (gap > 9s to next line, and past current line by 4s)
+const isSoloBreak = computed(() => {
+  if (!hasLrcTimestamps.value || !isAudioPlaying.value || currentLyricIndex.value < 0) return false
+  const curr = lyricsLines.value[currentLyricIndex.value]
+  if (!curr || curr.time === undefined) return false
+
+  let nextTime: number | undefined
+  for (let i = currentLyricIndex.value + 1; i < lyricsLines.value.length; i++) {
+    if (lyricsLines.value[i]?.time !== undefined) {
+      nextTime = lyricsLines.value[i]?.time
+      break
+    }
+  }
+  if (nextTime === undefined) return false
+  const gap = nextTime - curr.time
+  return gap >= 8 && currentTime.value >= curr.time + 4
+})
+
+// Seek to line timestamp when clicked
+const seekToLyricLine = (line: ParsedLrcLine) => {
+  if (line.time !== undefined) {
+    seek(line.time)
+  }
+}
+
+// Auto-scroll the teleprompter smoothly to the active line when index changes
 watch(
-  () => currentTime.value,
-  () => {
-    if (prompterContainer.value && isAudioPlaying.value && playerViewTab.value === 'lyrics') {
-      const maxDur = duration.value > 0 ? duration.value : (currentSong.value?.duration || 30)
-      const prog = Math.min(1, Math.max(0, currentTime.value / maxDur))
-      const maxScroll = prompterContainer.value.scrollHeight - prompterContainer.value.clientHeight
-      if (maxScroll > 0) {
-        prompterContainer.value.scrollTop = prog * maxScroll
+  () => currentLyricIndex.value,
+  (newIdx) => {
+    if (newIdx >= 0 && prompterContainer.value && isAudioPlaying.value && playerViewTab.value === 'lyrics') {
+      const el = prompterContainer.value.querySelector(`[data-lyric-idx="${newIdx}"]`) as HTMLElement | null
+      if (el) {
+        const targetScroll = el.offsetTop - prompterContainer.value.clientHeight / 2 + el.clientHeight / 2
+        prompterContainer.value.scrollTo({
+          top: Math.max(0, targetScroll),
+          behavior: 'smooth',
+        })
       }
+    } else if (newIdx === -1 && prompterContainer.value && playerViewTab.value === 'lyrics') {
+      prompterContainer.value.scrollTo({ top: 0, behavior: 'smooth' })
     }
   },
 )
@@ -494,31 +546,64 @@ const formatTime = (secs: number) => {
                 ref="prompterContainer"
                 class="h-32 bg-[#0c120a] text-[#4ade80] p-3 rounded-xl border-2 border-emerald-500/40 font-mono text-xs overflow-y-auto space-y-1.5 shadow-[inset_0_0_20px_rgba(16,185,129,0.25)] scroll-smooth select-none relative"
               >
-                <div class="sticky top-0 bg-[#0c120a]/95 backdrop-blur-sm text-[9px] uppercase tracking-widest text-emerald-400/80 border-b border-emerald-500/20 pb-1 flex justify-between z-10">
-                  <span class="font-bold text-emerald-300">TELEPROMPTER • {{ currentSong.title }}</span>
-                  <span v-if="isAudioPlaying" class="flex items-center gap-1 text-amber-300 font-bold">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    {{ t('music.rolling_live') }}
+                <div class="sticky top-0 bg-[#0c120a]/95 backdrop-blur-sm text-[9px] uppercase tracking-widest text-emerald-400/80 border-b border-emerald-500/20 pb-1 flex justify-between items-center z-10">
+                  <span class="font-bold text-emerald-300 truncate mr-2">TELEPROMPTER • {{ currentSong.title }}</span>
+                  <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <span v-if="isIntroPhase" class="flex items-center gap-1 text-amber-300 font-bold animate-pulse">
+                      <span>🎸</span>
+                      <span>Intro spelas...</span>
+                    </span>
+                    <span v-else-if="isSoloBreak" class="flex items-center gap-1 text-cyan-300 font-bold animate-pulse">
+                      <span>🎷</span>
+                      <span>Solo / Paus...</span>
+                    </span>
+                    <span v-else-if="isAudioPlaying && hasLrcTimestamps" class="flex items-center gap-1 text-emerald-400 font-bold">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                      <span>Live Synk</span>
+                    </span>
+                    <span v-else-if="isAudioPlaying" class="flex items-center gap-1 text-amber-300 font-bold">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                      <span>{{ t('music.rolling_live') }}</span>
+                    </span>
+                    <span v-else class="text-base-content/40">{{ t('music.paused') }}</span>
+                  </div>
+                </div>
+
+                <!-- Intro card indicator if playback is before first line -->
+                <div v-if="isIntroPhase" class="p-2.5 rounded-lg bg-amber-950/30 border border-amber-600/30 text-center space-y-1 my-1">
+                  <span class="text-xs text-amber-300 font-bold flex items-center justify-center gap-1.5">
+                    <span>🎸</span> <span>Musiken rullar igång — sången startar snart!</span>
                   </span>
-                  <span v-else class="text-base-content/40">{{ t('music.paused') }}</span>
+                  <div class="flex justify-center items-center gap-1 text-amber-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" style="animation-delay: 0s;" />
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" style="animation-delay: 0.2s;" />
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" style="animation-delay: 0.4s;" />
+                  </div>
                 </div>
 
                 <div
                   v-for="(line, idx) in lyricsLines"
-                  :key="idx"
+                  :key="line.id"
+                  :data-lyric-idx="idx"
                   class="transition-all duration-300 px-1.5 py-0.5 rounded"
-                  :class="
-                    line.trim().startsWith('[')
-                      ? 'text-amber-400 font-bold text-[10px] mt-1.5 tracking-wider uppercase bg-amber-950/30'
-                      : Number(idx) === currentLyricIndex && isAudioPlaying
-                        ? 'text-amber-200 font-bold bg-emerald-900/60 shadow-[0_0_10px_rgba(74,222,128,0.4)] translate-x-1 scale-[1.01]'
-                        : Math.abs(Number(idx) - currentLyricIndex) <= 2
-                          ? 'text-[#86efac] opacity-90'
-                          : 'text-[#4ade80]/60'
-                  "
+                  :class="[
+                    line.isHeader
+                      ? 'text-amber-400 font-bold text-[10px] mt-2 tracking-wider uppercase bg-amber-950/40 border-l-2 border-amber-500 pl-2'
+                      : line.isSolo
+                        ? 'text-cyan-300 italic text-[11px] bg-cyan-950/30 border-l-2 border-cyan-500 pl-2 py-1 my-1 font-bold'
+                        : Number(idx) === currentLyricIndex && isAudioPlaying
+                          ? 'text-amber-200 font-bold bg-emerald-900/70 shadow-[0_0_12px_rgba(74,222,128,0.5)] translate-x-1 scale-[1.01] border-l-2 border-amber-400'
+                          : Math.abs(Number(idx) - currentLyricIndex) <= 2 && currentLyricIndex >= 0
+                            ? 'text-[#86efac] opacity-90'
+                            : 'text-[#4ade80]/60',
+                    line.time !== undefined ? 'cursor-pointer hover:bg-emerald-950/40 hover:text-white' : ''
+                  ]"
+                  :title="line.time !== undefined ? `Klicka för att hoppa till ${formatTime(line.time)}` : undefined"
+                  @click="seekToLyricLine(line)"
                 >
-                  <span v-if="Number(idx) === currentLyricIndex && isAudioPlaying && !line.trim().startsWith('[')" class="text-amber-300 mr-1 animate-pulse">▶</span>
-                  <span>{{ line }}</span>
+                  <span v-if="Number(idx) === currentLyricIndex && isAudioPlaying && !line.isHeader" class="text-amber-300 mr-1 animate-pulse">▶</span>
+                  <span v-else-if="line.time !== undefined" class="text-[9px] opacity-40 font-mono mr-1 select-none">[{{ formatTime(line.time) }}]</span>
+                  <span>{{ line.text || ' ' }}</span>
                 </div>
               </div>
 

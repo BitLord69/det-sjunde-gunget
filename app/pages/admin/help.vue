@@ -941,9 +941,9 @@ const scrollTo = (id: string) => {
             <li>Gå till <NuxtLink to="/admin/songs" class="text-primary font-bold underline">Låtar (/admin/songs)</NuxtLink> och klicka på <strong>Redigera</strong> på låten, eller skapa en ny.</li>
             <li>Klicka på knappen <strong>🎨 Cover Studio</strong>.</li>
             <li><strong>Välj bildkälla:</strong> Välj ur bandets officiella photoshoot (7 foton), bläddra i sajtens galleri, ladda upp ett eget foto eller skapa ett motiv med AI.</li>
-            <li><strong>Anpassa stil & detaljer:</strong> Välj layoutmall (t.ex. Topp/botten, Diagonal hörnremsa, Blue Note-kolumn eller Skivbolag) och vinylringseffekt.</li>
-            <li><strong>Slumpa & Förstora:</strong> Klicka på <strong>🎲 Slumpa stil</strong> för att testa olika färg- och typsnittskombinationer, eller <strong>🎲 Slumpa</strong> för ett unikt katalognummer. Klicka på förhandsvisningsbilden för att granska detaljerna i fullskärm.</li>
-            <li>Klicka på <strong>Spara ändringar</strong> – omslaget appliceras direkt på låten och visas i jukeboxen!</li>
+            <li><strong>Blixtsnabb förhandsgranskning:</strong> Omslaget renderas i realtid direkt i webbläsaren med äkta 70-talstypografi, färgpaletter och vinylringseffekt.</li>
+            <li><strong>Slumpa & Anpassa:</strong> Klicka på <strong>🎲 Slumpa stil</strong> för att testa olika färg- och typsnittskombinationer, eller <strong>🎲 Slumpa</strong> för ett unikt katalognummer. Klicka på förhandsvisningsbilden för att granska detaljerna i fullskärm.</li>
+            <li>Klicka på <strong>✓ Använd omslag</strong> – omslaget optimeras, laddas upp till molnet och tilldelas låten automatiskt!</li>
           </ol>
         </div>
 

@@ -103,24 +103,40 @@ REGLER:
   parts.push({ text: promptText })
 
   try {
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
+    const candidateModels = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.5-flash']
+    let response: Response | null = null
+    let lastErrText = ''
 
-    const response = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 2048,
-        },
-      }),
-    })
+    for (const model of candidateModels) {
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+      try {
+        const res = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 2048,
+            },
+          }),
+        })
 
-    if (!response.ok) {
-      const errText = await response.text()
-      console.error('[SyncLyricsAI] Gemini error response:', errText)
-      throw new Error(`Gemini API-fel (${response.status})`)
+        if (res.ok) {
+          response = res
+          break
+        } else {
+          lastErrText = await res.text()
+          console.warn(`[SyncLyricsAI] Model ${model} failed (${res.status}):`, lastErrText)
+        }
+      } catch (fetchErr) {
+        console.warn(`[SyncLyricsAI] Model ${model} fetch exception:`, fetchErr)
+      }
+    }
+
+    if (!response || !response.ok) {
+      console.error('[SyncLyricsAI] All Gemini models failed:', lastErrText)
+      throw new Error(`Gemini API-fel (${response ? response.status : '500'})`)
     }
 
     const data = await response.json()

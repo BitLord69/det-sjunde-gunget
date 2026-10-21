@@ -36,17 +36,19 @@ export default defineEventHandler(async (event) => {
 
   // 2. Försök med Google Gemini (högsta kvalitet & musikalisk anpassning)
   if (apiKey) {
-    try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
-      const res = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Du är en musikalisk översättare för det svenska bluesrockbandet "Det 7:e Gunget".
+    const candidateModels = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.5-flash']
+    for (const model of candidateModels) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+        const res = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Du är en musikalisk översättare för det svenska bluesrockbandet "Det 7:e Gunget".
 Översätt följande svenska text till naturlig, idiomatiskt träffsäker engelska (amerikansk engelska).
 Behåll bandnamnet "Det 7:e Gunget" och musikalisk terminologi.
 Svara ENDAST med den översatta texten, inga citattecken, introduktioner eller förklaringar.
@@ -55,28 +57,29 @@ Text:
 """
 ${sourceText}
 """`,
-                },
-              ],
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
             },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-          },
-        }),
-        signal: AbortSignal.timeout(10000),
-      })
+          }),
+          signal: AbortSignal.timeout(10000),
+        })
 
-      if (res.ok) {
-        const data = await res.json()
-        const candidate = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
-        if (candidate) {
-          // Rensa eventuella omslutande citattecken
-          const cleaned = candidate.replace(/^["'“”](.*)["'“”]$/s, '$1').trim()
-          return { success: true, text: cleaned, engine: 'gemini' }
+        if (res.ok) {
+          const data = await res.json()
+          const candidate = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
+          if (candidate) {
+            // Rensa eventuella omslutande citattecken
+            const cleaned = candidate.replace(/^["'“”](.*)["'“”]$/s, '$1').trim()
+            return { success: true, text: cleaned, engine: 'gemini' }
+          }
         }
+      } catch (gErr) {
+        console.warn(`[Translate] Gemini ${model} misslyckades:`, gErr)
       }
-    } catch (gErr) {
-      console.warn('[Translate] Gemini misslyckades, faller tillbaka till MyMemory:', gErr)
     }
   }
 

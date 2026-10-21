@@ -100,7 +100,24 @@ export default defineEventHandler(async (event) => {
       } else {
         const cleanRel = chosenPhoto.replace(/^\/+/, '')
         const absPath = path.resolve(process.cwd(), 'public', cleanRel)
-        imageBuffer = await fs.readFile(absPath)
+        try {
+          imageBuffer = await fs.readFile(absPath)
+        } catch (fsErr) {
+          // On Vercel serverless, public files are served via CDN/origin and not in Lambda cwd
+          try {
+            const reqUrl = getRequestURL(event)
+            const fallbackUrl = `${reqUrl.origin}/${cleanRel}`
+            const fetchRes = await fetch(fallbackUrl)
+            if (fetchRes.ok) {
+              const arrBuf = await fetchRes.arrayBuffer()
+              imageBuffer = Buffer.from(arrBuf)
+            } else {
+              throw fsErr
+            }
+          } catch {
+            throw fsErr
+          }
+        }
       }
       usedEngine = 'vinyl'
     } catch (photoErr) {
@@ -148,8 +165,17 @@ export default defineEventHandler(async (event) => {
     if (includeBand) {
       try {
         const defaultRefPath = path.resolve(process.cwd(), 'public/media/band/21..7de Gunget photoshoot1 21-6 26-3.jpg')
-        const refBuffer = await fs.readFile(defaultRefPath)
-        bandRefBase64 = refBuffer.toString('base64')
+        try {
+          const refBuffer = await fs.readFile(defaultRefPath)
+          bandRefBase64 = refBuffer.toString('base64')
+        } catch {
+          const reqUrl = getRequestURL(event)
+          const refRes = await fetch(`${reqUrl.origin}/media/band/21..7de Gunget photoshoot1 21-6 26-3.jpg`)
+          if (refRes.ok) {
+            const arr = await refRes.arrayBuffer()
+            bandRefBase64 = Buffer.from(arr).toString('base64')
+          }
+        }
       } catch (refErr) {
         console.warn('[GenerateCover] Could not load band reference photo:', refErr)
       }

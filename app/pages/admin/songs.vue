@@ -460,6 +460,9 @@ const randomizeCatalogNumber = () => {
   generateCoverWithAi()
 }
 
+const currentCanvasBlob = ref<Blob | null>(null)
+const isApplyingCover = ref(false)
+
 const generateCoverWithAi = async () => {
   if (coverDebounceTimer) {
     clearTimeout(coverDebounceTimer)
@@ -473,7 +476,7 @@ const generateCoverWithAi = async () => {
     if (aiCoverProgressStep.value < 4) {
       aiCoverProgressStep.value++
     }
-  }, 1800)
+  }, 400)
 
   try {
     let activePhoto = ''
@@ -488,8 +491,44 @@ const generateCoverWithAi = async () => {
       } else {
         activePhoto = selectedBandPhoto.value || bandPhotosList[0]?.path || '/media/band/21..7de Gunget photoshoot1 21-6 26-3.jpg'
       }
+
+      // 1. Klient-canvas för 100% pålitlig typografi & omedelbar rendering
+      try {
+        const canvasResult = await renderCoverStudioCanvas({
+          title: songForm.title || 'Det 7:e Gunget',
+          bandName: 'DET 7:e GUNGET',
+          subtitle: aiCustomSubtitle.value || undefined,
+          catalogNumber: aiCatalogNumber.value || undefined,
+          isOriginal: songForm.isOriginal,
+          originalArtist: songForm.originalArtist || undefined,
+          layout: aiLayout.value,
+          stylePreset: aiStylePreset.value,
+          agingEffect: aiAgingEffect.value,
+          photoFilter: aiPhotoFilter.value,
+          badgeFormat: aiBadgeFormat.value,
+          sourceImageUrl: activePhoto,
+        })
+
+        clearInterval(stepTimer)
+        currentCanvasBlob.value = canvasResult.blob
+        generatedCoverResult.value = {
+          success: true,
+          url: canvasResult.dataUrl,
+          coverUrl: canvasResult.dataUrl,
+          engine: 'canvas',
+          styleName: canvasResult.chosenStyle,
+          layout: canvasResult.chosenLayout,
+          agingEffect: canvasResult.chosenAging,
+          title: songForm.title || 'Det 7:e Gunget',
+        }
+        showToast('✓ Singelomslag stämplat och klart!')
+        return
+      } catch (canvasErr) {
+        console.warn('[CoverStudio] Client canvas render fallback to server:', canvasErr)
+      }
     }
 
+    // 2. Server-generering (vid Gemini AI-konst eller extern CORS-källbild)
     const res = await $fetch<{
       success: boolean
       coverUrl: string
@@ -528,12 +567,13 @@ const generateCoverWithAi = async () => {
     clearInterval(stepTimer)
     const coverResultUrl = res.coverUrl || res.url
     if (res.success && coverResultUrl) {
+      currentCanvasBlob.value = null
       generatedCoverResult.value = {
         ...res,
         url: coverResultUrl,
         coverUrl: coverResultUrl,
       }
-      showToast('✓ Singelomslaget har skapats! Granska i förhandsvisningen till höger.')
+      showToast('✓ Singelomslaget har skapats!')
     } else {
       aiGenerationError.value = 'Inget bildresultat returnerades från servern.'
     }
@@ -548,14 +588,38 @@ const generateCoverWithAi = async () => {
   }
 }
 
-const applyGeneratedCover = () => {
+const applyGeneratedCover = async () => {
   const chosenUrl = generatedCoverResult.value?.coverUrl || generatedCoverResult.value?.url
-  if (chosenUrl) {
-    songForm.coverImage = chosenUrl
-    showCoverZoomModal.value = false
-    showAiCoverModal.value = false
-    showToast('✓ Omslaget har tilldelats låten! Kom ihåg att spara låten när du är klar.')
+  if (!chosenUrl) return
+
+  // Om bilden renderats av klient-canvas som data URL, ladda upp till Vercel Blob / molnet
+  if (chosenUrl.startsWith('data:') && currentCanvasBlob.value) {
+    try {
+      isApplyingCover.value = true
+      showToast('⏳ Sparar och laddar upp singelomslaget till molnet...')
+      const safeTitle = (songForm.title || 'omslag').toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30)
+      const fileName = `cover_${safeTitle}_${Date.now()}.jpg`
+      const file = new File([currentCanvasBlob.value], fileName, { type: 'image/jpeg' })
+      const uploadedUrl = await uploadAdminFile(file)
+      songForm.coverImage = uploadedUrl
+      showCoverZoomModal.value = false
+      showAiCoverModal.value = false
+      showToast('✓ Singelomslaget har sparats och tilldelats låten!')
+      return
+    } catch (uploadErr: unknown) {
+      console.error('[ApplyGeneratedCover Upload Failed]:', uploadErr)
+      const msg = uploadErr instanceof Error ? uploadErr.message : 'Kunde inte ladda upp omslaget'
+      showToast(`⚠️ Uppladdning misslyckades: ${msg}`)
+      return
+    } finally {
+      isApplyingCover.value = false
+    }
   }
+
+  songForm.coverImage = chosenUrl
+  showCoverZoomModal.value = false
+  showAiCoverModal.value = false
+  showToast('✓ Omslaget har tilldelats låten! Kom ihåg att spara låten när du är klar.')
 }
 
 // ---------------- COVER PREVIEW MODAL ----------------
@@ -1574,11 +1638,12 @@ const sortedSongs = computed(() => {
               type="button"
               class="btn btn-xs btn-primary rounded-full font-bold px-3 py-1.5 h-auto flex items-center gap-1 cursor-pointer shadow-md hover:scale-105 transition-transform"
               title="Spara och tilldela detta omslag till låten"
-              :disabled="isGeneratingCover"
+              :disabled="isGeneratingCover || isApplyingCover"
               @click="applyGeneratedCover"
             >
-              <span>✓</span>
-              <span>Använd omslag</span>
+              <span v-if="isApplyingCover" class="loading loading-spinner loading-xs" />
+              <span v-else>✓</span>
+              <span>{{ isApplyingCover ? 'Sparar...' : 'Använd omslag' }}</span>
             </button>
 
             <!-- Quick Randomize Button in Header -->
@@ -2138,9 +2203,12 @@ const sortedSongs = computed(() => {
               <button
                 type="button"
                 class="btn btn-primary btn-sm rounded-full font-bold px-5 shadow-lg shadow-primary/30 text-xs sm:text-sm cursor-pointer"
+                :disabled="isGeneratingCover || isApplyingCover"
                 @click="applyGeneratedCover"
               >
-                ✓ Använd detta omslag
+                <span v-if="isApplyingCover" class="loading loading-spinner loading-xs" />
+                <span v-else>✓</span>
+                <span>{{ isApplyingCover ? 'Sparar omslag...' : 'Använd detta omslag' }}</span>
               </button>
             </div>
           </template>

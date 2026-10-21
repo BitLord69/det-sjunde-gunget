@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     return {
       engine: 'gemini',
       available: true,
-      message: 'Google Gemini 2.5 Flash är aktiv och redo',
+      message: 'Google Gemini AI är aktiv och redo',
     }
   }
 

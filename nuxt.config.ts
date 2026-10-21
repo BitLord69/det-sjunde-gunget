@@ -47,6 +47,7 @@ export default defineNuxtConfig({
     '@nuxtjs/sitemap',
     '@nuxtjs/robots',
     '@nuxt/eslint',
+    '@vercel/speed-insights/nuxt',
   ],
   css: ['~/assets/css/main.css'],
   fonts: {

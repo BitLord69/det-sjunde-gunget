@@ -601,8 +601,7 @@ const formatTime = (secs: number) => {
                   :title="line.time !== undefined ? `Klicka för att hoppa till ${formatTime(line.time)}` : undefined"
                   @click="seekToLyricLine(line)"
                 >
-                  <span v-if="Number(idx) === currentLyricIndex && isAudioPlaying && !line.isHeader" class="text-amber-300 mr-1 animate-pulse">▶</span>
-                  <span v-else-if="line.time !== undefined" class="text-[9px] opacity-40 font-mono mr-1 select-none">[{{ formatTime(line.time) }}]</span>
+                  <span v-if="Number(idx) === currentLyricIndex && isAudioPlaying && !line.isHeader" class="text-amber-300 mr-1.5 animate-pulse flex-shrink-0">▶</span>
                   <span>{{ line.text || ' ' }}</span>
                 </div>
               </div>

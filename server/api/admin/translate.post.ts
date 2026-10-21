@@ -17,21 +17,23 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 1. Kontrollera om Gemini API-nyckel finns
-  let apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_API_KEY
-  if (!apiKey) {
-    try {
-      const setting = await db
-        .select()
-        .from(siteSettings)
-        .where(eq(siteSettings.key, 'gemini_api_key'))
-        .get()
-      if (setting?.value) {
-        apiKey = setting.value
-      }
-    } catch {
-      // Ignorera om databasen saknar nyckeln
+  // 1. Kontrollera om Gemini API-nyckel finns (prioritera databasen siteSettings, därefter env)
+  let apiKey = ''
+  try {
+    const setting = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.key, 'gemini_api_key'))
+      .get()
+    if (setting?.value && setting.value.trim().length > 0) {
+      apiKey = setting.value.trim()
     }
+  } catch {
+    // Ignorera om databasen saknar nyckeln
+  }
+
+  if (!apiKey) {
+    apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_API_KEY || ''
   }
 
   // 2. Försök med Google Gemini (högsta kvalitet & musikalisk anpassning)

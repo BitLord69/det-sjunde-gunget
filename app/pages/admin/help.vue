@@ -957,7 +957,7 @@ const scrollTo = (id: string) => {
             <li>Gå till <NuxtLink to="/admin/songs" class="text-primary font-bold underline">Låtar (/admin/songs)</NuxtLink> och redigera en låt som har en ljudfil uppladdad eller länkad.</li>
             <li>Vid fältet <strong>Låttext (svenska)</strong> hittar du två knappar:
               <ul class="list-disc list-inside ml-4 my-1 space-y-0.5 text-xs text-base-content/80">
-                <li><strong>✨ AI-synka:</strong> Låter Gemini AI analysera texten och generera färdiga tidsstämplar automatiskt med 1 klick.</li>
+                <li><strong>✨ AI-synka:</strong> Låter Gemini AI analysera texten och generera färdiga tidsstämplar automatiskt med 1 klick. Hela din text bevaras garanterat till 100% (med automatisk token-expansion upp till 8192 tokens och fallback-skydd mot avklippt text). Om du vill gå tillbaka finns en <strong>↩ Återställ originaltext</strong>-knapp som omedelbart lägger tillbaka din klistrade råtext.</li>
                 <li><strong>⏱️ Synka (Tap-to-sync):</strong> Öppnar den inbyggda synkstudion där du stämplar texten manuellt till musiken i realtid.</li>
               </ul>
             </li>

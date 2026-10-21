@@ -806,15 +806,34 @@ const applyTapSync = () => {
   showToast('✓ Synkad text sparades till formuläret! Kom ihåg att klicka på Spara för låten.')
 }
 
+const previousLyricsBackup = ref<string>('')
+
+const restoreOriginalLyrics = () => {
+  if (previousLyricsBackup.value) {
+    songForm.lyrics = previousLyricsBackup.value
+    previousLyricsBackup.value = ''
+    showToast('✓ Din klistrade originaltext har återställts!')
+  }
+}
+
 const syncLyricsWithAi = async () => {
   if (!songForm.lyrics || !songForm.lyrics.trim()) {
     showToast('⚠️ Fyll i texten som ska synkas först!')
     return
   }
+  // Spara alltid en säkerhetskopia av den klistrade texten innan AI-bearbetning
+  previousLyricsBackup.value = songForm.lyrics
   isAiSyncingLyrics.value = true
   try {
-    showToast('⏳ AI lyssnar på låten och beräknar tidsstämplar...')
-    const res = await $fetch<{ success: boolean; syncedLyrics: string; audioAnalyzed: boolean }>('/api/admin/songs/sync-lyrics-ai', {
+    showToast('⏳ AI synkroniserar hela texten...')
+    const res = await $fetch<{
+      success: boolean
+      syncedLyrics: string
+      audioAnalyzed: boolean
+      wasAppended?: boolean
+      originalCount?: number
+      syncedCount?: number
+    }>('/api/admin/songs/sync-lyrics-ai', {
       method: 'POST',
       body: {
         title: songForm.title,
@@ -825,7 +844,13 @@ const syncLyricsWithAi = async () => {
     })
     if (res.syncedLyrics) {
       songForm.lyrics = res.syncedLyrics
-      showToast(res.audioAnalyzed ? '✓ Texten synkades direkt mot ljudfilen med AI!' : '✓ Texten strukturerades med AI-tidsstämplar!')
+      if (res.wasAppended) {
+        showToast('✓ AI synkade texten och säkerställde att 100% av dina rader bevarades!')
+      } else if (res.audioAnalyzed) {
+        showToast('✓ Hela texten synkades direkt mot ljudfilen med AI!')
+      } else {
+        showToast('✓ Hela texten strukturerades med AI-tidsstämplar!')
+      }
     }
   } catch (err: unknown) {
     const errorObj = err as { data?: { message?: string }; message?: string }
@@ -1151,6 +1176,18 @@ const sortedSongs = computed(() => {
                   <span v-if="isAiSyncingLyrics" class="loading loading-spinner loading-xs" />
                   <span v-else>✨</span>
                   <span>AI-synka</span>
+                </button>
+
+                <!-- Undo AI Sync Button -->
+                <button
+                  v-if="previousLyricsBackup"
+                  type="button"
+                  class="btn btn-outline btn-warning btn-xs rounded-full font-bold px-2 py-0.5 h-auto text-[10px] flex items-center gap-1 cursor-pointer"
+                  title="Återställ den klistrade originaltexten som den var innan AI-synkningen"
+                  @click="restoreOriginalLyrics"
+                >
+                  <span>↩</span>
+                  <span>Återställ originaltext</span>
                 </button>
 
                 <!-- Tap-To-Sync Studio Button -->

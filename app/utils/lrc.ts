@@ -120,13 +120,18 @@ export function parseLrc(content: string | null | undefined): ParsedLrcResult {
 }
 
 /**
- * Removes [mm:ss], [m:ss], [mm:ss.xx] timestamps from text lines for clean reading
+ * Removes [mm:ss], [m:ss], [mm:ss.xx], [hh:mm:ss] and bare timestamps from text lines for clean reading
  */
 export function stripLrcTimestamps(text: string | null | undefined): string {
   if (!text) return ''
   return text
     .split('\n')
-    .map((l) => l.replace(/^\s*(?:\[\s*\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*)+/, ''))
+    .map((l) =>
+      l
+        .replace(/\[\s*(?:\d{1,2}\s*:\s*)?\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*/g, '')
+        .replace(/^\s*(?:\d{1,2}:)?\d{1,2}:\d{2}(?:\.\d+)?\s*/, '')
+        .trimEnd()
+    )
     .join('\n')
 }
 

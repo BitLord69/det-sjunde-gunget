@@ -333,6 +333,14 @@ const formatTime = (secs: number) => {
   const s = Math.floor(secs % 60)
   return `${m}:${s < 10 ? '0' : ''}${s}`
 }
+
+const cleanDisplayLine = (text: string | null | undefined): string => {
+  if (!text) return ''
+  return text
+    .replace(/\[\s*(?:\d{1,2}\s*:\s*)?\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*/g, '')
+    .replace(/^\s*(?:\d{1,2}:)?\d{1,2}:\d{2}(?:\.\d+)?\s*/, '')
+    .trim()
+}
 </script>
 
 <template>
@@ -618,7 +626,7 @@ const formatTime = (secs: number) => {
                   @click="seekToLyricLine(line)"
                 >
                   <span v-if="Number(idx) === currentLyricIndex && isAudioPlaying && !line.isHeader" class="text-amber-300 mr-1.5 animate-pulse flex-shrink-0">▶</span>
-                  <span>{{ stripLrcTimestamps(line.text) || ' ' }}</span>
+                  <span>{{ cleanDisplayLine(line.text) || ' ' }}</span>
                 </div>
               </div>
 

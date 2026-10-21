@@ -292,24 +292,40 @@ const seekToLyricLine = (line: ParsedLrcLine) => {
   }
 }
 
-// Auto-scroll the teleprompter smoothly to the active line when index changes
+// Auto-scroll the teleprompter smoothly to the active line
+const scrollToActiveLyric = (idx: number) => {
+  if (!prompterContainer.value) return
+  if (idx < 0) {
+    prompterContainer.value.scrollTo({ top: 0, behavior: 'smooth' })
+    return
+  }
+  const el = prompterContainer.value.querySelector(`[data-lyric-idx="${idx}"]`) as HTMLElement | null
+  if (el) {
+    const container = prompterContainer.value
+    const targetScroll = el.offsetTop - (container.clientHeight / 2) + (el.clientHeight / 2)
+    container.scrollTo({
+      top: Math.max(0, targetScroll),
+      behavior: 'smooth',
+    })
+  }
+}
+
 watch(
   () => currentLyricIndex.value,
   (newIdx) => {
-    if (newIdx >= 0 && prompterContainer.value && isAudioPlaying.value && playerViewTab.value === 'lyrics') {
-      const el = prompterContainer.value.querySelector(`[data-lyric-idx="${newIdx}"]`) as HTMLElement | null
-      if (el) {
-        const targetScroll = el.offsetTop - prompterContainer.value.clientHeight / 2 + el.clientHeight / 2
-        prompterContainer.value.scrollTo({
-          top: Math.max(0, targetScroll),
-          behavior: 'smooth',
-        })
-      }
-    } else if (newIdx === -1 && prompterContainer.value && playerViewTab.value === 'lyrics') {
-      prompterContainer.value.scrollTo({ top: 0, behavior: 'smooth' })
+    if (playerViewTab.value === 'lyrics') {
+      scrollToActiveLyric(newIdx)
     }
   },
 )
+
+watch(playerViewTab, (newTab) => {
+  if (newTab === 'lyrics') {
+    nextTick(() => {
+      scrollToActiveLyric(currentLyricIndex.value)
+    })
+  }
+})
 
 const formatTime = (secs: number) => {
   if (isNaN(secs) || secs < 0) return '0:00'
@@ -544,7 +560,7 @@ const formatTime = (secs: number) => {
               <div
                 v-else-if="playerViewTab === 'lyrics' && currentSong?.lyrics"
                 ref="prompterContainer"
-                class="h-32 bg-[#0c120a] text-[#4ade80] p-3 rounded-xl border-2 border-emerald-500/40 font-mono text-xs overflow-y-auto space-y-1.5 shadow-[inset_0_0_20px_rgba(16,185,129,0.25)] scroll-smooth select-none relative"
+                class="h-36 sm:h-40 bg-[#0c120a] text-[#4ade80] p-3 rounded-xl border-2 border-emerald-500/40 font-mono text-xs overflow-y-auto space-y-1.5 shadow-[inset_0_0_20px_rgba(16,185,129,0.25)] select-none relative"
               >
                 <div class="sticky top-0 bg-[#0c120a]/95 backdrop-blur-sm text-[9px] uppercase tracking-widest text-emerald-400/80 border-b border-emerald-500/20 pb-1 flex justify-between items-center z-10">
                   <span class="font-bold text-emerald-300 truncate mr-2">TELEPROMPTER • {{ currentSong.title }}</span>
@@ -602,7 +618,7 @@ const formatTime = (secs: number) => {
                   @click="seekToLyricLine(line)"
                 >
                   <span v-if="Number(idx) === currentLyricIndex && isAudioPlaying && !line.isHeader" class="text-amber-300 mr-1.5 animate-pulse flex-shrink-0">▶</span>
-                  <span>{{ line.text || ' ' }}</span>
+                  <span>{{ stripLrcTimestamps(line.text) || ' ' }}</span>
                 </div>
               </div>
 

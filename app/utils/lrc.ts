@@ -39,8 +39,8 @@ export function parseLrc(content: string | null | undefined): ParsedLrcResult {
   let firstTimestamp: number | undefined
   let lastTimestamp: number | undefined
 
-  // Regex matching [mm:ss] or [mm:ss.xx]
-  const timeRegex = /^\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]\s*(.*)$/
+  // Robust Regex matching [mm:ss], [m:ss], [m:s], [mm:ss.xx], [mm:ss,xx], [ 0:00 ] etc.
+  const timeRegex = /^\[\s*(\d{1,2})\s*:\s*(\d{1,2})(?:[\.,:](\d{1,3}))?\s*\]\s*(.*)$/
   // Regex matching section headers: [Vers 1], [Refräng], [Intro], etc.
   const headerRegex = /^\[([A-Za-zÅÄÖåäö0-9\s:-]+)\]$/
 
@@ -58,7 +58,9 @@ export function parseLrc(content: string | null | undefined): ParsedLrcResult {
       const secs = parseInt(timeMatch[2] || '0', 10)
       const ms = timeMatch[3] ? parseFloat(`0.${timeMatch[3]}`) : 0
       const totalSecs = mins * 60 + secs + ms
-      const lyricText = (timeMatch[4] || '').trim()
+      // Ensure any additional or nested timestamp prefixes are stripped from lyric text
+      let lyricText = (timeMatch[4] || '').trim()
+      lyricText = lyricText.replace(/^\s*(?:\[\s*\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*)+/, '')
 
       if (firstTimestamp === undefined || totalSecs < firstTimestamp) {
         firstTimestamp = totalSecs
@@ -74,12 +76,17 @@ export function parseLrc(content: string | null | undefined): ParsedLrcResult {
         lower.includes('paus') ||
         (lyricText.startsWith('(') && lyricText.endsWith(')'))
 
+      const isHeader =
+        (lyricText.startsWith('[') && lyricText.endsWith(']')) ||
+        headerRegex.test(lyricText)
+
       lines.push({
         id: idx,
         raw,
         text: lyricText,
         time: totalSecs,
         isSolo,
+        isHeader,
       })
       return
     }
@@ -95,10 +102,12 @@ export function parseLrc(content: string | null | undefined): ParsedLrcResult {
       return
     }
 
+    // Fallback: strip any accidental timestamp prefix so raw numbers never leak to UI
+    const cleanFallback = trimmed.replace(/^\s*(?:\[\s*\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*)+/, '')
     lines.push({
       id: idx,
       raw,
-      text: trimmed,
+      text: cleanFallback,
     })
   })
 
@@ -111,13 +120,13 @@ export function parseLrc(content: string | null | undefined): ParsedLrcResult {
 }
 
 /**
- * Removes [mm:ss] or [mm:ss.xx] timestamps from text lines for clean reading
+ * Removes [mm:ss], [m:ss], [mm:ss.xx] timestamps from text lines for clean reading
  */
 export function stripLrcTimestamps(text: string | null | undefined): string {
   if (!text) return ''
   return text
     .split('\n')
-    .map((l) => l.replace(/^\[\d{1,2}:\d{2}(?:\.\d{1,3})?\]\s*/, ''))
+    .map((l) => l.replace(/^\s*(?:\[\s*\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*)+/, ''))
     .join('\n')
 }
 

@@ -76,11 +76,19 @@ const includeBandMembers = ref(true)
 // Band Logo & Photo Customization
 const useBandLogo = ref(true)
 const logoSize = ref<'normal' | 'large'>('large')
-const imageSource = ref<'photoshoot' | 'gallery' | 'upload' | 'none'>('photoshoot')
+const imageSource = ref<'photoshoot' | 'gallery' | 'upload' | 'ai' | 'none'>('photoshoot')
 const selectedBandPhoto = ref('/media/band/21..7de Gunget photoshoot1 21-6 26-3.jpg')
 const selectedGalleryPhoto = ref('')
 const customUploadedPhoto = ref<string | null>(null)
 const photoFilter = ref<'vintage' | 'bw' | 'duotone' | 'natural'>('vintage')
+
+// Gemini AI Poster Generator State
+const aiPosterPreset = ref<'club' | 'stage' | 'folkpark' | 'rockbar' | 'chicago' | 'custom'>('club')
+const aiPosterCustomPrompt = ref('')
+const aiPosterIncludeBand = ref(false)
+const isGeneratingPosterAi = ref(false)
+const aiPosterError = ref<string | null>(null)
+const aiGeneratedPosterImageUrl = ref<string | null>(null)
 
 // Active photo URL computed
 const activePhotoUrl = computed(() => {
@@ -88,6 +96,7 @@ const activePhotoUrl = computed(() => {
   if (imageSource.value === 'photoshoot') return selectedBandPhoto.value
   if (imageSource.value === 'gallery') return selectedGalleryPhoto.value || galleryItems.value?.[0]?.url || null
   if (imageSource.value === 'upload') return customUploadedPhoto.value
+  if (imageSource.value === 'ai') return aiGeneratedPosterImageUrl.value
   return null
 })
 
@@ -596,6 +605,7 @@ watch(
     selectedBandPhoto,
     selectedGalleryPhoto,
     customUploadedPhoto,
+    aiGeneratedPosterImageUrl,
     photoFilter,
     isOpen,
   ],
@@ -835,6 +845,49 @@ const saveAsOfficialPoster = async () => {
     isSavingOfficialPoster.value = false
   }
 }
+
+// Generate AI Background Artwork via Gemini / Fallback
+const generatePosterWithAi = async () => {
+  if (!props.gig) return
+  isGeneratingPosterAi.value = true
+  aiPosterError.value = null
+
+  try {
+    const res = await $fetch<{
+      success: boolean
+      imageUrl: string
+      prompt: string
+      engine: string
+    }>('/api/admin/gigs/generate-poster-ai', {
+      method: 'POST',
+      body: {
+        venue: props.gig.venue,
+        city: props.gig.city,
+        motifPreset: aiPosterPreset.value,
+        customPrompt: aiPosterPreset.value === 'custom' ? aiPosterCustomPrompt.value : undefined,
+        includeBand: aiPosterIncludeBand.value,
+        format: selectedFormat.value,
+      },
+    })
+
+    if (res.success && res.imageUrl) {
+      aiGeneratedPosterImageUrl.value = res.imageUrl
+      imageSource.value = 'ai'
+      await nextTick()
+      await drawPoster()
+    } else {
+      aiPosterError.value = 'Inget bildresultat returnerades från AI-motorn.'
+    }
+  } catch (err: unknown) {
+    const errorObj = err as { statusCode?: number; data?: { statusCode?: number; statusMessage?: string; message?: string }; message?: string }
+    const isAuth = errorObj?.statusCode === 401 || errorObj?.data?.statusCode === 401 || errorObj?.data?.statusMessage === 'Unauthorized'
+    aiPosterError.value = isAuth
+      ? 'Inloggningen har löpt ut. Logga in igen i en ny flik för att skapa AI-bild.'
+      : (errorObj?.data?.message || errorObj?.data?.statusMessage || errorObj?.message || 'Kunde inte generera AI-bild.')
+  } finally {
+    isGeneratingPosterAi.value = false
+  }
+}
 </script>
 
 <template>
@@ -961,18 +1014,18 @@ const saveAsOfficialPoster = async () => {
             </div>
 
             <!-- Image Source Selector Tabs -->
-            <div class="grid grid-cols-4 gap-1 p-1 bg-base-300/60 rounded-xl">
+            <div class="grid grid-cols-5 gap-1 p-1 bg-base-300/60 rounded-xl">
               <button
                 type="button"
-                class="py-1.5 px-1 rounded-lg text-center font-bold text-[11px] transition-all cursor-pointer truncate"
+                class="py-1.5 px-0.5 rounded-lg text-center font-bold text-[10px] transition-all cursor-pointer truncate"
                 :class="imageSource === 'photoshoot' ? 'bg-primary text-primary-content shadow' : 'text-base-content/70 hover:text-base-content'"
                 @click="imageSource = 'photoshoot'"
               >
-                📸 Photoshoot
+                📸 Bandfoto
               </button>
               <button
                 type="button"
-                class="py-1.5 px-1 rounded-lg text-center font-bold text-[11px] transition-all cursor-pointer truncate"
+                class="py-1.5 px-0.5 rounded-lg text-center font-bold text-[10px] transition-all cursor-pointer truncate"
                 :class="imageSource === 'gallery' ? 'bg-primary text-primary-content shadow' : 'text-base-content/70 hover:text-base-content'"
                 @click="imageSource = 'gallery'"
               >
@@ -980,7 +1033,15 @@ const saveAsOfficialPoster = async () => {
               </button>
               <button
                 type="button"
-                class="py-1.5 px-1 rounded-lg text-center font-bold text-[11px] transition-all cursor-pointer truncate"
+                class="py-1.5 px-0.5 rounded-lg text-center font-bold text-[10px] transition-all cursor-pointer truncate"
+                :class="imageSource === 'ai' ? 'bg-primary text-primary-content shadow ring-1 ring-primary' : 'text-base-content/70 hover:text-base-content'"
+                @click="imageSource = 'ai'; if (!aiGeneratedPosterImageUrl) generatePosterWithAi()"
+              >
+                🤖 Gemini AI
+              </button>
+              <button
+                type="button"
+                class="py-1.5 px-0.5 rounded-lg text-center font-bold text-[10px] transition-all cursor-pointer truncate"
                 :class="imageSource === 'upload' ? 'bg-primary text-primary-content shadow' : 'text-base-content/70 hover:text-base-content'"
                 @click="triggerFileUpload"
               >
@@ -988,7 +1049,7 @@ const saveAsOfficialPoster = async () => {
               </button>
               <button
                 type="button"
-                class="py-1.5 px-1 rounded-lg text-center font-bold text-[11px] transition-all cursor-pointer truncate"
+                class="py-1.5 px-0.5 rounded-lg text-center font-bold text-[10px] transition-all cursor-pointer truncate"
                 :class="imageSource === 'none' ? 'bg-primary text-primary-content shadow' : 'text-base-content/70 hover:text-base-content'"
                 @click="imageSource = 'none'"
               >
@@ -1067,6 +1128,143 @@ const saveAsOfficialPoster = async () => {
                   @click="triggerFileUpload"
                 >
                   Välj fil
+                </button>
+              </div>
+            </div>
+
+            <!-- Source: Gemini AI Artwork -->
+            <div v-else-if="imageSource === 'ai'" class="space-y-2.5 p-3 bg-base-300/40 rounded-xl border border-primary/20">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-secondary flex items-center gap-1.5">
+                  <span>🤖</span>
+                  <span>Välj motiv & stämning för spelningen:</span>
+                </span>
+                <span v-if="aiGeneratedPosterImageUrl" class="badge badge-xs badge-primary font-mono font-bold">
+                  ✓ AI-bild aktiv
+                </span>
+              </div>
+
+              <!-- Preset motif options -->
+              <div class="grid grid-cols-3 gap-1.5 text-[10px] font-mono">
+                <button
+                  type="button"
+                  class="p-1.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col gap-0.5"
+                  :class="aiPosterPreset === 'club' ? 'bg-primary/20 border-primary text-primary font-bold shadow-sm' : 'border-white/10 hover:border-primary/40 text-base-content/80 bg-base-200/50'"
+                  :disabled="isGeneratingPosterAi"
+                  @click="aiPosterPreset = 'club'; generatePosterWithAi()"
+                >
+                  <span class="text-sm">🎷</span>
+                  <span class="font-bold">Bluesklubb</span>
+                  <span class="text-[8px] opacity-70">Rökigt 70-tal Chicago</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="p-1.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col gap-0.5"
+                  :class="aiPosterPreset === 'stage' ? 'bg-primary/20 border-primary text-primary font-bold shadow-sm' : 'border-white/10 hover:border-primary/40 text-base-content/80 bg-base-200/50'"
+                  :disabled="isGeneratingPosterAi"
+                  @click="aiPosterPreset = 'stage'; generatePosterWithAi()"
+                >
+                  <span class="text-sm">🎸</span>
+                  <span class="font-bold">Scen & Stärkare</span>
+                  <span class="text-[8px] opacity-70">Fender/Marshall rör</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="p-1.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col gap-0.5"
+                  :class="aiPosterPreset === 'folkpark' ? 'bg-primary/20 border-primary text-primary font-bold shadow-sm' : 'border-white/10 hover:border-primary/40 text-base-content/80 bg-base-200/50'"
+                  :disabled="isGeneratingPosterAi"
+                  @click="aiPosterPreset = 'folkpark'; generatePosterWithAi()"
+                >
+                  <span class="text-sm">🌲</span>
+                  <span class="font-bold">Svensk Folkpark</span>
+                  <span class="text-[8px] opacity-70">Skymning & lyktor</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="p-1.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col gap-0.5"
+                  :class="aiPosterPreset === 'rockbar' ? 'bg-primary/20 border-primary text-primary font-bold shadow-sm' : 'border-white/10 hover:border-primary/40 text-base-content/80 bg-base-200/50'"
+                  :disabled="isGeneratingPosterAi"
+                  @click="aiPosterPreset = 'rockbar'; generatePosterWithAi()"
+                >
+                  <span class="text-sm">🍻</span>
+                  <span class="font-bold">Svettig Rockbar</span>
+                  <span class="text-[8px] opacity-70">Träpanel & neonljus</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="p-1.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col gap-0.5"
+                  :class="aiPosterPreset === 'chicago' ? 'bg-primary/20 border-primary text-primary font-bold shadow-sm' : 'border-white/10 hover:border-primary/40 text-base-content/80 bg-base-200/50'"
+                  :disabled="isGeneratingPosterAi"
+                  @click="aiPosterPreset = 'chicago'; generatePosterWithAi()"
+                >
+                  <span class="text-sm">🏙️</span>
+                  <span class="font-bold">Chicago Alley</span>
+                  <span class="text-[8px] opacity-70">Natt, regn & neon</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="p-1.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col gap-0.5"
+                  :class="aiPosterPreset === 'custom' ? 'bg-primary/20 border-primary text-primary font-bold shadow-sm' : 'border-white/10 hover:border-primary/40 text-base-content/80 bg-base-200/50'"
+                  :disabled="isGeneratingPosterAi"
+                  @click="aiPosterPreset = 'custom'"
+                >
+                  <span class="text-sm">✍️</span>
+                  <span class="font-bold">Egen idé</span>
+                  <span class="text-[8px] opacity-70">Skriv egen prompt</span>
+                </button>
+              </div>
+
+              <!-- Custom prompt input -->
+              <div v-if="aiPosterPreset === 'custom'" class="pt-1">
+                <input
+                  v-model="aiPosterCustomPrompt"
+                  type="text"
+                  placeholder="Beskriv scenen (t.ex. Bluesfestival i solnedgång vid havet...)"
+                  class="input input-bordered input-xs w-full font-mono text-[11px] bg-base-100"
+                  @keydown.enter.prevent="generatePosterWithAi"
+                >
+              </div>
+
+              <!-- Include band members likeness toggle -->
+              <div class="flex items-center justify-between pt-1 border-t border-primary/10">
+                <div>
+                  <label class="text-[11px] font-bold text-base-content/80 flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      v-model="aiPosterIncludeBand"
+                      type="checkbox"
+                      class="checkbox checkbox-primary checkbox-xs"
+                      :disabled="isGeneratingPosterAi"
+                      @change="generatePosterWithAi"
+                    >
+                    <span>Generera bandmedlemmarna på scenen</span>
+                  </label>
+                  <p class="text-[9px] text-base-content/50 ml-5">
+                    Använder referensfoto av Janis, Marcus, Bosse och Jonas.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Error Alert if any -->
+              <div v-if="aiPosterError" class="p-2 bg-error/15 border border-error/40 rounded-lg text-error text-[10px] font-bold">
+                ⚠️ {{ aiPosterError }}
+              </div>
+
+              <!-- Generate Button & Action -->
+              <div class="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-xs rounded-lg font-bold flex-1 flex items-center justify-center gap-1.5 shadow cursor-pointer"
+                  :disabled="isGeneratingPosterAi"
+                  @click="generatePosterWithAi"
+                >
+                  <span v-if="isGeneratingPosterAi" class="loading loading-spinner loading-xs" />
+                  <span v-else>✨</span>
+                  <span>{{ isGeneratingPosterAi ? 'Genererar AI-affischbild...' : (aiGeneratedPosterImageUrl ? '🎲 Generera ny AI-variant' : 'Skapa AI-affischbild') }}</span>
                 </button>
               </div>
             </div>
@@ -1158,6 +1356,7 @@ const saveAsOfficialPoster = async () => {
           </div>
 
           <!-- 4. Quick Actions Panel -->
+          <div class="pt-1 flex flex-col gap-2">
             <!-- Alerts for Save and Story -->
             <div
               v-if="officialPosterSavedResult"

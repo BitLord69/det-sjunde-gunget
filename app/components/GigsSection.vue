@@ -21,6 +21,14 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   pastGigs: () => [],
 })
+
+const selectedPosterGig = ref<Gig | null>(null)
+const isPosterModalOpen = ref(false)
+
+const openPoster = (gig: any) => {
+  selectedPosterGig.value = gig
+  isPosterModalOpen.value = true
+}
 </script>
 
 <template>
@@ -43,6 +51,9 @@ withDefaults(defineProps<Props>(), {
       </div>
     </div>
 
+    <!-- Live Gig Countdown Banner -->
+    <GigCountdownBanner :gigs="upcomingGigs" class="mb-10" />
+
     <!-- Gig Poster Cards Grid -->
     <div v-if="upcomingGigs.length > 0" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <GigCard
@@ -50,6 +61,7 @@ withDefaults(defineProps<Props>(), {
         :key="gig.id"
         :gig="gig"
         :featured="index === 0"
+        @open-poster="openPoster"
       />
     </div>
 
@@ -75,5 +87,11 @@ withDefaults(defineProps<Props>(), {
         {{ t('gigs.book_for_event') }}
       </a>
     </div>
+
+    <!-- Vintage Gig Poster Studio Modal -->
+    <GigPosterModal
+      v-model="isPosterModalOpen"
+      :gig="selectedPosterGig"
+    />
   </section>
 </template>

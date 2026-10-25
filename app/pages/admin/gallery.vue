@@ -216,6 +216,20 @@ const uploadFile = async (event: Event, targetCallback: (url: string) => void) =
   }
 }
 
+// ---------------- BATCH UPLOAD STATE ----------------
+const isBatchModalOpen = ref(false)
+
+const openBatchModal = () => {
+  isBatchModalOpen.value = true
+}
+
+const onBatchUploaded = async (count: number) => {
+  await refreshGallery()
+  const { fetchBandPhotos } = useBandPhotos()
+  await fetchBandPhotos(true)
+  showToast(`🎉 ${count} bilder har laddats upp och sparats!`)
+}
+
 // ---------------- GALLERY FILTER & EPK ----------------
 const activeFilter = ref<'all' | 'epk' | 'band' | 'documents'>('all')
 
@@ -561,14 +575,23 @@ const deleteGalleryItem = async (id: string) => {
         >
           + Nytt dokument / PDF
         </button>
-        <button
-          v-else
-          type="button"
-          class="btn btn-primary btn-sm rounded-full font-bold px-5 cursor-pointer self-start sm:self-auto"
-          @click="openAddGal"
-        >
-          + Ny bild
-        </button>
+        <div v-else class="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm rounded-full font-bold px-4 cursor-pointer shadow-sm hover:shadow-secondary/20 flex items-center gap-1.5"
+            @click="openBatchModal"
+          >
+            <span>📁</span>
+            <span>Batch-uppladdning</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary btn-sm rounded-full font-bold px-5 cursor-pointer shadow-md shadow-primary/20"
+            @click="openAddGal"
+          >
+            + Ny bild
+          </button>
+        </div>
       </div>
 
       <!-- Filter Tabs: Alla vs Presskit / Foton vs Arrangörsdokument -->
@@ -1166,6 +1189,12 @@ const deleteGalleryItem = async (id: string) => {
         </div>
       </div>
     </div>
+
+    <!-- MODULAR BATCH UPLOAD MODAL -->
+    <AdminBatchUploadModal
+      v-model="isBatchModalOpen"
+      @uploaded="onBatchUploaded"
+    />
 
     <!-- SOCIAL SHARE MODAL -->
     <AdminSocialShareModal

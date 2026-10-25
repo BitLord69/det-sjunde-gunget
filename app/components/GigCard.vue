@@ -22,6 +22,10 @@ const props = withDefaults(defineProps<Props>(), {
   featured: false,
 })
 
+const emit = defineEmits<{
+  (e: 'openPoster', gig: Gig): void
+}>()
+
 const formatGigDate = (dateVal: number | string | Date) => {
   const d = new Date(dateVal)
   const loc = locale.value === 'en' ? 'en-US' : 'sv-SE'
@@ -92,6 +96,17 @@ const formatGigDate = (dateVal: number | string | Date) => {
         <span v-else class="text-xs font-medium text-base-content/60">
           {{ t('gigs.door_ticket') }}
         </span>
+
+        <!-- Vintage Poster Button -->
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs rounded-full font-mono text-[11px] font-bold border border-primary/20 hover:bg-primary/20 flex items-center gap-1 cursor-pointer"
+          :title="t('gigs.poster_btn') || 'Affisch'"
+          @click="emit('openPoster', gig)"
+        >
+          <span>🎨</span>
+          <span class="hidden sm:inline">{{ t('gigs.poster_btn') || 'Affisch' }}</span>
+        </button>
 
         <!-- Calendar Dropdown -->
         <div class="dropdown dropdown-top sm:dropdown-end">

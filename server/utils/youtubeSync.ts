@@ -1,4 +1,3 @@
-import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { db } from '../db/client'
 import { siteSettings, videos } from '../db/schema'

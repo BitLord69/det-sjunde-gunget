@@ -29,6 +29,15 @@ const currentTab = ref<'upcoming' | 'past'>('upcoming')
 const upcomingGigs = computed(() => gigsData.value?.upcoming || [])
 const pastGigs = computed(() => gigsData.value?.past || [])
 
+// Vintage Poster Studio Modal State
+const selectedPosterGig = ref<Gig | null>(null)
+const isPosterModalOpen = ref(false)
+
+const openPoster = (gig: any) => {
+  selectedPosterGig.value = gig
+  isPosterModalOpen.value = true
+}
+
 // Schema.org MusicEvents for Google Search Rich Results
 const eventsStructuredData = computed(() => {
   return upcomingGigs.value.map(gig => ({
@@ -155,6 +164,9 @@ const formatGigDate = (dateVal: number | string | Date) => {
       <!-- GIGS PAGE HEADER -->
       <PageHeader :title="t('gigs.page_title')" :description="t('gigs.desc')" />
 
+      <!-- LIVE GIG COUNTDOWN BANNER -->
+      <GigCountdownBanner :gigs="upcomingGigs" class="max-w-5xl mx-auto" />
+
       <!-- TICKET BOOTH WINDOW / COUNTER -->
       <div class="max-w-5xl mx-auto">
         <!-- Booth Window Frame -->
@@ -240,6 +252,7 @@ const formatGigDate = (dateVal: number | string | Date) => {
                 :key="gig.id"
                 :gig="gig"
                 :index="idx"
+                @open-poster="openPoster"
               />
             </div>
 
@@ -357,6 +370,12 @@ const formatGigDate = (dateVal: number | string | Date) => {
           {{ t('contact.send_button') }}
         </NuxtLink>
       </div>
+
+      <!-- Vintage Gig Poster Modal -->
+      <GigPosterModal
+        v-model="isPosterModalOpen"
+        :gig="selectedPosterGig"
+      />
     </div>
   </div>
 </template>

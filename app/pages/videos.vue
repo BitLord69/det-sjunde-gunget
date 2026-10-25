@@ -2,7 +2,6 @@
 import type { VideoItem } from '~/types'
 
 const { t, locale } = useI18n()
-const localePath = useLocalePath()
 
 useSeoMeta({
   title: computed(() => `${t('videos.title')} | Det 7:e Gunget`),

@@ -372,7 +372,15 @@ const scrollTo = (id: string) => {
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
-                <span><strong>📱 Dela till Facebook:</strong> Kräver en permanent Page Access Token i miljövariablerna (FB_PAGE_ACCESS_TOKEN). Se guiden <code>FACEBOOK_PERMANENT_TOKEN_GUIDE.md</code> i projektet för instruktioner hur den genereras så den aldrig går ut.</span>
+                <span><strong>📱 Dela till Facebook & Instagram:</strong> Kräver en permanent Page Access Token i miljövariablerna (FB_PAGE_ACCESS_TOKEN). Stödjer både vanliga flödesinlägg och 24-timmars Stories till både Facebook och Instagram. Se guiden <code>FACEBOOK_PERMANENT_TOKEN_GUIDE.md</code> i projektet för instruktioner hur den genereras så den aldrig går ut.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🎨 Vintage Affisch-studio & Direkt Story-publicering:</strong> Klicka på <em>Affisch</em>-knappen på valfritt gig (även tillgänglig för publiken på startsidan och i Biljettluckan) för att skapa autentiska vintage konsertaffischer i 4 retrostilar och 3 format (A4, Story 9:16, Kvadrat). För inloggade administratörer finns knappen <strong>🚀 Publicera Story</strong> som automatiskt laddar upp och sänder affischen till både Facebook Story och Instagram Story med 24 timmars livslängd.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>⏱️ Live Gig-nedräkning:</strong> Startsidan och spelningssidan visar ett levande retro-ur som tickar ner dagar, timmar, minuter och sekunder till nästa spelning, med automatisk "I KVÄLL!"-indikator och blues-fallback när inga datum är spikade.</span>
               </li>
             </ul>
           </div>
@@ -517,6 +525,10 @@ const scrollTo = (id: string) => {
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
                 <span><strong>📄 PDF & Dokument:</strong> Ladda upp A3-affischer, riderbilagor och pressmeddelanden.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📁 Batch-uppladdning:</strong> Välj eller släpp flera foton samtidigt! Välj gemensam kategori, ramstil och bildtext i förväg. Systemet identifierar upplösning och 300 DPI automatiskt och visar förloppsindikator per bild och totalt.</span>
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>

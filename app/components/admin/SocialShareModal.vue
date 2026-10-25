@@ -16,6 +16,7 @@ const allHashtags = computed<any[]>(() => (Array.isArray(hashtagsData.value) ? h
 
 const selectedTags = ref<string[]>([])
 const customNotes = ref('')
+const isStory = ref(false)
 const isPublishing = ref(false)
 const publishResult = ref<{ success: boolean; message: string } | null>(null)
 
@@ -112,14 +113,16 @@ const doPublish = async () => {
         type: props.type,
         id: props.item.id,
         customNotes: customNotes.value,
-        hashtags: selectedTags.value,
+        hashtags: isStory.value ? [] : selectedTags.value,
+        isStory: isStory.value,
       },
     })
 
     if (res.social?.success) {
+      const modeText = isStory.value ? 'som Story på Facebook & Instagram (24h)' : 'på Facebook'
       publishResult.value = {
         success: true,
-        message: `✓ Inlägget har publicerats på Facebook! (ID: ${res.social.facebook?.id || 'OK'})`,
+        message: `✓ Publicerat ${modeText}! (ID: ${res.social.facebook?.id || res.social.instagram?.id || 'OK'})`,
       }
       emit('published', res.social)
     } else {
@@ -128,10 +131,15 @@ const doPublish = async () => {
         message: `⚠️ Publicering misslyckades: ${res.social?.message || 'Okänt fel'}`,
       }
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMsg = err && typeof err === 'object' && 'data' in err && (err as any).data?.message
+      ? (err as any).data.message
+      : err instanceof Error
+        ? err.message
+        : 'Ett serverfel uppstod'
     publishResult.value = {
       success: false,
-      message: `⚠️ Ett serverfel uppstod: ${err?.data?.message || err?.message || 'Fel'}`,
+      message: `⚠️ ${errorMsg}`,
     }
   } finally {
     isPublishing.value = false
@@ -154,10 +162,10 @@ const close = () => {
           </div>
           <div>
             <h3 class="font-heading text-lg text-primary font-bold">
-              Publicera till Facebook & Sociala medier
+              Publicera till Facebook & Instagram
             </h3>
             <p class="text-xs text-base-content/70">
-              Dela "{{ item?.title || item?.venue || 'Objekt' }}" direkt till er Facebook-sida.
+              Dela "{{ item?.title || item?.venue || 'Objekt' }}" som vanligt inlägg eller 24-timmars Story.
             </p>
           </div>
         </div>
@@ -177,6 +185,40 @@ const close = () => {
           {{ publishResult.message }}
         </div>
 
+        <!-- Mode Selector: Feed vs Story -->
+        <div class="space-y-1.5">
+          <label class="block font-bold text-secondary text-xs uppercase tracking-wider">
+            Publiceringsmål:
+          </label>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              class="p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-2.5"
+              :class="!isStory ? 'border-primary bg-primary/15 text-primary font-bold shadow' : 'border-base-content/15 bg-base-200/50 text-base-content/70'"
+              @click="isStory = false"
+            >
+              <span class="text-xl">📢</span>
+              <div class="min-w-0">
+                <div class="font-bold text-xs">Vanligt flödesinlägg</div>
+                <div class="text-[10px] opacity-75">Facebook-sida & flöde</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              class="p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-2.5"
+              :class="isStory ? 'border-secondary bg-secondary/15 text-secondary font-bold shadow' : 'border-base-content/15 bg-base-200/50 text-base-content/70'"
+              @click="isStory = true"
+            >
+              <span class="text-xl">⚡</span>
+              <div class="min-w-0">
+                <div class="font-bold text-xs">Story (24 timmar)</div>
+                <div class="text-[10px] opacity-75">Facebook & Instagram Story</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
         <!-- Optional Custom Note/Text -->
         <div class="space-y-1.5">
           <label class="block font-bold text-secondary text-xs">
@@ -190,8 +232,8 @@ const close = () => {
           />
         </div>
 
-        <!-- Hashtag Selector -->
-        <div class="space-y-2">
+        <!-- Hashtag Selector (endast för flödesinlägg) -->
+        <div v-if="!isStory" class="space-y-2">
           <label class="block font-bold text-secondary text-xs">
             Välj hashtags:
           </label>
@@ -212,10 +254,15 @@ const close = () => {
         <!-- Live Preview of Post -->
         <div class="space-y-1.5">
           <label class="block font-bold text-secondary text-xs flex items-center justify-between">
-            <span>Förhandsgranskning av inlägg:</span>
-            <span class="badge badge-outline text-[10px] font-mono">Facebook Page</span>
+            <span>Förhandsgranskning:</span>
+            <span class="badge badge-outline text-[10px] font-mono">
+              {{ isStory ? 'FB & IG Stories (9:16)' : 'Facebook Page Feed' }}
+            </span>
           </label>
           <div class="p-4 rounded-2xl bg-base-300/80 border border-primary/20 text-base-content/90 font-mono text-xs whitespace-pre-wrap leading-relaxed shadow-inner">
+            <div v-if="isStory" class="text-secondary font-bold pb-1">
+              ⚡ Visas i 24 timmar som Story för sidans följare på Facebook och Instagram.
+            </div>
             {{ previewText }}
           </div>
         </div>
@@ -234,7 +281,7 @@ const close = () => {
           @click="doPublish"
         >
           <span>🚀</span>
-          <span>{{ isPublishing ? 'Publicerar...' : 'Publicera på Facebook nu' }}</span>
+          <span>{{ isPublishing ? 'Publicerar...' : isStory ? 'Publicera Story (FB & IG)' : 'Publicera på Facebook nu' }}</span>
         </button>
       </div>
     </div>

@@ -23,6 +23,10 @@ const props = withDefaults(defineProps<Props>(), {
   index: 0,
 })
 
+const emit = defineEmits<{
+  (e: 'openPoster', gig: GigItem): void
+}>()
+
 const isTorn = ref(false)
 const isSetlistOpen = ref(false)
 
@@ -275,6 +279,18 @@ const exportGigSetlistAsTxt = () => {
             <span v-else-if="gig.status === 'free'" class="text-xs font-bold text-emerald-600 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-200">
               ✓ {{ t('gigs.free_entry') }}
             </span>
+
+            <!-- Vintage Poster Button -->
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm rounded-full text-xs font-bold border border-primary/20 hover:bg-primary/10 flex items-center gap-1 cursor-pointer"
+              :class="isTorn ? 'text-primary' : 'text-stone-700'"
+              :title="t('gigs.poster_btn') || 'Affisch'"
+              @click="emit('openPoster', gig)"
+            >
+              <span>🎨</span>
+              <span>{{ t('gigs.poster_btn') || 'Affisch' }}</span>
+            </button>
 
             <!-- Calendar Save Dropdown -->
             <div class="dropdown dropdown-end">

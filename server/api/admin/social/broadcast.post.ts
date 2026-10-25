@@ -75,6 +75,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Ogiltig objekttyp' })
   }
 
+  // Tillåt bild-override (t.ex. genererad affisch för ett gig) och Story-publicering
+  if (body.imageUrl) {
+    postParams.imageUrl = body.imageUrl
+  }
+  if (body.isStory) {
+    postParams.isStory = true
+  }
+
   const result = await publishToSocialMedia(postParams)
 
   return {

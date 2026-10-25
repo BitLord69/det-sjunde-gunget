@@ -17,6 +17,7 @@ export interface SocialPostParams {
   imageUrl?: string
   notes?: string
   hashtags?: string[]
+  isStory?: boolean
 }
 
 export interface SocialPostResult {
@@ -183,6 +184,18 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
   }
 
   if (isMockMode) {
+    if (params.isStory) {
+      console.log('\n[Social MOCK / TEST MODE - STORY PUBLICERING]:')
+      console.log('--- FACEBOOK STORY PREVIEW --- Bild: ' + (params.imageUrl || 'Ingen bild vald'))
+      console.log('--- INSTAGRAM STORY PREVIEW --- Bild: ' + (params.imageUrl || 'Ingen bild vald'))
+      return {
+        success: true,
+        simulated: true,
+        previewText: `[STORY 24h] ${params.title}\nBild: ${params.imageUrl || 'Genererad affisch'}\nPubliceras till Facebook Story & Instagram Story.`,
+        message: 'Simulerad Story-publicering (Mock-läge aktivt — publiceras som 24h Story på Facebook och Instagram).',
+      }
+    }
+
     console.log('\n[Social MOCK / TEST MODE - Inget skarpt inlägg skickas]:')
     console.log('--- FACEBOOK POST PREVIEW ---\n' + facebookText)
     console.log('--- INSTAGRAM POST PREVIEW ---\n' + instagramText)
@@ -221,112 +234,265 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
     console.warn('[Social] Could not read fresh .env from disk:', err instanceof Error ? err.message : String(err))
   }
 
-  let hasExternalDispatch = false
-
-  // 1. Post to Facebook Page (Photo post if imageUrl is available, otherwise Feed post)
-  if (fbToken && fbPageId) {
+  // Om Instagram Account ID inte finns i env, försök hämta det automatiskt från Facebook Page
+  if (fbToken && fbPageId && !igUserId) {
     try {
-      hasExternalDispatch = true
-      let fbRes: Response
-
-      let localFilePath: string | null = null
-      if (params.imageUrl && !params.imageUrl.startsWith('http')) {
-        const cleanPath = params.imageUrl.replace(/^\//, '')
-        const candidate = path.resolve(process.cwd(), 'public', cleanPath)
-        if (fs.existsSync(candidate)) {
-          localFilePath = candidate
+      const igLookupRes = await fetch(
+        `https://graph.facebook.com/v20.0/${fbPageId}?fields=instagram_business_account&access_token=${fbToken}`,
+      )
+      if (igLookupRes.ok) {
+        const lookupData = await igLookupRes.json()
+        if (lookupData.instagram_business_account?.id) {
+          igUserId = lookupData.instagram_business_account.id
+          console.log('[Social] ✓ Automagiskt detekterade Instagram Business Account ID:', igUserId)
         }
       }
-
-      if (localFilePath) {
-        // Upload local image binary directly to Facebook
-        const fileBuffer = fs.readFileSync(localFilePath)
-        const ext = path.extname(localFilePath).toLowerCase()
-        const mimeType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg'
-        const fileBlob = new Blob([fileBuffer], { type: mimeType })
-
-        const formData = new FormData()
-        formData.append('source', fileBlob, path.basename(localFilePath))
-        formData.append('caption', facebookText)
-        formData.append('access_token', fbToken)
-
-        fbRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/photos`, {
-          method: 'POST',
-          body: formData,
-        })
-      } else if (params.imageUrl && params.imageUrl.startsWith('http')) {
-        // Upload via remote public URL
-        const formData = new FormData()
-        formData.append('url', params.imageUrl)
-        formData.append('caption', facebookText)
-        formData.append('access_token', fbToken)
-
-        fbRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/photos`, {
-          method: 'POST',
-          body: formData,
-        })
-      } else {
-        // Text / Link post to Feed
-        fbRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/feed`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: facebookText,
-            link: params.ticketUrl || params.embedUrl || 'https://sjundegunget.se',
-            access_token: fbToken,
-          }),
-        })
-      }
-
-      const fbData = await fbRes.json()
-      if (fbRes.ok && (fbData.id || fbData.post_id)) {
-        const publishedId = fbData.post_id || fbData.id
-        result.facebook = { success: true, id: publishedId }
-        console.log('[Social] ✓ Successfully posted to Facebook Page:', publishedId)
-      } else {
-        const errDetail = fbData.error?.message || 'FB API Error'
-        result.facebook = { success: false, error: errDetail }
-        console.error('[Social] ✕ Facebook post error:', fbData)
-      }
-    } catch (e: unknown) {
-      const errorMsg = e instanceof Error ? e.message : String(e)
-      result.facebook = { success: false, error: errorMsg }
-      console.error('[Social] ✕ Facebook network error:', errorMsg)
+    } catch (lookupErr: unknown) {
+      console.warn('[Social] Kunde inte slå upp instagram_business_account automatiskt:', lookupErr)
     }
   }
 
-  // 2. Post to Instagram Business (requires media container)
-  if (fbToken && igUserId && params.imageUrl) {
-    try {
-      hasExternalDispatch = true
-      const containerRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image_url: params.imageUrl.startsWith('http') ? params.imageUrl : `https://sjundegunget.se${params.imageUrl}`,
-          caption: instagramText,
-          access_token: fbToken,
-        }),
-      })
+  let hasExternalDispatch = false
 
-      const containerData = await containerRes.json()
-      if (containerRes.ok && containerData.id) {
-        const publishRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+  // ==========================================
+  // CASE A: STORY PUBLISHING (FB & IG STORIES)
+  // ==========================================
+  if (params.isStory) {
+    if (!params.imageUrl) {
+      return {
+        success: false,
+        previewText: 'En bild krävs för att publicera som Story (rekommenderat 9:16 format).',
+        message: 'Kunde inte publicera Story: Ingen bild-URL angiven.',
+      }
+    }
+
+    const publicImageUrl = params.imageUrl.startsWith('http')
+      ? params.imageUrl
+      : `https://sjundegunget.se${params.imageUrl}`
+
+    // 1. Facebook Page Story
+    if (fbToken && fbPageId) {
+      hasExternalDispatch = true
+      try {
+        let photoId: string | null = null
+
+        // Kolla om bilden finns lokalt på disk
+        let localFilePath: string | null = null
+        if (!params.imageUrl.startsWith('http')) {
+          const cleanPath = params.imageUrl.replace(/^\//, '')
+          const candidate = path.resolve(process.cwd(), 'public', cleanPath)
+          if (fs.existsSync(candidate)) {
+            localFilePath = candidate
+          }
+        }
+
+        if (localFilePath) {
+          const fileBuffer = fs.readFileSync(localFilePath)
+          const ext = path.extname(localFilePath).toLowerCase()
+          const mimeType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg'
+          const fileBlob = new Blob([fileBuffer], { type: mimeType })
+
+          const formData = new FormData()
+          formData.append('source', fileBlob, path.basename(localFilePath))
+          formData.append('published', 'false')
+          formData.append('access_token', fbToken)
+
+          const photoRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/photos`, {
+            method: 'POST',
+            body: formData,
+          })
+          const photoData = await photoRes.json()
+          if (photoRes.ok && photoData.id) {
+            photoId = photoData.id
+          } else {
+            result.facebook = { success: false, error: photoData.error?.message || 'FB Photo Upload Error' }
+          }
+        } else {
+          // Ladda upp via publik URL som unpublished photo
+          const formData = new FormData()
+          formData.append('url', publicImageUrl)
+          formData.append('published', 'false')
+          formData.append('access_token', fbToken)
+
+          const photoRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/photos`, {
+            method: 'POST',
+            body: formData,
+          })
+          const photoData = await photoRes.json()
+          if (photoRes.ok && photoData.id) {
+            photoId = photoData.id
+          } else {
+            result.facebook = { success: false, error: photoData.error?.message || 'FB Photo Upload Error' }
+          }
+        }
+
+        // När vi har photoId, skapa en Page Story
+        if (photoId) {
+          const storyRes = await fetch(
+            `https://graph.facebook.com/v20.0/${fbPageId}/photo_stories?photo_id=${photoId}&access_token=${fbToken}`,
+            { method: 'POST' },
+          )
+          const storyData = await storyRes.json()
+          if (storyRes.ok && (storyData.success || storyData.id || storyData.post_id)) {
+            const storyId = storyData.post_id || storyData.id || photoId
+            result.facebook = { success: true, id: storyId }
+            console.log('[Social] ✓ Publicerad som Facebook Story:', storyId)
+          } else {
+            result.facebook = { success: false, error: storyData.error?.message || 'FB Photo Story Error' }
+          }
+        }
+      } catch (e: unknown) {
+        result.facebook = { success: false, error: e instanceof Error ? e.message : String(e) }
+      }
+    }
+
+    // 2. Instagram Story
+    if (fbToken && igUserId) {
+      hasExternalDispatch = true
+      try {
+        const containerRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            creation_id: containerData.id,
+            image_url: publicImageUrl,
+            media_type: 'STORIES',
             access_token: fbToken,
           }),
         })
-        const publishData = await publishRes.json()
-        result.instagram = { success: true, id: publishData.id }
-        console.log('[Social] Successfully posted to Instagram:', publishData.id)
-      } else {
-        result.instagram = { success: false, error: containerData.error?.message || 'IG Container Error' }
+
+        const containerData = await containerRes.json()
+        if (containerRes.ok && containerData.id) {
+          const publishRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              creation_id: containerData.id,
+              access_token: fbToken,
+            }),
+          })
+          const publishData = await publishRes.json()
+          if (publishRes.ok && publishData.id) {
+            result.instagram = { success: true, id: publishData.id }
+            console.log('[Social] ✓ Publicerad som Instagram Story:', publishData.id)
+          } else {
+            result.instagram = { success: false, error: publishData.error?.message || 'IG Story Publish Error' }
+          }
+        } else {
+          result.instagram = { success: false, error: containerData.error?.message || 'IG Story Container Error' }
+        }
+      } catch (e: unknown) {
+        result.instagram = { success: false, error: e instanceof Error ? e.message : String(e) }
       }
-    } catch (e: unknown) {
-      result.instagram = { success: false, error: e instanceof Error ? e.message : String(e) }
+    }
+  } else {
+    // ==========================================
+    // CASE B: STANDARD FEED / PHOTO PUBLISHING
+    // ==========================================
+    // 1. Post to Facebook Page (Photo post if imageUrl is available, otherwise Feed post)
+    if (fbToken && fbPageId) {
+      try {
+        hasExternalDispatch = true
+        let fbRes: Response
+
+        let localFilePath: string | null = null
+        if (params.imageUrl && !params.imageUrl.startsWith('http')) {
+          const cleanPath = params.imageUrl.replace(/^\//, '')
+          const candidate = path.resolve(process.cwd(), 'public', cleanPath)
+          if (fs.existsSync(candidate)) {
+            localFilePath = candidate
+          }
+        }
+
+        if (localFilePath) {
+          // Upload local image binary directly to Facebook
+          const fileBuffer = fs.readFileSync(localFilePath)
+          const ext = path.extname(localFilePath).toLowerCase()
+          const mimeType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg'
+          const fileBlob = new Blob([fileBuffer], { type: mimeType })
+
+          const formData = new FormData()
+          formData.append('source', fileBlob, path.basename(localFilePath))
+          formData.append('caption', facebookText)
+          formData.append('access_token', fbToken)
+
+          fbRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/photos`, {
+            method: 'POST',
+            body: formData,
+          })
+        } else if (params.imageUrl && params.imageUrl.startsWith('http')) {
+          // Upload via remote public URL
+          const formData = new FormData()
+          formData.append('url', params.imageUrl)
+          formData.append('caption', facebookText)
+          formData.append('access_token', fbToken)
+
+          fbRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/photos`, {
+            method: 'POST',
+            body: formData,
+          })
+        } else {
+          // Text / Link post to Feed
+          fbRes = await fetch(`https://graph.facebook.com/v20.0/${fbPageId}/feed`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: facebookText,
+              link: params.ticketUrl || params.embedUrl || 'https://sjundegunget.se',
+              access_token: fbToken,
+            }),
+          })
+        }
+
+        const fbData = await fbRes.json()
+        if (fbRes.ok && (fbData.id || fbData.post_id)) {
+          const publishedId = fbData.post_id || fbData.id
+          result.facebook = { success: true, id: publishedId }
+          console.log('[Social] ✓ Successfully posted to Facebook Page:', publishedId)
+        } else {
+          const errDetail = fbData.error?.message || 'FB API Error'
+          result.facebook = { success: false, error: errDetail }
+          console.error('[Social] ✕ Facebook post error:', fbData)
+        }
+      } catch (e: unknown) {
+        const errorMsg = e instanceof Error ? e.message : String(e)
+        result.facebook = { success: false, error: errorMsg }
+        console.error('[Social] ✕ Facebook network error:', errorMsg)
+      }
+    }
+
+    // 2. Post to Instagram Business (requires media container)
+    if (fbToken && igUserId && params.imageUrl) {
+      try {
+        hasExternalDispatch = true
+        const containerRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image_url: params.imageUrl.startsWith('http') ? params.imageUrl : `https://sjundegunget.se${params.imageUrl}`,
+            caption: instagramText,
+            access_token: fbToken,
+          }),
+        })
+
+        const containerData = await containerRes.json()
+        if (containerRes.ok && containerData.id) {
+          const publishRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              creation_id: containerData.id,
+              access_token: fbToken,
+            }),
+          })
+          const publishData = await publishRes.json()
+          result.instagram = { success: true, id: publishData.id }
+          console.log('[Social] Successfully posted to Instagram:', publishData.id)
+        } else {
+          result.instagram = { success: false, error: containerData.error?.message || 'IG Container Error' }
+        }
+      } catch (e: unknown) {
+        result.instagram = { success: false, error: e instanceof Error ? e.message : String(e) }
+      }
     }
   }
 
@@ -341,6 +507,7 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
           source: 'Det 7:e Gunget Website',
           type: params.type,
           title: params.title,
+          isStory: !!params.isStory,
           facebookText,
           instagramText,
           imageUrl: params.imageUrl,
@@ -357,8 +524,10 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
   if (!hasExternalDispatch) {
     result.simulated = true
     result.success = true
-    result.message = 'Simulerat läge: Inga API-tokens konfigurerade.'
-    console.log('[Social Preview Generated]:\n', facebookText)
+    result.message = params.isStory
+      ? 'Simulerat läge: Inga API-tokens konfigurerade (Story förberedd för FB & IG).'
+      : 'Simulerat läge: Inga API-tokens konfigurerade.'
+    console.log('[Social Preview Generated]:\n', params.isStory ? `Story: ${params.imageUrl}` : facebookText)
   } else {
     const fbOk = !result.facebook || result.facebook.success
     const igOk = !result.instagram || result.instagram.success
@@ -366,7 +535,9 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
 
     if (fbOk && igOk && whOk) {
       result.success = true
-      result.message = 'Publicerat på Facebook!'
+      result.message = params.isStory
+        ? 'Publicerat som Story på Facebook & Instagram (synlig i 24 timmar)!'
+        : 'Publicerat på Facebook!'
     } else {
       result.success = false
       const errors: string[] = []

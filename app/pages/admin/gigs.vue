@@ -260,6 +260,15 @@ const onSocialPublished = (social: any) => {
   showToast(`✓ ${social.message || 'Inlägget har publicerats på Facebook!'}`)
 }
 
+// ---------------- POSTER MODAL STATE ----------------
+const posterModalOpen = ref(false)
+const selectedPosterGig = ref<any | null>(null)
+
+const openPosterModal = (gig: any) => {
+  selectedPosterGig.value = gig
+  posterModalOpen.value = true
+}
+
 const deleteGig = async (id: string) => {
   if (!confirm('Är du säker på att du vill ta bort detta gig?')) return
   await $fetch('/api/admin/gigs', {
@@ -674,7 +683,7 @@ const getGigStatusBadgeClass = (status: string | null | undefined) => {
           </div>
 
           <!-- Actions Row -->
-          <div class="grid grid-cols-3 gap-2 pt-1 border-t border-primary/10">
+          <div class="grid grid-cols-4 gap-1.5 pt-1 border-t border-primary/10">
             <button
               type="button"
               class="btn btn-xs btn-outline btn-secondary rounded-xl font-bold flex items-center justify-center gap-1 py-1.5 h-auto cursor-pointer"
@@ -683,6 +692,15 @@ const getGigStatusBadgeClass = (status: string | null | undefined) => {
             >
               <span>📱</span>
               <span>Dela</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-xs btn-outline btn-accent rounded-xl font-bold flex items-center justify-center gap-1 py-1.5 h-auto cursor-pointer"
+              title="Skapa vintage konsertaffisch"
+              @click="openPosterModal(gig)"
+            >
+              <span>🎨</span>
+              <span>Affisch</span>
             </button>
             <button
               type="button"
@@ -877,6 +895,15 @@ const getGigStatusBadgeClass = (status: string | null | undefined) => {
                   </button>
                   <button
                     type="button"
+                    class="btn btn-xs btn-outline btn-accent rounded cursor-pointer inline-flex items-center justify-center gap-1 font-sans"
+                    title="Skapa vintage konsertaffisch för utskrift & sociala medier"
+                    @click="openPosterModal(gig)"
+                  >
+                    <span>🎨</span>
+                    <span>Affisch</span>
+                  </button>
+                  <button
+                    type="button"
                     class="btn btn-xs btn-outline btn-primary rounded cursor-pointer inline-flex items-center justify-center font-sans"
                     @click="openEditGig(gig)"
                   >
@@ -903,6 +930,12 @@ const getGigStatusBadgeClass = (status: string | null | undefined) => {
       type="gig"
       :item="selectedShareGig"
       @published="onSocialPublished"
+    />
+
+    <!-- VINTAGE GIG POSTER MODAL -->
+    <GigPosterModal
+      v-model="posterModalOpen"
+      :gig="selectedPosterGig"
     />
   </div>
 </template>

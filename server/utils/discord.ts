@@ -16,7 +16,7 @@ export interface DiscordNotificationOptions {
   authorIcon?: string
 }
 
-const DEFAULT_AVATAR = 'https://det7egunget.se/favicon.ico'
+const DEFAULT_AVATAR = 'https://sjundegunget.se/favicon.ico'
 const EMBED_GOLD_COLOR = 0xe2bd72 // #e2bd72 brand gold
 
 /**

@@ -144,8 +144,13 @@ const openEditGig = (gig: any) => {
   gigForm.id = gig.id
   gigForm.venue = gig.venue
   gigForm.city = gig.city
-  gigForm.date = d.toISOString().split('T')[0] || ''
-  gigForm.time = d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  gigForm.date = `${year}-${month}-${day}`
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  gigForm.time = `${hours}:${minutes}`
   gigForm.ticketUrl = gig.ticketUrl || ''
   gigForm.status = gig.status || 'upcoming'
   gigForm.notesSv = gig.notesSv || ''
@@ -178,40 +183,67 @@ const gigSocialPreview = computed(() => {
   })
 })
 
+const isSavingGig = ref(false)
+
 const saveGig = async () => {
   if (!gigForm.venue || !gigForm.city || !gigForm.date) {
     showToast('⚠️ Vänligen fyll i spelplats, stad och datum!')
     return
   }
 
-  const dateTimeStr = `${gigForm.date}T${gigForm.time || '20:00'}:00`
-  const res = await $fetch<{ success: boolean; social?: any }>('/api/admin/gigs', {
-    method: 'POST',
-    body: {
-      id: gigForm.id || undefined,
-      venue: gigForm.venue,
-      city: gigForm.city,
-      date: new Date(dateTimeStr).toISOString(),
-      ticketUrl: gigForm.ticketUrl,
-      status: gigForm.status,
-      notesSv: gigForm.notesSv,
-      notesEn: gigForm.notesEn,
-      setlist: gigForm.setlistTracks.length > 0 ? JSON.stringify(gigForm.setlistTracks) : null,
-      postToSocials: gigForm.postToSocials,
-      hashtags: selectedGigTags.value,
-    },
-  })
+  isSavingGig.value = true
+  try {
+    // Robust tidsvalidering som hanterar punkter, kolon och mellanslag
+    const rawTime = (gigForm.time || '20:00').trim().replace('.', ':')
+    const timeMatch = rawTime.match(/^(\d{1,2}):(\d{1,2})/)
+    const cleanTime = (timeMatch && timeMatch[1] && timeMatch[2])
+      ? `${timeMatch[1].padStart(2, '0')}:${timeMatch[2].padStart(2, '0')}`
+      : '20:00'
 
-  editingGig.value = null
-  await refreshGigs()
-  if (res.social) {
-    if (res.social.success) {
-      showToast(`✓ Giget sparades! 📱 ${res.social.message}`)
+    const dateParts = gigForm.date.split('-').map(Number)
+    const y = dateParts[0] ?? new Date().getFullYear()
+    const m = dateParts[1] ?? (new Date().getMonth() + 1)
+    const d = dateParts[2] ?? new Date().getDate()
+
+    const timeParts = cleanTime.split(':').map(Number)
+    const hh = timeParts[0] ?? 20
+    const mm = timeParts[1] ?? 0
+    const targetDate = new Date(y, m - 1, d, hh, mm, 0)
+
+    const res = await $fetch<{ success: boolean; social?: any }>('/api/admin/gigs', {
+      method: 'POST',
+      body: {
+        id: gigForm.id || undefined,
+        venue: gigForm.venue.trim(),
+        city: gigForm.city.trim(),
+        date: targetDate.toISOString(),
+        ticketUrl: gigForm.ticketUrl?.trim() || null,
+        status: gigForm.status,
+        notesSv: gigForm.notesSv?.trim() || null,
+        notesEn: gigForm.notesEn?.trim() || null,
+        setlist: gigForm.setlistTracks.length > 0 ? JSON.stringify(gigForm.setlistTracks) : null,
+        postToSocials: gigForm.postToSocials,
+        hashtags: selectedGigTags.value,
+      },
+    })
+
+    editingGig.value = null
+    await refreshGigs()
+    if (res.social) {
+      if (res.social.success) {
+        showToast(`✓ Giget sparades! 📱 ${res.social.message}`)
+      } else {
+        showToast(`⚠️ Giget sparades, men social publicering misslyckades: ${res.social.message || res.social.error || 'Kontrollera FB-token'}`)
+      }
     } else {
-      showToast(`⚠️ Giget sparades lokalt, men social publicering misslyckades: ${res.social.message}`)
+      showToast('✓ Giget har sparats!')
     }
-  } else {
-    showToast('✓ Giget har sparats!')
+  } catch (err: unknown) {
+    console.error('Error saving gig:', err)
+    const msg = err instanceof Error ? err.message : 'Kunde inte spara gig'
+    showToast(`⚠️ Fel vid sparande: ${msg}`)
+  } finally {
+    isSavingGig.value = false
   }
 }
 
@@ -557,10 +589,21 @@ const getGigStatusBadgeClass = (status: string | null | undefined) => {
         </div>
 
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-3">
-          <button type="button" class="btn btn-primary btn-sm rounded-full font-bold px-6 cursor-pointer w-full sm:w-auto" @click="saveGig">
-            Spara gig
+          <button
+            type="button"
+            class="btn btn-primary btn-sm rounded-full font-bold px-6 cursor-pointer w-full sm:w-auto"
+            :disabled="isSavingGig"
+            @click="saveGig"
+          >
+            <span v-if="isSavingGig" class="loading loading-spinner loading-xs mr-1" />
+            <span>{{ isSavingGig ? 'Sparar...' : 'Spara gig' }}</span>
           </button>
-          <button type="button" class="btn btn-ghost btn-sm rounded-full cursor-pointer w-full sm:w-auto" @click="editingGig = null">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm rounded-full cursor-pointer w-full sm:w-auto"
+            :disabled="isSavingGig"
+            @click="editingGig = null"
+          >
             Avbryt
           </button>
         </div>

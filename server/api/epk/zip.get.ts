@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(epkDocuments.isActive, true))
 
   // 3. Fetch notification email from site_settings
-  let contactEmail = 'info@det7egunget.se'
+  let contactEmail = 'info@sjundegunget.se'
   try {
     const settingsList = await db.select().from(siteSettings)
     const emailSetting = settingsList.find(s => s.key === 'notification_email')?.value
@@ -103,8 +103,8 @@ export default defineEventHandler(async (event) => {
 DET 7:e GUNGET — OFFICIELLT ARRANGÖRS- & PRESSKIT (EPK)
 =====================================================
 
-Webbplats: https://det7egunget.se
-Arrangörssida: https://det7egunget.se/epk
+Webbplats: https://sjundegunget.se
+Arrangörssida: https://sjundegunget.se/epk
 Bokning & Kontakt: ${contactEmail}
 
 OM BANDET:
@@ -130,7 +130,7 @@ INNEHÅLL I DETTA ARKIV:
 - /Arrangorsdokument-PDF/ : Tryckfärdiga affischer och tekniska bilagor
 
 För tekniska frågor, scenplot och patchlista (13 kanaler), besök:
-https://det7egunget.se/epk
+https://sjundegunget.se/epk
 `
   zip.file('README-Presskit.txt', readmeContent)
 

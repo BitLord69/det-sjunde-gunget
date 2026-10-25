@@ -65,7 +65,7 @@ export function useSocialSharePost() {
       '',
       params.ticketUrl
         ? `🎟️ Biljetter: ${params.ticketUrl}`
-        : '👉 Mer info: https://det7egunget.se/gigs',
+        : '👉 Mer info: https://sjundegunget.se/gigs',
       '',
       'Kom och sväng med oss! 🎶',
       `${tagsStr} ${cityTag}`.trim(),
@@ -78,7 +78,7 @@ export function useSocialSharePost() {
     const caption = params.caption?.trim() || 'Ny bild från scenen & replokalen med Det 7:e Gunget!'
     const tagsStr = params.tags && params.tags.length > 0 ? params.tags.join(' ') : ''
 
-    return `📷 NYTT I GALLERIET!\n\n"${caption}"\n\nKolla in fler bilder och ögonblick på vår webbplats! 🎸✨\n\nhttps://det7egunget.se/gallery\n\n${tagsStr}`.trim()
+    return `📷 NYTT I GALLERIET!\n\n"${caption}"\n\nKolla in fler bilder och ögonblick på vår webbplats! 🎸✨\n\nhttps://sjundegunget.se/gallery\n\n${tagsStr}`.trim()
   }
 
   const formatSongSocialPost = (params: SongSocialParams): string => {
@@ -102,7 +102,7 @@ export function useSocialSharePost() {
       '',
       'Lyssna direkt i retro-jukeboxen på webbplatsen! 🎸✨',
       '',
-      'https://det7egunget.se/music',
+      'https://sjundegunget.se/music',
       '',
       tagsStr,
     )
@@ -127,7 +127,7 @@ export function useSocialSharePost() {
     lines.push(
       '',
       params.url ? `Kolla in videon här: ${params.url}` : 'Se videon direkt i vårt galleri på hemsidan!',
-      'https://det7egunget.se/videos',
+      'https://sjundegunget.se/videos',
       '',
       'Dela gärna och höj volymen till 11! 🎸💥',
       tagsStr,

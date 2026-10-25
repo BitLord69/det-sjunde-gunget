@@ -31,9 +31,9 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon.png' },
         { rel: 'icon', type: 'image/webp', href: '/media/brand/favicon.webp' },
-        { rel: 'icon', type: 'image/webp', href: '/media/brand/Logotyp_mini.webp' },
-        { rel: 'apple-touch-icon', href: '/media/brand/Logotyp_mini.webp' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
         { rel: 'manifest', href: '/site.webmanifest' },
       ],
     },
@@ -60,7 +60,7 @@ export default defineNuxtConfig({
     ],
   },
   i18n: {
-    baseUrl: 'https://det7egunget.se',
+    baseUrl: 'https://sjundegunget.se',
     defaultLocale: 'sv',
     strategy: 'prefix_except_default',
     locales: [
@@ -90,7 +90,7 @@ export default defineNuxtConfig({
     '/api/merch': { swr: 1800 },
   },
   site: {
-    url: 'https://det7egunget.se',
+    url: 'https://sjundegunget.se',
     name: 'Det 7:e Gunget',
     description: 'Blues, rock och lagom mycket oväsen.',
   },

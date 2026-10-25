@@ -98,13 +98,13 @@ export default defineEventHandler(async (event) => {
     settingsMap[s.key] = s.value
   }
 
-  const rawBandEmails = settingsMap.notification_email || process.env.BREVO_CONTACT_EMAIL || 'info@det7egunget.se'
+  const rawBandEmails = settingsMap.notification_email || process.env.BREVO_CONTACT_EMAIL || 'info@sjundegunget.se'
   const recipientEmails = rawBandEmails
     .split(/[,;\s]+/)
     .map((e) => e.trim())
     .filter((e) => e.length > 0 && e.includes('@'))
 
-  const bandEmail = recipientEmails[0] || 'info@det7egunget.se'
+  const bandEmail = recipientEmails[0] || 'info@sjundegunget.se'
   const bandRecipients = recipientEmails.length > 0
     ? recipientEmails.map((email) => ({ email, name: 'Det 7:e Gunget' }))
     : [{ email: bandEmail, name: 'Det 7:e Gunget' }]
@@ -132,7 +132,7 @@ export default defineEventHandler(async (event) => {
           location: combinedLocation,
           message,
         },
-        `https://det7egunget.se/admin/messages/${id}`,
+        `https://sjundegunget.se/admin/messages/${id}`,
       )
     } catch (discordErr) {
       console.error('[Contact] Discord alert error:', discordErr)
@@ -143,7 +143,7 @@ export default defineEventHandler(async (event) => {
   const bandNotificationHtml = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #17120e; color: #f5eedc; border-radius: 12px; border: 1px solid #c87f3f;">
       <h2 style="color: #e2bd72; margin-top: 0; font-size: 22px;">🎸 Ny bokningsförfrågan mottagen!</h2>
-      <p style="color: #d1c7b7; font-size: 14px;">En ny förfrågan har skickats via kontaktformuläret på <strong>det7egunget.se</strong>.</p>
+      <p style="color: #d1c7b7; font-size: 14px;">En ny förfrågan har skickats via kontaktformuläret på <strong>sjundegunget.se</strong>.</p>
       
       <div style="background-color: #241c16; padding: 18px; border-radius: 8px; border-left: 4px solid #e2bd72; margin: 20px 0;">
         <table style="width: 100%; font-size: 14px; border-collapse: collapse; color: #f5eedc;">
@@ -165,7 +165,7 @@ export default defineEventHandler(async (event) => {
       </div>
 
       <div style="margin: 24px 0 16px; text-align: center;">
-        <a href="https://det7egunget.se/admin/messages/${id}" style="background-color: #e2bd72; color: #17120e; padding: 12px 28px; border-radius: 9999px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(226, 189, 114, 0.35);">
+        <a href="https://sjundegunget.se/admin/messages/${id}" style="background-color: #e2bd72; color: #17120e; padding: 12px 28px; border-radius: 9999px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(226, 189, 114, 0.35);">
           👉 Hantera förfrågan i Admin Panel
         </a>
       </div>

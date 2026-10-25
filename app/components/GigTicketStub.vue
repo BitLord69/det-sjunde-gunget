@@ -88,7 +88,7 @@ const exportGigSetlistAsTxt = () => {
   let output = '============================================================\r\n'
   output += `DET 7:e GUNGET — SETLISTA @ ${props.gig.venue.toUpperCase()} (${props.gig.city.toUpperCase()})\r\n`
   output += `Speldatum: ${dateStr}\r\n`
-  output += 'Webb: https://www.det7egunget.se\r\n'
+  output += 'Webb: https://www.sjundegunget.se\r\n'
   output += '============================================================\r\n\r\n'
 
   const groups = groupGigSetlist(props.gig.setlist)

@@ -164,11 +164,32 @@ const formatGigDate = (dateVal: number | string | Date) => {
 
           <!-- Glass Window Header with "TICKETS" sign -->
           <div class="flex flex-col items-center justify-center mb-6 relative">
-            <!-- "OPEN" neon badge (above) - perfectly centered vertically between top frame and Biljettluckan -->
-            <div class="inline-flex items-center gap-2.5 px-5 py-1.5 rounded-full bg-emerald-500/10 border-2 border-emerald-500/40 text-sm sm:text-base font-mono font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.25)]">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.9)]" />
-              <span>{{ t('gigs.open') }}</span>
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.9)]" />
+            <!-- "OPEN" / "CLOSED" neon badge (above) - dynamic based on active tab -->
+            <div
+              class="inline-flex items-center gap-2.5 px-5 py-1.5 rounded-full border-2 text-sm sm:text-base font-mono font-black uppercase tracking-[0.2em] transition-all duration-300"
+              :class="
+                currentTab === 'upcoming'
+                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.25)]'
+                  : 'bg-rose-500/10 border-rose-500/40 text-rose-600 dark:text-rose-400 shadow-[0_0_16px_rgba(244,63,94,0.25)]'
+              "
+            >
+              <span
+                class="w-2.5 h-2.5 rounded-full transition-all duration-300"
+                :class="
+                  currentTab === 'upcoming'
+                    ? 'bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.9)]'
+                    : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)]'
+                "
+              />
+              <span>{{ currentTab === 'upcoming' ? t('gigs.open') : t('gigs.closed') }}</span>
+              <span
+                class="w-2.5 h-2.5 rounded-full transition-all duration-300"
+                :class="
+                  currentTab === 'upcoming'
+                    ? 'bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.9)]'
+                    : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)]'
+                "
+              />
             </div>
 
             <!-- Biljettluckan sign with symmetric spacing from ÖPPEN -->

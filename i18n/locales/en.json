@@ -84,6 +84,7 @@
     "no_upcoming": "Warming up the tube amps and tuning strings. New dates coming soon!",
     "ticket_booth": "Ticket booth",
     "open": "Open",
+    "closed": "Closed",
     "upcoming_tab": "Upcoming shows",
     "past_tab": "Past shows",
     "buy_ticket": "Buy ticket",
@@ -450,7 +451,7 @@
     "right_complaint": "Right to lodge a complaint",
     "right_complaint_desc": "If you believe your data is processed unlawfully, you may lodge a complaint with your supervisory authority (Integritetsskyddsmyndigheten IMY in Sweden).",
     "questions_title": "Have questions regarding privacy or your data?",
-    "questions_desc": "Reach out directly at kontakt{'@'}det7egunget.se and we will gladly help you.",
+    "questions_desc": "Reach out directly at kontakt{'@'}sjundegunget.se and we will gladly help you.",
     "contact_button": "Contact us →"
   },
   "footer": {
@@ -591,7 +592,7 @@
     "hosp_arrival_desc": "We normally arrive 2 hours prior to doors opening for load-in, setup, and approx. 30-40 minutes of soundcheck.",
     "export_print_btn": "Print Tech Rider & Stage Plot (A4)",
     "export_txt_btn": "Download Tech Rider (.txt)",
-    "print_footer_note": "Det 7:e Gunget • Official Technical Rider • www.det7egunget.se • kontakt{'@'}det7egunget.se"
+    "print_footer_note": "Det 7:e Gunget • Official Technical Rider • www.sjundegunget.se • kontakt{'@'}sjundegunget.se"
   },
   "error_page": {
     "eyebrow_404": "★ DET 7:e GUNGET • FALSE NOTE DETECTED ★",

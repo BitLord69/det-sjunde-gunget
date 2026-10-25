@@ -52,7 +52,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       formattedDate ? `📅 Datum: ${formattedDate}` : '',
       params.notes ? `\n"${params.notes}"` : '',
       '',
-      params.ticketUrl ? `🎟️ Biljetter & info: ${params.ticketUrl}` : `👉 Mer info: https://det7egunget.se/gigs`,
+      params.ticketUrl ? `🎟️ Biljetter & info: ${params.ticketUrl}` : `👉 Mer info: https://sjundegunget.se/gigs`,
       '',
       `Kom och sväng med oss! 🎶`,
       `${activeTags} ${cityTag}`,
@@ -66,7 +66,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       '',
       params.notes ? `"${params.notes}"\n` : '',
       `Länk i bion för biljetter och alla turnédatum! 🎟️👇`,
-      `https://det7egunget.se/gigs`,
+      `https://sjundegunget.se/gigs`,
       '',
       `${activeTags} ${cityTag}`,
     ].filter(Boolean)
@@ -78,7 +78,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
   }
 
   if (params.type === 'video') {
-    const vUrl = params.videoUrl || params.embedUrl || 'https://det7egunget.se/videos'
+    const vUrl = params.videoUrl || params.embedUrl || 'https://sjundegunget.se/videos'
     const fbText = [
       `🎬 NY VIDEO FRÅN DET 7:e GUNGET! 🎬`,
       '',
@@ -86,7 +86,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       params.notes ? `\n"${params.notes}"` : '',
       '',
       `Kolla in videon här: ${vUrl}`,
-      'Eller spana in vårt videogalleri på hemsidan: https://det7egunget.se/videos',
+      'Eller spana in vårt videogalleri på hemsidan: https://sjundegunget.se/videos',
       '',
       `Dela gärna och höj volymen! 🎸💥`,
       `${activeTags}`,
@@ -99,7 +99,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       '',
       params.notes ? `"${params.notes}"\n` : '',
       `Se hela videon på YouTube eller i vårt videogalleri via länken i bio! 🎶👇`,
-      `https://det7egunget.se/videos`,
+      `https://sjundegunget.se/videos`,
       '',
       `${activeTags}`,
     ]
@@ -118,7 +118,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       '',
       `"${params.title}" ${params.subtitle ? `(${params.subtitle})` : ''} finns nu att lyssna på i vår retro jukebox på hemsidan!`,
       '',
-      params.embedUrl ? `Lyssna direkt: ${params.embedUrl}` : `👉 Lyssna här: https://det7egunget.se/music`,
+      params.embedUrl ? `Lyssna direkt: ${params.embedUrl}` : `👉 Lyssna här: https://sjundegunget.se/music`,
       '',
       `Släpp i en slant och höj volymen till 11! ⚡`,
       `${activeTags}`,
@@ -147,7 +147,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
     params.title,
     params.notes || '',
     '',
-    `Läs mer på https://det7egunget.se`,
+    `Läs mer på https://sjundegunget.se`,
     '',
     activeTags,
   ]
@@ -272,7 +272,7 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: facebookText,
-            link: params.ticketUrl || params.embedUrl || 'https://det7egunget.se',
+            link: params.ticketUrl || params.embedUrl || 'https://sjundegunget.se',
             access_token: fbToken,
           }),
         })
@@ -303,7 +303,7 @@ export async function publishToSocialMedia(params: SocialPostParams): Promise<So
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image_url: params.imageUrl.startsWith('http') ? params.imageUrl : `https://det7egunget.se${params.imageUrl}`,
+          image_url: params.imageUrl.startsWith('http') ? params.imageUrl : `https://sjundegunget.se${params.imageUrl}`,
           caption: instagramText,
           access_token: fbToken,
         }),

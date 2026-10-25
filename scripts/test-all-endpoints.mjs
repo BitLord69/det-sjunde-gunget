@@ -27,7 +27,8 @@ import { existsSync, readFileSync } from 'node:fs'
 import { createClient } from '@libsql/client'
 import 'dotenv/config'
 
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000'
+const isLiveArg = process.argv.includes('--live')
+const BASE_URL = process.env.TEST_BASE_URL || (isLiveArg ? 'https://sjundegunget.se' : 'http://localhost:3000')
 
 const dbClient = createClient({
   url: process.env.TURSO_DATABASE_URL || 'file:local.db',
@@ -51,21 +52,11 @@ async function ensureServer() {
 
   console.log(`ℹ Ingen aktiv server svarade på ${BASE_URL}. Startar temporär server för testkörning...`)
   const isWindows = process.platform === 'win32'
-  const hasProdBuild = existsSync('.output/server/index.mjs')
-
-  if (hasProdBuild) {
-    spawnedServerProcess = spawn('node', ['.output/server/index.mjs'], {
-      env: { ...process.env, PORT: '3000' },
-      stdio: 'ignore',
-      shell: isWindows,
-    })
-  } else {
-    spawnedServerProcess = spawn('node', ['./node_modules/nuxt/bin/nuxt.mjs', 'dev', '--port', '3000'], {
-      env: { ...process.env, PORT: '3000' },
-      stdio: 'ignore',
-      shell: isWindows,
-    })
-  }
+  spawnedServerProcess = spawn('node', ['./node_modules/nuxt/bin/nuxt.mjs', 'dev', '--port', '3000'], {
+    env: { ...process.env, PORT: '3000' },
+    stdio: 'ignore',
+    shell: isWindows,
+  })
 
   const maxAttempts = 60
   for (let i = 0; i < maxAttempts; i++) {
@@ -445,7 +436,7 @@ async function run() {
 
   // 10. ADMINANVÄNDARE (POST /api/admin/users)
   console.log('\n▶ [10/17] Adminanvändare (POST /api/admin/users)')
-  const testAdminEmail = `test-tech-${Date.now()}@det7egunget.se`
+  const testAdminEmail = `test-tech-${Date.now()}@sjundegunget.se`
   let createdAdminId = ''
   try {
     const createRes = await fetch(`${BASE_URL}/api/admin/users`, {

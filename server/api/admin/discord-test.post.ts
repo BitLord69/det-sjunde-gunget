@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
       },
       {
         name: '🎛️ Adminpanel',
-        value: '[Öppna Admin](https://det7egunget.se/admin)',
+        value: '[Öppna Admin](https://sjundegunget.se/admin)',
         inline: false,
       },
     ],

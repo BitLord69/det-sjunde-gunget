@@ -27,7 +27,7 @@ export function useCalendarExport() {
       : (gig.status === 'free' ? (isEn ? 'Free entry' : 'Fri entré') : (isEn ? 'Tickets at door' : 'Biljetter i dörren'))
 
     const details = encodeURIComponent(
-      `Det 7:e Gunget — Blues & Rock live\n\n${noteText}\n${ticketText}\n\nhttps://www.det7egunget.se`
+      `Det 7:e Gunget — Blues & Rock live\n\n${noteText}\n${ticketText}\n\nhttps://www.sjundegunget.se`
     )
     const location = encodeURIComponent(`${gig.venue}, ${gig.city}`)
 
@@ -49,9 +49,9 @@ export function useCalendarExport() {
       ? `Tickets: ${gig.ticketUrl}`
       : (gig.status === 'free' ? 'Free entry' : 'Tickets at door')
 
-    const uid = `gig-${gig.id || Date.now()}@det7egunget.se`
+    const uid = `gig-${gig.id || Date.now()}@sjundegunget.se`
     const summary = `Det 7:e Gunget live @ ${gig.venue}`
-    const description = `Det 7:e Gunget — Blues & Rock live\\n\\n${noteText}\\n${ticketText}\\n\\nhttps://www.det7egunget.se`
+    const description = `Det 7:e Gunget — Blues & Rock live\\n\\n${noteText}\\n${ticketText}\\n\\nhttps://www.sjundegunget.se`
     const location = `${gig.venue}, ${gig.city}`
 
     return [

@@ -56,9 +56,8 @@ export const useAdminUpload = () => {
         return blob.url
       }
     } catch (blobErr: any) {
-      console.warn('[AdminUpload] Vercel Blob client upload misslyckades eller stöds inte i denna miljö:', blobErr)
+      console.warn('[AdminUpload] Vercel Blob direct client upload misslyckades, testar server-uppladdning som fallback:', blobErr)
 
-      // Om felet beror på att filen är för stor för Vercel Blob eller nätverksfel
       const msg = String(blobErr?.message || blobErr || '')
       if (msg.includes('413') || msg.includes('Payload Too Large')) {
         const errorMsg = 'Filen överskrider maximal tillåten uppladdningsstorlek (50 MB).'
@@ -66,17 +65,7 @@ export const useAdminUpload = () => {
         throw new Error(errorMsg)
       }
 
-      // Om felet är "Blob Storage Not Configured" (501 / saknar token i lokal dev), gör fallback till multipart /api/admin/upload
-      const isConfigError = msg.includes('Blob Storage Not Configured') || msg.includes('501') || msg.includes('BLOB_READ_WRITE_TOKEN saknas')
-
-      if (!isConfigError && !msg.includes('Failed to fetch') && !msg.includes('NetworkError')) {
-        // Om Vercel Blob var konfigurerat men kastade ett specifikt fel
-        const errorMsg = `Kunde inte ladda upp till Vercel Blob: ${blobErr?.message || 'Okänt fel'}`
-        uploadError.value = errorMsg
-        throw new Error(errorMsg)
-      }
-
-      // 3. Fallback: Traditionell uppladdning via /api/admin/upload (lokal miljö)
+      // 3. Fallback: Uppladdning via /api/admin/upload (hanterar server-side Vercel Blob eller lokal disk)
       try {
         const formData = new FormData()
         formData.append('file', file)
@@ -94,7 +83,7 @@ export const useAdminUpload = () => {
 
         let friendlyError = 'Serverfel vid uppladdning.'
         if (fallbackErr?.status === 413 || fallbackErr?.statusCode === 413) {
-          friendlyError = 'Filen är för stor för att överföras via servern (max 4.5 MB utan Vercel Blob).'
+          friendlyError = 'Filen är för stor för att överföras via servern.'
         } else if (fallbackErr?.data?.message) {
           friendlyError = fallbackErr.data.message
         } else if (fallbackErr?.message) {

@@ -364,11 +364,15 @@ const scrollTo = (id: string) => {
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
+                <span><strong>⏰ Tidsangivelse:</strong> Tidsfältet hanterar automatiskt alla format (t.ex. 20:00 eller 20.00) och bevarar lokal svensk tidzon utan förskjutning.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
                 <span><strong>Google Rich Results:</strong> Genererar automatiskt Schema.org Event-data för sökmotorer.</span>
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
-                <span><strong>📱 Dela:</strong> Posta eller förhandsgranska giget direkt till Facebook & Instagram med valda hashtags.</span>
+                <span><strong>📱 Dela till Facebook:</strong> Kräver en permanent Page Access Token i miljövariablerna (FB_PAGE_ACCESS_TOKEN). Se guiden <code>FACEBOOK_PERMANENT_TOKEN_GUIDE.md</code> i projektet för instruktioner hur den genereras så den aldrig går ut.</span>
               </li>
             </ul>
           </div>
@@ -769,6 +773,10 @@ const scrollTo = (id: string) => {
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
                 <span><strong>📺 YouTube:</strong> Konfigurera kanal-ID, dygnscron och auto-posting.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🌐 Domäner & Adresser:</strong> Både <code>sjundegunget.se</code> och <code>detsjundegunget.se</code> (inklusive <code>www</code>) stöds och vidarebefordras sömlöst med gemensamt cookie-samtycke och SSL.</span>
               </li>
             </ul>
           </div>

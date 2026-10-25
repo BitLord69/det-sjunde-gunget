@@ -17,9 +17,11 @@
 import { chromium } from 'playwright'
 import { createClient } from '@libsql/client'
 import crypto from 'node:crypto'
+import { spawn } from 'node:child_process'
 import 'dotenv/config'
 
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000'
+const isLiveArg = process.argv.includes('--live')
+const BASE_URL = process.env.TEST_BASE_URL || (isLiveArg ? 'https://sjundegunget.se' : 'http://localhost:3000')
 
 const dbClient = createClient({
   url: process.env.TURSO_DATABASE_URL || 'file:local.db',
@@ -29,6 +31,40 @@ const dbClient = createClient({
 let passed = 0
 let failed = 0
 const results = []
+let spawnedServerProcess = null
+
+async function ensureServer() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/band`, { signal: AbortSignal.timeout(1500) })
+    if (res.status === 200) {
+      return
+    }
+  } catch (_) {
+    // Server is not running
+  }
+
+  console.log(`ℹ Ingen aktiv server svarade på ${BASE_URL}. Startar temporär server för testkörning...`)
+  const isWindows = process.platform === 'win32'
+  spawnedServerProcess = spawn('node', ['./node_modules/nuxt/bin/nuxt.mjs', 'dev', '--port', '3000'], {
+    env: { ...process.env, PORT: '3000' },
+    stdio: 'ignore',
+    shell: isWindows,
+  })
+
+  const maxAttempts = 60
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise((r) => setTimeout(r, 1000))
+    try {
+      const res = await fetch(`${BASE_URL}/api/band`, { signal: AbortSignal.timeout(1000) })
+      if (res.status === 200) {
+        console.log(`✓ Test-server är igång och svarar på ${BASE_URL}.\n`)
+        return
+      }
+    } catch (_) {}
+  }
+
+  throw new Error(`Kunde inte starta test-servern inom 60 sekunder.`)
+}
 
 function assert(condition, name, details = '') {
   if (condition) {
@@ -48,6 +84,8 @@ async function run() {
   console.log(`Mål-server: ${BASE_URL}`)
   console.log('Webbläsare: Google Chrome / Playwright')
   console.log('============================================================\n')
+
+  await ensureServer()
 
   const startTime = Date.now()
 
@@ -260,15 +298,14 @@ async function run() {
     console.log('\n▶ [8/10] Videor & YouTube UI (/admin/videos & /videos)')
     await page.goto(`${BASE_URL}/admin/videos`, { waitUntil: 'networkidle' })
 
-    const addVideoBtn = await page.$('button:has-text("+ Ny video")')
+    const addVideoBtn = await page.$('button:has-text("Lägg till video"), button:has-text("+ Ny video")')
     const syncVideoBtn = await page.$('button:has-text("Synka från YouTube")')
-    assert(Boolean(addVideoBtn && syncVideoBtn), 'Knapparna "+ Ny video" och "Synka från YouTube" hittades på /admin/videos')
+    assert(Boolean(addVideoBtn && syncVideoBtn), 'Knapparna "Lägg till video" och "Synka från YouTube" hittades på /admin/videos')
 
     if (addVideoBtn) {
       await addVideoBtn.click()
-      await page.waitForTimeout(400)
-      const modalHeader = await page.$('text=Lägg till video')
-      assert(Boolean(modalHeader), 'Modalfönstret "Lägg till video" öppnades vid klick på "+ Ny video"')
+      const modalHeader = await page.waitForSelector('text=Lägg till YouTube-video', { timeout: 3000 }).catch(() => null)
+      assert(Boolean(modalHeader), 'Modalfönstret "Lägg till YouTube-video" öppnades vid klick på "Lägg till video"')
 
       // Avbryt och stäng modalen
       const cancelModalBtn = await page.$('button:has-text("Avbryt")')
@@ -396,7 +433,11 @@ async function run() {
   } finally {
     // Städning av session
     await dbClient.execute({ sql: 'DELETE FROM admin_sessions WHERE id = ?', args: [sessionId] })
-    await browser.close()
+    if (browser) await browser.close()
+    if (spawnedServerProcess) {
+      console.log('🛑 Stänger ner temporär test-server...')
+      spawnedServerProcess.kill()
+    }
   }
 
   const durationSec = ((Date.now() - startTime) / 1000).toFixed(2)
@@ -410,6 +451,9 @@ async function run() {
 }
 
 run().catch((e) => {
+  if (spawnedServerProcess) {
+    spawnedServerProcess.kill()
+  }
   console.error('UI-testsvit kraschade:', e)
   process.exit(1)
 })

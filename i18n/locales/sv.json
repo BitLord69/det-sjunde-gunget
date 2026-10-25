@@ -84,6 +84,7 @@
     "no_upcoming": "Just nu laddar vi förstärkare och stämmer gitarrer. Fler datum kommer snart!",
     "ticket_booth": "Biljettluckan",
     "open": "Öppen",
+    "closed": "Stängd",
     "upcoming_tab": "Kommande gig",
     "past_tab": "Spelade gig",
     "buy_ticket": "Köp biljett",
@@ -450,7 +451,7 @@
     "right_complaint": "Klagomål till tillsynsmyndighet",
     "right_complaint_desc": "Om du anser att dina uppgifter hanteras felaktigt kan du lämna klagomål till Integritetsskyddsmyndigheten (IMY).",
     "questions_title": "Har du frågor om integritet eller dina uppgifter?",
-    "questions_desc": "Kontakta oss direkt på kontakt{'@'}det7egunget.se så hjälper vi dig gärna.",
+    "questions_desc": "Kontakta oss direkt på kontakt{'@'}sjundegunget.se så hjälper vi dig gärna.",
     "contact_button": "Kontakta oss →"
   },
   "footer": {
@@ -591,7 +592,7 @@
     "hosp_arrival_desc": "Vi anländer normalt 2 timmar före dörrarna öppnar för inlastning, uppställning och ca 30-40 minuters soundcheck.",
     "export_print_btn": "Skriv ut Tech Rider & Scenplot (A4)",
     "export_txt_btn": "Ladda ner Tech Rider (.txt)",
-    "print_footer_note": "Det 7:e Gunget • Officiell Teknisk Rider • www.det7egunget.se • kontakt{'@'}det7egunget.se"
+    "print_footer_note": "Det 7:e Gunget • Officiell Teknisk Rider • www.sjundegunget.se • kontakt{'@'}sjundegunget.se"
   },
   "error_page": {
     "eyebrow_404": "★ DET 7:e GUNGET • FALSK TON DETEKTERAD ★",

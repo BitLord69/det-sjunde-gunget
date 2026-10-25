@@ -67,7 +67,7 @@ const toggleGalTag = (tag: string) => {
 const galSocialPreview = computed(() => {
   const caption = galForm.captionSv.trim() || 'Nytt foto från replokalen & scenen med Det 7:e Gunget!'
   const tags = selectedGalTags.value.join(' ')
-  return `📷 NYTT I GALLERIET!\n\n"${caption}"\n\nKolla in fler bilder och ögonblick på vår webbplats! 🎸✨\n\nhttps://www.det7egunget.se/gallery\n\n${tags}`
+  return `📷 NYTT I GALLERIET!\n\n"${caption}"\n\nKolla in fler bilder och ögonblick på vår webbplats! 🎸✨\n\nhttps://www.sjundegunget.se/gallery\n\n${tags}`
 })
 
 const isAnalyzingResolution = ref(false)

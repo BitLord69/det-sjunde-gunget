@@ -200,7 +200,7 @@ export default defineEventHandler(async (event) => {
     const discordNotifyFanPhotos = settingsMap.discord_notify_fan_photos === 'true'
 
     if (discordWebhookUrl && discordNotifyFanPhotos) {
-      const host = getRequestHeader(event, 'host') || 'www.det7egunget.se'
+      const host = getRequestHeader(event, 'host') || 'www.sjundegunget.se'
       const protocol = host.includes('localhost') ? 'http' : 'https'
       const adminUrl = `${protocol}://${host}/admin/fancentral`
 

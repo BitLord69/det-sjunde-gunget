@@ -72,6 +72,7 @@ const includeBandMembers = ref(true)
 
 // Band Logo & Photo Customization
 const useBandLogo = ref(true)
+const logoSize = ref<'normal' | 'large'>('large')
 const imageSource = ref<'photoshoot' | 'gallery' | 'upload' | 'none'>('photoshoot')
 const selectedBandPhoto = ref('/media/band/21..7de Gunget photoshoot1 21-6 26-3.jpg')
 const selectedGalleryPhoto = ref('')
@@ -308,8 +309,12 @@ const drawPoster = async () => {
 
   // 4. Band Brand: Official Logo or Big Typography
   if (useBandLogo.value && logoImg) {
-    const maxLogoW = Math.round(width * (hasPhoto ? 0.62 : 0.75))
-    const maxLogoH = Math.round(height * (isStory ? 0.12 : hasPhoto ? 0.095 : 0.14))
+    const isLarge = logoSize.value === 'large'
+    // Ge bandlogotypen en ståtlig storlek så att detaljerna och namnet syns tydligt
+    const maxLogoW = Math.round(width * (hasPhoto ? (isLarge ? 0.72 : 0.58) : (isLarge ? 0.82 : 0.68)))
+    const maxLogoH = Math.round(
+      height * (isStory ? (isLarge ? 0.18 : 0.13) : hasPhoto ? (isLarge ? 0.16 : 0.12) : (isLarge ? 0.22 : 0.16)),
+    )
     const logoAspect = logoImg.width / logoImg.height
 
     let targetW = maxLogoW
@@ -319,14 +324,14 @@ const drawPoster = async () => {
       targetW = targetH * logoAspect
     }
 
-    currentY += Math.round(height * 0.015)
+    currentY += Math.round(height * 0.01)
     const logoX = (width - targetW) / 2
 
-    // On light kraft paper (Chess), add a subtle back glow or render sharply
+    // På ljust papper (Chess), lägg till en mjuk skugga för optimal kontrast
     if (selectedTheme.value === 'chess') {
       ctx.save()
-      ctx.shadowColor = 'rgba(0,0,0,0.2)'
-      ctx.shadowBlur = 10
+      ctx.shadowColor = 'rgba(0,0,0,0.25)'
+      ctx.shadowBlur = 12
       ctx.drawImage(logoImg, logoX, currentY, targetW, targetH)
       ctx.restore()
     } else {
@@ -370,10 +375,10 @@ const drawPoster = async () => {
 
   // 5. Photo Section (if photo active)
   if (hasPhoto && photoImg) {
-    currentY += Math.round(height * 0.02)
+    currentY += Math.round(height * 0.018)
     const photoW = Math.round(width * 0.82)
     const photoH = Math.round(
-      height * (isStory ? 0.38 : isSquare ? 0.28 : 0.32),
+      height * (isStory ? 0.38 : isSquare ? 0.28 : 0.34),
     )
     const photoX = (width - photoW) / 2
     const photoY = currentY
@@ -438,7 +443,7 @@ const drawPoster = async () => {
     currentY += Math.round(height * (isStory ? 0.07 : 0.05))
   }
 
-  // 6. Venue Banner Box
+  // 6. Venue Banner Box (Millimeter-centrerad text & ren boxplacering)
   const venueBoxPadding = Math.round(width * 0.06)
   const venueText = props.gig.venue || 'SPELSTÄLLE'
 
@@ -449,48 +454,76 @@ const drawPoster = async () => {
     ctx.font = `900 ${venueFontSize}px 'Alfa Slab One', 'Arvo', serif`
   }
 
-  const venueBannerHeight = Math.round(venueFontSize * 1.55)
-  const venueBannerY = currentY - venueFontSize * 0.85
-  const venueBannerW = width - (margin + 18) * 2
-  const venueBannerX = margin + 18
+  const venueBannerHeight = Math.round(venueFontSize * 1.6)
+  const venueBannerY = currentY
+  const venueBannerW = width - (innerMargin + 16) * 2
+  const venueBannerX = innerMargin + 16
 
+  // Rita rektangel och ram
   ctx.fillStyle = theme.tagBg
   ctx.fillRect(venueBannerX, venueBannerY, venueBannerW, venueBannerHeight)
   ctx.strokeStyle = theme.primary
-  ctx.lineWidth = Math.round(width * 0.003)
+  ctx.lineWidth = Math.round(width * 0.0035)
   ctx.strokeRect(venueBannerX, venueBannerY, venueBannerW, venueBannerHeight)
 
-  ctx.fillStyle = theme.primary
-  ctx.fillText(venueText.toUpperCase(), width / 2, currentY)
+  // Inre hairline ram i bannern för extra vintage känsla
+  ctx.strokeStyle = theme.paperTint
+  ctx.lineWidth = Math.round(width * 0.001)
+  ctx.strokeRect(venueBannerX + 4, venueBannerY + 4, venueBannerW - 8, venueBannerHeight - 8)
 
-  // 7. City Banner
-  currentY += Math.round(height * (hasPhoto ? (isStory ? 0.055 : 0.05) : 0.065))
+  // Rita spelställetext EXAKT i boxens vertikala och horisontella mitt
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `900 ${venueFontSize}px 'Alfa Slab One', 'Arvo', serif`
+  ctx.fillStyle = theme.primary
+  ctx.fillText(venueText.toUpperCase(), width / 2, venueBannerY + venueBannerHeight / 2)
+  ctx.restore()
+
+  // 7. City Banner (Placerad med säkert och luftigt avstånd under bannerns nederkant)
+  currentY = venueBannerY + venueBannerHeight + Math.round(height * (isStory ? 0.038 : isSquare ? 0.028 : 0.034))
   const cityText = props.gig.city || 'SVERIGE'
+  const cityFontSize = Math.round(width * (hasPhoto ? 0.042 : 0.052))
+
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `900 ${cityFontSize}px 'Alfa Slab One', 'Arvo', serif`
   ctx.fillStyle = theme.secondary
-  ctx.font = `900 ${Math.round(width * (hasPhoto ? 0.042 : 0.052))}px 'Alfa Slab One', 'Arvo', serif`
-  ctx.letterSpacing = '0.25em'
-  ctx.fillText(`★  ${cityText.toUpperCase()}  ★`, width / 2, currentY)
+  ctx.letterSpacing = '0.22em'
+  ctx.fillText(`★   ${cityText.toUpperCase()}   ★`, width / 2, currentY)
+  ctx.restore()
 
   // 8. Date & Doors Time Display
-  currentY += Math.round(height * (hasPhoto ? (isStory ? 0.055 : 0.05) : 0.065))
+  currentY += Math.round(height * (hasPhoto ? (isStory ? 0.052 : 0.046) : 0.06))
   const dateStr = formatGigDate(props.gig.date)
   const timeStr = formatGigTime(props.gig.date)
 
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  const dateFontSize = Math.round(width * (hasPhoto ? 0.036 : 0.044))
+  ctx.font = `900 ${dateFontSize}px 'Alfa Slab One', 'Arvo', serif`
   ctx.fillStyle = theme.accent
-  ctx.font = `900 ${Math.round(width * (hasPhoto ? 0.034 : 0.042))}px 'Alfa Slab One', 'Arvo', serif`
   ctx.letterSpacing = '0.08em'
   ctx.fillText(dateStr, width / 2, currentY)
+  ctx.restore()
 
   if (timeStr) {
-    currentY += Math.round(height * (hasPhoto ? 0.032 : 0.038))
+    currentY += Math.round(height * (hasPhoto ? 0.034 : 0.038))
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    const timeFontSize = Math.round(width * (hasPhoto ? 0.026 : 0.032))
+    ctx.font = `700 ${timeFontSize}px 'Arvo', serif`
     ctx.fillStyle = theme.secondary
-    ctx.font = `700 ${Math.round(width * (hasPhoto ? 0.026 : 0.032))}px 'Arvo', serif`
     ctx.letterSpacing = '0.12em'
     ctx.fillText(`DÖRRARNA ÖPPNAR KL ${timeStr}`, width / 2, currentY)
+    ctx.restore()
   }
 
   // 9. Custom Extra Info / Ticket status
-  currentY += Math.round(height * (hasPhoto ? 0.038 : 0.05))
+  currentY += Math.round(height * (hasPhoto ? 0.042 : 0.05))
   const infoText =
     customNotes.value.trim() ||
     (props.gig.status === 'sold_out'
@@ -499,26 +532,49 @@ const drawPoster = async () => {
         ? '★ FRI ENTRÉ • ALLA ÄR VÄLKOMNA ★'
         : 'BILJETTER & INFO PÅ WWW.SJUNDEGUNGET.SE')
 
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  const infoFontSize = Math.round(width * (hasPhoto ? 0.026 : 0.03))
+  ctx.font = `800 ${infoFontSize}px 'Arvo', sans-serif`
   ctx.fillStyle = theme.primary
-  ctx.font = `800 ${Math.round(width * (hasPhoto ? 0.024 : 0.028))}px 'Arvo', sans-serif`
   ctx.letterSpacing = '0.1em'
   ctx.fillText(infoText.toUpperCase(), width / 2, currentY)
+  ctx.restore()
 
-  // 10. Band Members & Website Footer
+  // 10. Ornamental Stars Divider before footer
+  currentY += Math.round(height * (isStory ? 0.038 : isSquare ? 0.025 : 0.032))
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = theme.secondary
+  ctx.font = `${Math.round(width * 0.018)}px sans-serif`
+  ctx.fillText('★      ★      ★', width / 2, currentY)
+  ctx.restore()
+
+  // 11. Band Members & Website Footer
   if (includeBandMembers.value) {
-    const membersY = height - margin - Math.round(height * (isStory ? 0.06 : 0.055))
+    const membersY = height - innerMargin - Math.round(height * (isStory ? 0.045 : isSquare ? 0.035 : 0.038))
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
     ctx.fillStyle = theme.secondary
     ctx.font = `600 ${Math.round(width * 0.021)}px 'Inter', sans-serif`
     ctx.letterSpacing = '0.15em'
     ctx.fillText('JANIS  •  MARCUS  •  BOSSE  •  JONAS', width / 2, membersY)
+    ctx.restore()
   }
 
   // Official URL / Footer tag
-  const footerY = height - margin - Math.round(height * (isStory ? 0.025 : 0.022))
+  const footerY = height - innerMargin - Math.round(height * (isStory ? 0.018 : 0.015))
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
   ctx.fillStyle = theme.primary
   ctx.font = `900 ${Math.round(width * 0.019)}px 'Alfa Slab One', 'Arvo', sans-serif`
   ctx.letterSpacing = '0.22em'
   ctx.fillText('WWW.SJUNDEGUNGET.SE', width / 2, footerY)
+  ctx.restore()
 }
 
 // Watchers to trigger redrawing
@@ -532,6 +588,7 @@ watch(
     customNotes,
     includeBandMembers,
     useBandLogo,
+    logoSize,
     imageSource,
     selectedBandPhoto,
     selectedGalleryPhoto,
@@ -805,18 +862,38 @@ const publishStory = async () => {
 
           <!-- 2. Band Logo & Image Controls -->
           <div class="space-y-3 p-3.5 rounded-2xl bg-base-200/60 border border-primary/20">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between flex-wrap gap-2">
               <label class="font-bold text-secondary uppercase tracking-wider text-[11px]">
                 2. Logotyp & Bandfoto
               </label>
-              <label class="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-primary">
-                <input
-                  v-model="useBandLogo"
-                  type="checkbox"
-                  class="checkbox checkbox-primary checkbox-xs"
-                >
-                <span>Visa bandlogotyp</span>
-              </label>
+              <div class="flex items-center gap-2.5">
+                <div v-if="useBandLogo" class="flex items-center gap-1 bg-base-300/80 p-0.5 rounded-lg text-[10px]">
+                  <button
+                    type="button"
+                    class="px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer"
+                    :class="logoSize === 'large' ? 'bg-primary text-primary-content shadow-xs' : 'text-base-content/60 hover:text-base-content'"
+                    @click="logoSize = 'large'"
+                  >
+                    Stor
+                  </button>
+                  <button
+                    type="button"
+                    class="px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer"
+                    :class="logoSize === 'normal' ? 'bg-primary text-primary-content shadow-xs' : 'text-base-content/60 hover:text-base-content'"
+                    @click="logoSize = 'normal'"
+                  >
+                    Mellan
+                  </button>
+                </div>
+                <label class="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-primary">
+                  <input
+                    v-model="useBandLogo"
+                    type="checkbox"
+                    class="checkbox checkbox-primary checkbox-xs"
+                  >
+                  <span>Bandlogotyp</span>
+                </label>
+              </div>
             </div>
 
             <!-- Image Source Selector Tabs -->

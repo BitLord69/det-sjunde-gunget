@@ -376,7 +376,7 @@ const scrollTo = (id: string) => {
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
-                <span><strong>🎨 Vintage Affisch-studio & Direkt Story-publicering:</strong> Klicka på <em>Affisch</em>-knappen på valfritt gig (även tillgänglig för publiken på startsidan och i Biljettluckan) för att skapa autentiska vintage konsertaffischer i 4 retrostilar och 3 format (A4, Story 9:16, Kvadrat). För inloggade administratörer finns knappen <strong>🚀 Publicera Story</strong> som automatiskt laddar upp och sänder affischen till både Facebook Story och Instagram Story med 24 timmars livslängd.</span>
+                <span><strong>🎨 Vintage Affisch-studio & Direkt Story-publicering:</strong> Klicka på <em>Affisch</em>-knappen på valfritt gig (även tillgänglig för publiken på startsidan och i Biljettluckan) för att skapa autentiska konsertaffischer i 4 retrostilar (Sonet, Chess, Sun, Neon) och 3 format (Affisch 3:4, Story 9:16, Kvadrat). Du kan visa bandets officiella märke/logotyp, välja motiv ur bandets 7 photoshoot-bilder, sajtens galleri, ladda upp tidigare affisch/eget foto, eller köra ren vintage-typografi. Bilden kan stylas med vintage sepia, svartvitt, tematonad duotone eller naturlig färg. För administratörer finns knappen <strong>🚀 Publicera Story</strong> som automatiskt sänder affischen till både Facebook Story och Instagram Story med 24 timmars livslängd.</span>
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>

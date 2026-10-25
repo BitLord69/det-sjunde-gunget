@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, '/admin/login?error=missing_code')
   }
 
-  const clientId = process.env.GOOGLE_CLIENT_ID || '462278567234-thghbfbq5k2akhr8cj6fpr618g7qmise.apps.googleusercontent.com'
+  const clientId = process.env.GOOGLE_CLIENT_ID || ''
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET || ''
 
   const host = getRequestHeader(event, 'host') || 'localhost:3000'

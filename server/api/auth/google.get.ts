@@ -1,7 +1,7 @@
 export default defineEventHandler((event) => {
   const query = getQuery(event)
   const action = query.action === 'connect' ? 'connect' : 'login'
-  const clientId = process.env.GOOGLE_CLIENT_ID || '462278567234-thghbfbq5k2akhr8cj6fpr618g7qmise.apps.googleusercontent.com'
+  const clientId = process.env.GOOGLE_CLIENT_ID || ''
 
   const host = getRequestHeader(event, 'host') || 'localhost:3000'
   const protocol = host.includes('localhost') ? 'http' : 'https'

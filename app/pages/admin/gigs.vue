@@ -269,6 +269,11 @@ const openPosterModal = (gig: any) => {
   posterModalOpen.value = true
 }
 
+const onPosterSaved = async (_gigId: string, _posterUrl: string) => {
+  await refreshGigs()
+  showToast('✓ Officiell affisch har sparats för giget!')
+}
+
 const deleteGig = async (id: string) => {
   if (!confirm('Är du säker på att du vill ta bort detta gig?')) return
   await $fetch('/api/admin/gigs', {
@@ -865,7 +870,18 @@ const getGigStatusBadgeClass = (status: string | null | undefined) => {
                 {{ new Date(gig.date).toLocaleDateString('sv-SE', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) }}
                 <span class="text-base-content/60 ml-1">kl {{ new Date(gig.date).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }) }}</span>
               </td>
-              <td class="font-bold text-primary">{{ gig.venue }}</td>
+              <td class="font-bold text-primary">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span>{{ gig.venue }}</span>
+                  <span
+                    v-if="gig.posterUrl"
+                    class="badge badge-xs bg-amber-500/15 border border-amber-500/40 text-amber-500 font-mono text-[9px] font-bold"
+                    title="Officiell affisch finns sparad"
+                  >
+                    🖼️ Affisch
+                  </span>
+                </div>
+              </td>
               <td>{{ gig.city }}</td>
               <td>
                 <span
@@ -936,6 +952,7 @@ const getGigStatusBadgeClass = (status: string | null | undefined) => {
     <GigPosterModal
       v-model="posterModalOpen"
       :gig="selectedPosterGig"
+      @poster-saved="onPosterSaved"
     />
   </div>
 </template>

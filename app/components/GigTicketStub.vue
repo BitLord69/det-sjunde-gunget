@@ -11,6 +11,7 @@ export interface GigItem {
   status?: 'upcoming' | 'sold_out' | 'free' | 'cancelled' | 'completed' | string | null
   notesSv?: string | null
   notesEn?: string | null
+  posterUrl?: string | null
   setlist?: any
 }
 
@@ -29,6 +30,7 @@ const emit = defineEmits<{
 
 const isTorn = ref(false)
 const isSetlistOpen = ref(false)
+const showOfficialPosterModal = ref(false)
 
 const tearTicket = () => {
   isTorn.value = true
@@ -280,6 +282,18 @@ const exportGigSetlistAsTxt = () => {
               ✓ {{ t('gigs.free_entry') }}
             </span>
 
+            <!-- Official Poster Button (if exists) -->
+            <button
+              v-if="gig.posterUrl"
+              type="button"
+              class="btn btn-warning btn-sm rounded-full text-xs font-bold border border-warning/30 hover:bg-warning/20 flex items-center gap-1.5 cursor-pointer text-stone-900 shadow-sm"
+              title="Visa officiell affisch"
+              @click="showOfficialPosterModal = true"
+            >
+              <span>🖼️</span>
+              <span>Officiell affisch</span>
+            </button>
+
             <!-- Vintage Poster Button -->
             <button
               type="button"
@@ -289,7 +303,7 @@ const exportGigSetlistAsTxt = () => {
               @click="emit('openPoster', gig)"
             >
               <span>🎨</span>
-              <span>{{ t('gigs.poster_btn') || 'Affisch' }}</span>
+              <span>{{ gig.posterUrl ? 'Egen affisch' : (t('gigs.poster_btn') || 'Affisch') }}</span>
             </button>
 
             <!-- Calendar Save Dropdown -->
@@ -418,5 +432,63 @@ const exportGigSetlistAsTxt = () => {
         </Transition>
       </div>
     </div>
+
+    <!-- OFFICIAL POSTER LIGHTBOX MODAL -->
+    <Teleport to="body">
+      <div
+        v-if="showOfficialPosterModal && gig.posterUrl"
+        class="fixed inset-0 z-[60] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+        @click.self="showOfficialPosterModal = false"
+      >
+        <div class="stage-card p-5 sm:p-7 rounded-3xl border border-primary/40 shadow-2xl max-w-lg w-full bg-base-100 space-y-4 my-auto flex flex-col items-center">
+          <div class="flex items-center justify-between w-full border-b border-primary/20 pb-3">
+            <div>
+              <h3 class="font-heading text-lg font-bold text-primary flex items-center gap-2">
+                <span>🖼️</span>
+                <span>Officiell Konsertaffisch</span>
+              </h3>
+              <p class="text-xs text-base-content/70">
+                {{ gig.venue }} i {{ gig.city }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm btn-circle text-lg"
+              @click="showOfficialPosterModal = false"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="max-h-[65vh] overflow-hidden rounded-xl border border-primary/40 shadow-2xl bg-black/40 flex items-center justify-center">
+            <img
+              :src="gig.posterUrl"
+              :alt="'Konsertaffisch för ' + gig.venue"
+              class="w-auto h-auto max-h-[65vh] max-w-full object-contain"
+            />
+          </div>
+
+          <div class="flex items-center justify-between w-full pt-2 border-t border-primary/20 flex-wrap gap-2">
+            <a
+              :href="gig.posterUrl"
+              download
+              target="_blank"
+              class="btn btn-primary btn-sm rounded-xl font-bold flex items-center gap-1.5 shadow-md shadow-primary/20"
+            >
+              <span>📥</span>
+              <span>Ladda ner</span>
+            </a>
+            <button
+              type="button"
+              class="btn btn-outline btn-secondary btn-sm rounded-xl font-bold flex items-center gap-1.5"
+              @click="showOfficialPosterModal = false; emit('openPoster', gig)"
+            >
+              <span>🎨</span>
+              <span>Gör egen i Studion</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

@@ -6,6 +6,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
+  (e: 'posterSaved', gigId: string, posterUrl: string): void
 }>()
 
 const isOpen = computed({
@@ -18,11 +19,13 @@ const isGenerating = ref(false)
 const copyToast = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
-// Admin auth & upload for direct Story broadcasting
+// Admin auth & upload for direct Story broadcasting & saving poster
 const { adminUser } = useAdminAuth()
 const { uploadAdminFile } = useAdminUpload()
 const isPublishingStory = ref(false)
 const storyPublishResult = ref<{ success: boolean; message: string } | null>(null)
+const isSavingOfficialPoster = ref(false)
+const officialPosterSavedResult = ref<{ success: boolean; message: string } | null>(null)
 
 // Fetch site gallery photos for user selection
 const { data: galleryItems } = useFetch<any[]>('/api/gallery', {
@@ -771,6 +774,67 @@ const publishStory = async () => {
     isPublishingStory.value = false
   }
 }
+
+// Save currently composed poster as the official poster for this gig
+const saveAsOfficialPoster = async () => {
+  if (!props.gig?.id) return
+  isSavingOfficialPoster.value = true
+  officialPosterSavedResult.value = null
+
+  try {
+    // Sätt formatet till Affisch (3:4) för officiell affisch
+    if (selectedFormat.value !== 'a4') {
+      selectedFormat.value = 'a4'
+      await nextTick()
+      await drawPoster()
+      await new Promise((r) => setTimeout(r, 120))
+    }
+
+    const canvas = canvasRef.value
+    if (!canvas) throw new Error('Ingen canvas tillgänglig')
+
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
+    if (!blob) throw new Error('Kunde inte läsa bild från canvas')
+
+    const safeVenue = (props.gig.venue || 'gig').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
+    const file = new File([blob], `affisch-${safeVenue}-${Date.now()}.png`, { type: 'image/png' })
+
+    const uploadedUrl = await uploadAdminFile(file)
+    if (!uploadedUrl) throw new Error('Kunde inte ladda upp affischen')
+
+    await $fetch('/api/admin/gigs/poster', {
+      method: 'POST',
+      body: {
+        gigId: props.gig.id,
+        posterUrl: uploadedUrl,
+      },
+    })
+
+    if (props.gig) {
+      props.gig.posterUrl = uploadedUrl
+    }
+
+    emit('posterSaved', props.gig.id, uploadedUrl)
+
+    officialPosterSavedResult.value = {
+      success: true,
+      message: '✓ Sparad som officiell affisch för giget!',
+    }
+  } catch (err: unknown) {
+    const errorMsg =
+      err && typeof err === 'object' && 'data' in err && (err as any).data?.message
+        ? (err as any).data.message
+        : err instanceof Error
+          ? err.message
+          : 'Kunde inte spara affischen'
+    officialPosterSavedResult.value = {
+      success: false,
+      message: `⚠️ ${errorMsg}`,
+    }
+  } finally {
+    isSavingOfficialPoster.value = false
+  }
+}
 </script>
 
 <template>
@@ -1094,8 +1158,15 @@ const publishStory = async () => {
           </div>
 
           <!-- 4. Quick Actions Panel -->
-          <div class="pt-1 flex flex-col gap-2">
-            <!-- Story Result Alert -->
+            <!-- Alerts for Save and Story -->
+            <div
+              v-if="officialPosterSavedResult"
+              class="p-3 rounded-xl border text-xs font-bold transition-all"
+              :class="officialPosterSavedResult.success ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400' : 'bg-rose-500/10 border-rose-500/40 text-rose-400'"
+            >
+              {{ officialPosterSavedResult.message }}
+            </div>
+
             <div
               v-if="storyPublishResult"
               class="p-3 rounded-xl border text-xs font-bold transition-all"
@@ -1103,6 +1174,37 @@ const publishStory = async () => {
             >
               {{ storyPublishResult.message }}
             </div>
+
+            <!-- Existing Official Poster Status Indicator -->
+            <div
+              v-if="gig.posterUrl"
+              class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold"
+            >
+              <span class="flex items-center gap-1.5">
+                <span>✓</span>
+                <span>Officiell affisch finns sparad</span>
+              </span>
+              <a
+                :href="gig.posterUrl"
+                target="_blank"
+                class="underline hover:text-emerald-300 font-mono text-[10px]"
+              >
+                Visa ↗
+              </a>
+            </div>
+
+            <!-- Admin Save as Official Gig Poster -->
+            <button
+              v-if="adminUser"
+              type="button"
+              class="btn btn-warning btn-sm rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-warning/20 cursor-pointer text-stone-900"
+              :disabled="isSavingOfficialPoster"
+              @click="saveAsOfficialPoster"
+            >
+              <span v-if="isSavingOfficialPoster" class="loading loading-spinner loading-xs" />
+              <span v-else>💾</span>
+              <span>{{ isSavingOfficialPoster ? 'Sparar till giget...' : 'Spara som officiell affisch' }}</span>
+            </button>
 
             <!-- Admin Direct Story Publishing -->
             <button

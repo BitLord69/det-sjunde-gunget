@@ -215,6 +215,7 @@ const tables = [
         status text DEFAULT 'upcoming',
         notes_sv text,
         notes_en text,
+        poster_url text,
         setlist text,
         created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
         updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
@@ -228,6 +229,7 @@ const tables = [
       { name: 'status', definition: 'text DEFAULT "upcoming"' },
       { name: 'notes_sv', definition: 'text' },
       { name: 'notes_en', definition: 'text' },
+      { name: 'poster_url', definition: 'text' },
       { name: 'setlist', definition: 'text' },
       { name: 'created_at', definition: 'integer DEFAULT (unixepoch() * 1000) NOT NULL' },
       { name: 'updated_at', definition: 'integer DEFAULT (unixepoch() * 1000) NOT NULL' },

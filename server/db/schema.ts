@@ -111,6 +111,7 @@ export const gigs = sqliteTable('gigs', {
   }).default('upcoming'),
   notesSv: text('notes_sv'),
   notesEn: text('notes_en'),
+  posterUrl: text('poster_url'),
   setlist: text('setlist'),
   ...timestamps,
 })

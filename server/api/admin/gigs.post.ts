@@ -56,6 +56,7 @@ export default defineEventHandler(async (event) => {
         status: body.status || 'upcoming',
         notesSv: body.notesSv || null,
         notesEn: body.notesEn || null,
+        posterUrl: body.posterUrl !== undefined ? (body.posterUrl || null) : undefined,
         setlist: setlistJson,
         updatedAt: now,
       })
@@ -71,6 +72,7 @@ export default defineEventHandler(async (event) => {
       status: body.status || 'upcoming',
       notesSv: body.notesSv || null,
       notesEn: body.notesEn || null,
+      posterUrl: body.posterUrl || null,
       setlist: setlistJson,
       createdAt: now,
       updatedAt: now,

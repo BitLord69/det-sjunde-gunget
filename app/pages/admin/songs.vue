@@ -324,11 +324,12 @@ const checkEngineHealth = async () => {
     const res = await $fetch<{ engine: string; available: boolean; message: string }>('/api/admin/songs/cover-engine-status')
     aiEngineHealth.value = res
   } catch (err: unknown) {
-    const errorObj = err as { data?: { statusMessage?: string } }
+    const errorObj = err as { statusCode?: number; data?: { statusCode?: number; statusMessage?: string; message?: string }; message?: string }
+    const isAuth = errorObj?.statusCode === 401 || errorObj?.data?.statusCode === 401 || errorObj?.data?.statusMessage === 'Unauthorized'
     aiEngineHealth.value = {
       engine: 'gemini',
       available: false,
-      message: errorObj?.data?.statusMessage || 'Kunde inte kontakta AI-motorn',
+      message: isAuth ? 'Inloggningen har löpt ut – logga in på nytt' : (errorObj?.data?.message || errorObj?.data?.statusMessage || 'Kunde inte kontakta AI-motorn'),
     }
   } finally {
     isCheckingEngine.value = false
@@ -579,8 +580,11 @@ const generateCoverWithAi = async () => {
     }
   } catch (err: unknown) {
     clearInterval(stepTimer)
-    const errorObj = err as { data?: { statusMessage?: string; message?: string }; message?: string }
-    const errMsg = errorObj?.data?.statusMessage || errorObj?.data?.message || errorObj?.message || 'Ett fel uppstod vid bildgenerering.'
+    const errorObj = err as { statusCode?: number; data?: { statusCode?: number; statusMessage?: string; message?: string }; message?: string }
+    const isAuth = errorObj?.statusCode === 401 || errorObj?.data?.statusCode === 401 || errorObj?.data?.statusMessage === 'Unauthorized'
+    const errMsg = isAuth
+      ? 'Inloggningssessionen har löpt ut. Logga in igen som administratör för att använda Gemini AI.'
+      : (errorObj?.data?.message || errorObj?.data?.statusMessage || errorObj?.message || 'Ett fel uppstod vid bildgenerering.')
     aiGenerationError.value = errMsg
     showToast(`⚠️ ${errMsg}`)
   } finally {
@@ -609,7 +613,13 @@ const applyGeneratedCover = async () => {
     } catch (uploadErr: unknown) {
       console.error('[ApplyGeneratedCover Upload Failed]:', uploadErr)
       const msg = uploadErr instanceof Error ? uploadErr.message : 'Kunde inte ladda upp omslaget'
-      showToast(`⚠️ Uppladdning misslyckades: ${msg}`)
+      const isAuthErr = msg.includes('Obehörig') || msg.includes('Unauthorized') || (uploadErr as any)?.statusCode === 401
+      if (isAuthErr) {
+        aiGenerationError.value = 'Inloggningssessionen har löpt ut. Logga in i ny flik och klicka sedan på "Använd detta omslag" igen.'
+        showToast('⚠️ Inloggningen har löpt ut. Logga in igen för att spara omslaget.')
+      } else {
+        showToast(`⚠️ Uppladdning misslyckades: ${msg}`)
+      }
       return
     } finally {
       isApplyingCover.value = false
@@ -2088,8 +2098,21 @@ const sortedSongs = computed(() => {
                 </div>
 
                 <!-- Error Alert if any -->
-                <div v-if="aiGenerationError" class="p-1.5 mt-1.5 bg-error/15 border border-error/40 rounded-lg text-center text-[10px] text-error font-bold w-full">
-                  ⚠️ {{ aiGenerationError }}
+                <div v-if="aiGenerationError" class="p-2 mt-2 bg-error/15 border border-error/40 rounded-lg text-center text-[11px] text-error w-full space-y-1">
+                  <div class="font-bold flex items-center justify-center gap-1">
+                    <span>⚠️</span>
+                    <span>{{ aiGenerationError }}</span>
+                  </div>
+                  <div v-if="aiGenerationError.includes('Logga in') || aiGenerationError.includes('session')" class="pt-0.5">
+                    <NuxtLink
+                      to="/admin/login"
+                      target="_blank"
+                      class="btn btn-xs btn-primary font-bold shadow-sm inline-flex items-center gap-1 text-[10px]"
+                    >
+                      <span>🔑</span>
+                      <span>Logga in i ny flik</span>
+                    </NuxtLink>
+                  </div>
                 </div>
               </div>
 

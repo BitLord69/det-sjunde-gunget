@@ -64,6 +64,15 @@ export function verifyPassword(password: string, salt: string, expectedHash: str
   }
 }
 
+function getSessionCookieDomain(event: H3Event): string | undefined {
+  if (process.env.NODE_ENV !== 'production') return undefined
+  const host = getRequestHeader(event, 'host') || ''
+  if (host.includes('sjundegunget.se')) {
+    return '.sjundegunget.se'
+  }
+  return undefined
+}
+
 export async function createAdminSession(userId: string, event: H3Event) {
   const token = generateToken()
   const now = new Date()
@@ -77,12 +86,14 @@ export async function createAdminSession(userId: string, event: H3Event) {
     createdAt: now,
   })
 
+  const domain = getSessionCookieDomain(event)
   setCookie(event, COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
     maxAge: 7 * 24 * 60 * 60,
     secure: process.env.NODE_ENV === 'production',
+    ...(domain ? { domain } : {}),
   })
 
   return { token, expiresAt }
@@ -98,8 +109,10 @@ export async function destroyAdminSession(event: H3Event) {
     }
   }
 
+  const domain = getSessionCookieDomain(event)
   deleteCookie(event, COOKIE_NAME, {
     path: '/',
+    ...(domain ? { domain } : {}),
   })
 }
 
@@ -118,7 +131,8 @@ export async function getAdminFromSession(event: H3Event): Promise<SafeAdminUser
 
   const activeSession = sessionList[0]
   if (!activeSession) {
-    deleteCookie(event, COOKIE_NAME, { path: '/' })
+    const domain = getSessionCookieDomain(event)
+    deleteCookie(event, COOKIE_NAME, { path: '/', ...(domain ? { domain } : {}) })
     return null
   }
 
@@ -131,7 +145,8 @@ export async function getAdminFromSession(event: H3Event): Promise<SafeAdminUser
 
   const admin = userList[0]
   if (!admin) {
-    deleteCookie(event, COOKIE_NAME, { path: '/' })
+    const domain = getSessionCookieDomain(event)
+    deleteCookie(event, COOKIE_NAME, { path: '/', ...(domain ? { domain } : {}) })
     return null
   }
 

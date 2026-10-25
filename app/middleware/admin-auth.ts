@@ -1,13 +1,12 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { adminUser, fetchUser } = useAdminAuth()
+  const { fetchUser } = useAdminAuth()
 
-  if (!adminUser.value) {
-    const user = await fetchUser()
-    if (!user) {
-      return navigateTo({
-        path: '/admin/login',
-        query: { redirect: to.fullPath },
-      })
-    }
+  // Always verify that the session is still active with the server
+  const user = await fetchUser()
+  if (!user) {
+    return navigateTo({
+      path: '/admin/login',
+      query: { redirect: to.fullPath },
+    })
   }
 })

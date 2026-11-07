@@ -736,6 +736,44 @@ const tables = [
       { name: 'updated_at', definition: 'integer DEFAULT (unixepoch() * 1000) NOT NULL' },
     ],
   },
+  {
+    name: 'analytics_events',
+    createSql: `
+      CREATE TABLE IF NOT EXISTS analytics_events (
+        id text PRIMARY KEY NOT NULL,
+        event_type text DEFAULT 'pageview' NOT NULL,
+        path text DEFAULT '/' NOT NULL,
+        visitor_hash text NOT NULL,
+        referrer text,
+        campaign text,
+        country text,
+        city text,
+        device_type text,
+        os text,
+        browser text,
+        locale text DEFAULT 'sv',
+        target_id text,
+        target_label text,
+        created_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+      )
+    `,
+    columns: [
+      { name: 'event_type', definition: 'text DEFAULT "pageview" NOT NULL' },
+      { name: 'path', definition: 'text DEFAULT "/" NOT NULL' },
+      { name: 'visitor_hash', definition: 'text NOT NULL DEFAULT ""' },
+      { name: 'referrer', definition: 'text' },
+      { name: 'campaign', definition: 'text' },
+      { name: 'country', definition: 'text' },
+      { name: 'city', definition: 'text' },
+      { name: 'device_type', definition: 'text' },
+      { name: 'os', definition: 'text' },
+      { name: 'browser', definition: 'text' },
+      { name: 'locale', definition: 'text DEFAULT "sv"' },
+      { name: 'target_id', definition: 'text' },
+      { name: 'target_label', definition: 'text' },
+      { name: 'created_at', definition: 'integer DEFAULT (unixepoch() * 1000) NOT NULL' },
+    ],
+  },
 ]
 
 // Lista över kolumner som explicit ska tas bort om de finns (t.ex. vid refaktorisering)

@@ -221,8 +221,15 @@ const formattedEmbedUrl = computed(() => {
   return url
 })
 
+const { trackEvent } = usePublicAnalytics()
 const playerViewTab = ref<'equalizer' | 'lyrics'>('equalizer')
 const prompterContainer = ref<HTMLElement | null>(null)
+
+watch(playerViewTab, (tab) => {
+  if (tab === 'lyrics' && currentSong.value) {
+    trackEvent('lyrics_view', currentSong.value.title, currentSong.value.id)
+  }
+})
 
 const needleAngle = computed(() => {
   if (!isAudioPlaying.value) return 0

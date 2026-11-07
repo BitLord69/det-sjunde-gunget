@@ -1,7 +1,93 @@
 <script setup lang="ts">
+interface GigPosterItem {
+  id: string
+  venue: string
+  city: string
+  date: string | number | Date
+  status?: string | null
+  posterUrl?: string | null
+}
+
+interface GalleryPhotoItem {
+  id: string
+  url: string
+  title?: string | null
+}
+
+type PosterFontKey = 'poetsen' | 'righteous' | 'calistoga' | 'caprasimo' | 'oleo' | 'lemon' | 'rye'
+
+interface PosterFontOption {
+  key: PosterFontKey
+  name: string
+  label: string
+  family: string
+  weight: number
+}
+
+const posterFonts: PosterFontOption[] = [
+  {
+    key: 'poetsen',
+    name: 'Poetsen One',
+    label: 'Poetsen One — Handmålad Vintage-skylt (Standard)',
+    family: 'Poetsen One',
+    weight: 400,
+  },
+  {
+    key: 'righteous',
+    name: 'Righteous',
+    label: 'Righteous — Retro Art-Deco / 50-tals Jukebox',
+    family: 'Righteous',
+    weight: 400,
+  },
+  {
+    key: 'calistoga',
+    name: 'Calistoga',
+    label: 'Calistoga — 60/70-tals Roots & Blues',
+    family: 'Calistoga',
+    weight: 400,
+  },
+  {
+    key: 'caprasimo',
+    name: 'Caprasimo',
+    label: 'Caprasimo — 70-tals Vinyl & Cooper-stil',
+    family: 'Caprasimo',
+    weight: 400,
+  },
+  {
+    key: 'oleo',
+    name: 'Oleo Script Bold',
+    label: 'Oleo Script Bold — 50-tals Jukebox & Bar-skylt',
+    family: 'Oleo Script',
+    weight: 700,
+  },
+  {
+    key: 'lemon',
+    name: 'Lemon',
+    label: 'Lemon — Singelomslag & Retro-Diner',
+    family: 'Lemon',
+    weight: 400,
+  },
+  {
+    key: 'rye',
+    name: 'Rye',
+    label: 'Rye — Roots, Blues & Bourbon-affisch',
+    family: 'Rye',
+    weight: 400,
+  },
+]
+
+useHead({
+  link: [
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Calistoga&family=Caprasimo&family=Lemon&family=Oleo+Script:wght@700&family=Poetsen+One&family=Righteous&family=Rye&display=swap',
+    },
+  ],
+})
+
 const props = defineProps<{
   modelValue: boolean
-  gig: any | null
+  gig: GigPosterItem | null
 }>()
 
 const emit = defineEmits<{
@@ -28,7 +114,7 @@ const isSavingOfficialPoster = ref(false)
 const officialPosterSavedResult = ref<{ success: boolean; message: string } | null>(null)
 
 // Fetch site gallery photos for user selection
-const { data: galleryItems } = useFetch<any[]>('/api/gallery', {
+const { data: galleryItems } = useFetch<GalleryPhotoItem[]>('/api/gallery', {
   query: { category: 'photo' },
   default: () => [],
 })
@@ -66,21 +152,45 @@ const bandPhotos = [
 ]
 
 // Poster Settings
-const selectedTheme = ref<'sonet' | 'chess' | 'sun' | 'neon'>('sonet')
+const selectedTheme = ref<'sunburst' | 'sonet' | 'chess' | 'sun' | 'neon'>('sunburst')
 const selectedFormat = ref<'a4' | 'story' | 'square'>('a4')
+const selectedFont = ref<PosterFontKey>('poetsen')
+const topPresenter = ref('')
 const headline = ref('LIVE PÅ SCEN')
 const subheadline = ref('ÄKTA BLUES & SVÄNGIG ROCK \'N\' ROLL')
 const customNotes = ref('')
 const includeBandMembers = ref(true)
 
+const activeFontOption = computed<PosterFontOption>(() => {
+  return posterFonts.find((f) => f.key === selectedFont.value) || posterFonts[0]!
+})
+
+const ensurePosterFontLoaded = async (fontOpt: PosterFontOption) => {
+  if (typeof document === 'undefined' || !('fonts' in document)) return
+  try {
+    await document.fonts.load(`${fontOpt.weight} 48px "${fontOpt.family}"`)
+  } catch {
+    // Ignore font load errors and fall back gracefully
+  }
+}
+
 // Band Logo & Photo Customization
 const useBandLogo = ref(true)
 const logoSize = ref<'normal' | 'large'>('large')
-const imageSource = ref<'photoshoot' | 'gallery' | 'upload' | 'ai' | 'none'>('photoshoot')
+const imageSource = ref<'photoshoot' | 'gallery' | 'upload' | 'ai' | 'none'>('none')
 const selectedBandPhoto = ref('/media/band/21..7de Gunget photoshoot1 21-6 26-3.jpg')
 const selectedGalleryPhoto = ref('')
 const customUploadedPhoto = ref<string | null>(null)
 const photoFilter = ref<'vintage' | 'bw' | 'duotone' | 'natural'>('vintage')
+
+const selectThemeOption = (key: 'sunburst' | 'sonet' | 'chess' | 'sun' | 'neon') => {
+  selectedTheme.value = key
+  if (key === 'sunburst') {
+    imageSource.value = 'none'
+  } else if (imageSource.value === 'none') {
+    imageSource.value = 'photoshoot'
+  }
+}
 
 // Gemini AI Poster Generator State
 const aiPosterPreset = ref<'club' | 'stage' | 'folkpark' | 'rockbar' | 'chicago' | 'custom'>('club')
@@ -115,6 +225,17 @@ const dimensions = computed(() => {
 
 // Themes styling configurations
 const themes = {
+  sunburst: {
+    name: 'Retro Sunburst (Originalmall)',
+    bg: '#2c2b31',
+    paperTint: '#2c2b31',
+    primary: '#dc624b', // Terracotta Sunburst Red
+    secondary: '#ede8ca', // Warm Vintage Cream
+    accent: '#dc624b',
+    border: '#ede8ca',
+    tagBg: '#232227',
+    frameInner: '#1e1d22',
+  },
   sonet: {
     name: 'Sonet 70s Blues',
     bg: '#14100c',
@@ -224,6 +345,94 @@ const triggerFileUpload = () => {
   fileInputRef.value?.click()
 }
 
+// Helper to fit text within a maximum width by reducing font size
+const fitTextFont = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  initialSize: number,
+  minSize: number,
+  maxWidth: number,
+  fontFamily: string,
+  fontWeight: string | number = 900,
+) => {
+  let size = initialSize
+  ctx.font = `${fontWeight} ${size}px ${fontFamily}`
+  while (ctx.measureText(text).width > maxWidth && size > minSize) {
+    size -= 2
+    ctx.font = `${fontWeight} ${size}px ${fontFamily}`
+  }
+  return size
+}
+
+// Helper to split a phrase into 2 balanced lines
+const splitIntoTwoLines = (text: string): [string, string] => {
+  const cleaned = text.trim().replace(/\s+/g, ' ')
+  if (cleaned.includes('\n')) {
+    const parts = cleaned.split('\n').map((s) => s.trim()).filter(Boolean)
+    return [parts[0] || '', parts.slice(1).join(' ')]
+  }
+  const words = cleaned.split(' ')
+  if (words.length <= 1) return [cleaned, '']
+  if (words.length === 2) return [words[0]!, words[1]!]
+
+  // Prefer keeping the first line slightly longer than the second line (inverted pyramid like "LIVE AT MJ'S" / "GARAGE!")
+  let bestSplit = Math.ceil(words.length / 2)
+  let bestScore = Infinity
+  const totalLen = cleaned.length
+  const targetFirstRatio = 0.58
+
+  for (let i = 1; i < words.length; i++) {
+    const l1 = words.slice(0, i).join(' ')
+    const ratio = l1.length / totalLen
+    const score = Math.abs(ratio - targetFirstRatio)
+    if (score < bestScore) {
+      bestScore = score
+      bestSplit = i
+    }
+  }
+
+  return [
+    words.slice(0, bestSplit).join(' '),
+    words.slice(bestSplit).join(' '),
+  ]
+}
+
+// Short date formatter for the Retro Sunburst template (e.g. "30 MAJ")
+const formatShortGigDate = (dateVal: string | number | Date | null | undefined) => {
+  if (!dateVal) return ''
+  try {
+    const d = new Date(dateVal)
+    return d
+      .toLocaleDateString('sv-SE', {
+        day: 'numeric',
+        month: 'long',
+      })
+      .toUpperCase()
+  } catch {
+    return String(dateVal).toUpperCase()
+  }
+}
+
+// Download the blank cleaned Retro Sunburst template without any text
+const downloadBlankSunburstTemplate = async () => {
+  try {
+    const img = await loadImage('/media/brand/poster_template_retro_mics.webp')
+    const offCanvas = document.createElement('canvas')
+    offCanvas.width = img.width
+    offCanvas.height = img.height
+    const offCtx = offCanvas.getContext('2d')
+    if (!offCtx) return
+    offCtx.drawImage(img, 0, 0)
+    const dataUrl = offCanvas.toDataURL('image/png')
+    const link = document.createElement('a')
+    link.download = 'mall-det-7e-gunget-retro-sunburst-utan-text.png'
+    link.href = dataUrl
+    link.click()
+  } catch {
+    window.open('/media/brand/poster_template_retro_mics.webp', '_blank')
+  }
+}
+
 // Render lock to avoid race conditions during fast typing
 let currentRenderId = 0
 
@@ -240,7 +449,312 @@ const drawPoster = async () => {
   canvas.width = width
   canvas.height = height
 
+  const fontOpt = activeFontOption.value
+  await ensurePosterFontLoaded(fontOpt)
+  if (renderId !== currentRenderId) return
+
+  const selectedFontStack = `'${fontOpt.family}', 'Poetsen One', sans-serif`
+  const selectedFontWeight = fontOpt.weight
+
   const theme = themes[selectedTheme.value]
+
+  // Special Dedicated Renderer for the Band's Original "Retro Sunburst & Mics" Template
+  if (selectedTheme.value === 'sunburst') {
+    let templateImg: HTMLImageElement | null = null
+    try {
+      templateImg = await loadImage('/media/brand/poster_template_retro_mics.webp')
+    } catch {
+      templateImg = null
+    }
+
+    let photoImg: HTMLImageElement | null = null
+    const photoUrlToLoad = activePhotoUrl.value
+    if (photoUrlToLoad) {
+      try {
+        photoImg = await loadImage(photoUrlToLoad)
+      } catch {
+        photoImg = null
+      }
+    }
+
+    if (renderId !== currentRenderId) return
+
+    const isStory = selectedFormat.value === 'story'
+    const isSquare = selectedFormat.value === 'square'
+    const creamColor = '#ede8ca'
+    const softCreamColor = '#ece6d6'
+    const darkCharcoal = '#2c2b31'
+
+    // 1. Fill base dark charcoal background
+    ctx.fillStyle = darkCharcoal
+    ctx.fillRect(0, 0, width, height)
+
+    let topSectionBottomY = Math.round(height * 0.62)
+
+    if (templateImg) {
+      // Template source dimensions: 723 x 1024
+      // Top section (sunburst + skyline + round Det 7nde Gunget emblem): y = 0..645
+      // Bottom section (left & right vintage microphones + sound rays): y = 685..1024
+      if (isSquare) {
+        // For 1:1 Square (1080x1080): scale top section slightly so round emblem stays circular and leaves room below
+        const topCropY = 48
+        const topCropH = 597 // ends at y=645
+        const topScale = (height * 0.58) / topCropH
+        const drawTopW = Math.round(templateImg.width * topScale)
+        const drawTopH = Math.round(topCropH * topScale)
+        const drawTopX = Math.round((width - drawTopW) / 2)
+
+        // Extend side background for square
+        ctx.drawImage(templateImg, 0, topCropY, templateImg.width, topCropH, 0, 0, width, drawTopH)
+        ctx.drawImage(templateImg, 0, topCropY, templateImg.width, topCropH, drawTopX, 0, drawTopW, drawTopH)
+        topSectionBottomY = drawTopH
+
+        // Draw bottom corner mics scaled to 0.72 in bottom-left and bottom-right corners
+        const micSrcY = 685
+        const micSrcH = 339
+        const micScale = (width / templateImg.width) * 0.72
+        const micDrawH = Math.round(micSrcH * micScale)
+        const leftMicSrcW = 240
+        const leftMicDrawW = Math.round(leftMicSrcW * micScale)
+        ctx.drawImage(
+          templateImg,
+          0,
+          micSrcY,
+          leftMicSrcW,
+          micSrcH,
+          0,
+          height - micDrawH,
+          leftMicDrawW,
+          micDrawH,
+        )
+        const rightMicSrcX = 483
+        const rightMicSrcW = 240
+        const rightMicDrawW = Math.round(rightMicSrcW * micScale)
+        ctx.drawImage(
+          templateImg,
+          rightMicSrcX,
+          micSrcY,
+          rightMicSrcW,
+          micSrcH,
+          width - rightMicDrawW,
+          height - micDrawH,
+          rightMicDrawW,
+          micDrawH,
+        )
+      } else {
+        // For A4 (1200x1600) and Story (1080x1920): full width 1:1 proportional top & bottom sections
+        const topCropY = isStory ? 0 : 14
+        const topCropH = 645 - topCropY
+        const drawTopH = Math.round(width * (topCropH / templateImg.width))
+        ctx.drawImage(templateImg, 0, topCropY, templateImg.width, topCropH, 0, 0, width, drawTopH)
+        topSectionBottomY = drawTopH
+
+        const micSrcY = 685
+        const micSrcH = 339
+        const drawBotH = Math.round(width * (micSrcH / templateImg.width))
+        ctx.drawImage(
+          templateImg,
+          0,
+          micSrcY,
+          templateImg.width,
+          micSrcH,
+          0,
+          height - drawBotH,
+          width,
+          drawBotH,
+        )
+      }
+    }
+
+    // 2. Optional Top Presenter Line in Sunburst Rays (e.g. "PUB 666 PRESENTS")
+    if (topPresenter.value.trim()) {
+      ctx.save()
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      const presFontSize = Math.round(width * (isSquare ? 0.02 : 0.023))
+      ctx.font = `${selectedFontWeight} ${presFontSize}px ${selectedFontStack}`
+      ctx.fillStyle = '#232227'
+      ctx.letterSpacing = '0.06em'
+      const presY = Math.round(topSectionBottomY * (isSquare ? 0.075 : 0.115))
+      ctx.fillText(topPresenter.value.trim().toUpperCase(), width / 2, presY)
+      ctx.restore()
+    }
+
+    // 3. Optional Photo (if user explicitly selected a photo source in sunburst mode)
+    let textZoneStartY = topSectionBottomY + Math.round(height * (isStory ? 0.025 : 0.015))
+    if (photoImg) {
+      const maxPhotoH = isStory ? Math.round(height * 0.22) : Math.round(height * 0.14)
+      const photoW = Math.round(width * (isSquare ? 0.46 : 0.56))
+      const photoX = Math.round((width - photoW) / 2)
+      const photoY = textZoneStartY
+
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(photoX, photoY, photoW, maxPhotoH)
+      ctx.clip()
+      if (photoFilter.value === 'vintage') {
+        ctx.filter = 'sepia(0.55) contrast(1.15) brightness(0.95)'
+      } else if (photoFilter.value === 'bw') {
+        ctx.filter = 'grayscale(1) contrast(1.25)'
+      } else if (photoFilter.value === 'duotone') {
+        ctx.filter = 'grayscale(1) contrast(1.2)'
+      }
+      drawCoverImage(ctx, photoImg, photoX, photoY, photoW, maxPhotoH)
+      ctx.restore()
+
+      ctx.strokeStyle = creamColor
+      ctx.lineWidth = Math.round(width * 0.004)
+      ctx.strokeRect(photoX, photoY, photoW, maxPhotoH)
+
+      textZoneStartY = photoY + maxPhotoH + Math.round(height * 0.02)
+    } else if (isStory) {
+      // Extra breathing space in 9:16 Story mode when no photo is used
+      textZoneStartY = topSectionBottomY + Math.round(height * 0.065)
+    }
+
+    // 4. Main 2-Line Venue Callout ("LIVE AT MJ'S" / "GARAGE!")
+    const rawHeadline = headline.value.trim()
+    const effectivePrefix =
+      rawHeadline.toUpperCase() === 'LIVE PÅ SCEN'
+        ? 'LIVE PÅ'
+        : rawHeadline
+    const rawVenue = (props.gig.venue || 'SPELSTÄLLE').trim()
+    const combinedVenueCallout = effectivePrefix
+      ? (rawVenue.toUpperCase().startsWith('LIVE ') ? rawVenue : `${effectivePrefix} ${rawVenue}`)
+      : rawVenue
+    const calloutWithBang = /[!?.]$/.test(combinedVenueCallout)
+      ? combinedVenueCallout.toUpperCase()
+      : `${combinedVenueCallout.toUpperCase()}!`
+
+    const [venueLine1, venueLine2] = splitIntoTwoLines(calloutWithBang)
+
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = creamColor
+    ctx.letterSpacing = '0.03em'
+
+    const displayFont = selectedFontStack
+    const maxWLine1 = Math.round(width * (isSquare ? 0.64 : 0.72))
+    const maxWLine2 = Math.round(width * (isSquare ? 0.46 : 0.46))
+    const targetVenueFontSize = Math.round(width * (photoImg ? 0.052 : isSquare ? 0.064 : 0.074))
+
+    if (venueLine2) {
+      const size1 = fitTextFont(ctx, venueLine1, targetVenueFontSize, 26, maxWLine1, displayFont, selectedFontWeight)
+      const size2 = fitTextFont(ctx, venueLine2, targetVenueFontSize, 26, maxWLine2, displayFont, selectedFontWeight)
+      const unifiedSize = Math.min(size1, size2)
+      ctx.font = `${selectedFontWeight} ${unifiedSize}px ${displayFont}`
+
+      const line1Y = textZoneStartY + Math.round(unifiedSize * 0.55)
+      const line2Y = line1Y + Math.round(unifiedSize * 1.12)
+      ctx.fillText(venueLine1, width / 2, line1Y)
+      ctx.fillText(venueLine2, width / 2, line2Y)
+      textZoneStartY = line2Y + Math.round(unifiedSize * 0.85)
+    } else {
+      const size1 = fitTextFont(ctx, venueLine1, targetVenueFontSize, 26, maxWLine2, displayFont, selectedFontWeight)
+      ctx.font = `${selectedFontWeight} ${size1}px ${displayFont}`
+      const line1Y = textZoneStartY + Math.round(size1 * 0.8)
+      ctx.fillText(venueLine1, width / 2, line1Y)
+      textZoneStartY = line1Y + Math.round(size1 * 1.0)
+    }
+    ctx.restore()
+
+    // 5. Date, Time/Address & City Block ("MAY 30 / IDROTTSGATAN 11 / ÄNGELHOLM")
+    const shortDateStr = formatShortGigDate(props.gig.date)
+    const timeStr = formatGigTime(props.gig.date)
+    const rawSub = subheadline.value.trim()
+    const isDefaultSub = rawSub.toUpperCase() === 'ÄKTA BLUES & SVÄNGIG ROCK \'N\' ROLL'
+    const middleDetailLine = !isDefaultSub && rawSub
+      ? rawSub.toUpperCase()
+      : timeStr
+        ? `KL ${timeStr}`
+        : ''
+    const cityStr = (props.gig.city || 'ÄNGELHOLM').trim().toUpperCase()
+
+    const safeCenterMaxW = Math.round(width * 0.36)
+    const detailFontFamily = selectedFontStack
+    const detailBaseSize = Math.round(width * (isSquare ? 0.025 : 0.028))
+    const detailStepY = Math.round(detailBaseSize * 1.38)
+
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = softCreamColor
+    ctx.letterSpacing = '0.06em'
+
+    let currentDetailY = textZoneStartY + Math.round(height * 0.012)
+    if (shortDateStr) {
+      fitTextFont(ctx, shortDateStr, detailBaseSize, 16, safeCenterMaxW, detailFontFamily, selectedFontWeight)
+      ctx.fillText(shortDateStr, width / 2, currentDetailY)
+      currentDetailY += detailStepY
+    }
+    if (middleDetailLine) {
+      fitTextFont(ctx, middleDetailLine, Math.round(detailBaseSize * 0.92), 15, safeCenterMaxW, detailFontFamily, selectedFontWeight)
+      ctx.fillText(middleDetailLine, width / 2, currentDetailY)
+      currentDetailY += detailStepY
+    }
+    if (cityStr) {
+      fitTextFont(ctx, cityStr, detailBaseSize, 16, safeCenterMaxW, detailFontFamily, selectedFontWeight)
+      ctx.fillText(cityStr, width / 2, currentDetailY)
+      currentDetailY += detailStepY
+    }
+    ctx.restore()
+
+    // 6. Bottom Extra Notes / Party Tagline between the two microphones ("BBQ, LIVE MUSIC, KARAOKE / PARTY TILL YOU DROP!")
+    const rawNotes = customNotes.value.trim()
+    let botLine1 = ''
+    let botLine2 = ''
+
+    if (rawNotes) {
+      if (rawNotes.includes('•')) {
+        const parts = rawNotes.split('•').map((s) => s.trim()).filter(Boolean)
+        botLine1 = (parts[0] || '').toUpperCase()
+        botLine2 = parts.slice(1).join(' • ').toUpperCase()
+      } else if (rawNotes.length > 22) {
+        const [l1, l2] = splitIntoTwoLines(rawNotes.toUpperCase())
+        botLine1 = l1
+        botLine2 = l2
+      } else {
+        botLine1 = rawNotes.toUpperCase()
+        botLine2 = includeBandMembers.value ? 'WWW.SJUNDEGUNGET.SE' : ''
+      }
+    } else {
+      botLine1 = props.gig.status === 'sold_out'
+        ? 'UTSÅLT • FULLSATT HUS!'
+        : props.gig.status === 'free'
+          ? 'FRI ENTRÉ • LIVE BLUES & ROCK'
+          : 'LIVE BLUES & SVÄNGIG ROCK'
+      botLine2 = includeBandMembers.value
+        ? 'WWW.SJUNDEGUNGET.SE'
+        : ''
+    }
+
+    const botCorridorMaxW = Math.round(width * 0.40)
+    const botFontSize = Math.round(width * (isSquare ? 0.020 : 0.022))
+    const botStepY = Math.round(botFontSize * 1.42)
+    const targetBotY = Math.max(
+      currentDetailY + Math.round(height * 0.022),
+      height - Math.round(height * (isStory ? 0.065 : 0.068)),
+    )
+
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = softCreamColor
+    ctx.letterSpacing = '0.05em'
+
+    if (botLine1) {
+      fitTextFont(ctx, botLine1, botFontSize, 14, botCorridorMaxW, detailFontFamily, selectedFontWeight)
+      ctx.fillText(botLine1, width / 2, targetBotY)
+    }
+    if (botLine2) {
+      fitTextFont(ctx, botLine2, botFontSize, 14, botCorridorMaxW, detailFontFamily, selectedFontWeight)
+      ctx.fillText(botLine2, width / 2, targetBotY + botStepY)
+    }
+    ctx.restore()
+
+    return
+  }
 
   // 1. Background
   ctx.fillStyle = theme.bg
@@ -313,7 +827,7 @@ const drawPoster = async () => {
   ctx.textAlign = 'center'
 
   if (headline.value.trim()) {
-    ctx.font = `900 ${Math.round(width * (isSquare ? 0.032 : 0.035))}px 'Alfa Slab One', 'Arvo', serif`
+    ctx.font = `${selectedFontWeight} ${Math.round(width * (isSquare ? 0.032 : 0.035))}px ${selectedFontStack}`
     ctx.fillStyle = theme.accent
     ctx.letterSpacing = '0.22em'
     ctx.fillText(`★  ${headline.value.trim().toUpperCase()}  ★`, width / 2, currentY)
@@ -355,7 +869,7 @@ const drawPoster = async () => {
     // Typography fallback or user opted for plain typography
     currentY += Math.round(height * (hasPhoto ? 0.065 : 0.08))
     ctx.fillStyle = theme.primary
-    ctx.font = `900 ${Math.round(width * (hasPhoto ? 0.08 : 0.095))}px 'Alfa Slab One', 'Arvo', serif`
+    ctx.font = `${selectedFontWeight} ${Math.round(width * (hasPhoto ? 0.08 : 0.095))}px ${selectedFontStack}`
     ctx.letterSpacing = '0.04em'
     ctx.fillText('DET 7:e GUNGET', width / 2, currentY)
     currentY += Math.round(height * 0.01)
@@ -460,10 +974,10 @@ const drawPoster = async () => {
   const venueText = props.gig.venue || 'SPELSTÄLLE'
 
   let venueFontSize = Math.round(width * (hasPhoto ? (isSquare ? 0.055 : 0.065) : 0.08))
-  ctx.font = `900 ${venueFontSize}px 'Alfa Slab One', 'Arvo', serif`
+  ctx.font = `${selectedFontWeight} ${venueFontSize}px ${selectedFontStack}`
   while (ctx.measureText(venueText.toUpperCase()).width > width - venueBoxPadding * 2 && venueFontSize > 22) {
     venueFontSize -= 2
-    ctx.font = `900 ${venueFontSize}px 'Alfa Slab One', 'Arvo', serif`
+    ctx.font = `${selectedFontWeight} ${venueFontSize}px ${selectedFontStack}`
   }
 
   const venueBannerHeight = Math.round(venueFontSize * 1.6)
@@ -487,7 +1001,7 @@ const drawPoster = async () => {
   ctx.save()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.font = `900 ${venueFontSize}px 'Alfa Slab One', 'Arvo', serif`
+  ctx.font = `${selectedFontWeight} ${venueFontSize}px ${selectedFontStack}`
   ctx.fillStyle = theme.primary
   ctx.fillText(venueText.toUpperCase(), width / 2, venueBannerY + venueBannerHeight / 2)
   ctx.restore()
@@ -500,7 +1014,7 @@ const drawPoster = async () => {
   ctx.save()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.font = `900 ${cityFontSize}px 'Alfa Slab One', 'Arvo', serif`
+  ctx.font = `${selectedFontWeight} ${cityFontSize}px ${selectedFontStack}`
   ctx.fillStyle = theme.secondary
   ctx.letterSpacing = '0.22em'
   ctx.fillText(`★   ${cityText.toUpperCase()}   ★`, width / 2, currentY)
@@ -515,7 +1029,7 @@ const drawPoster = async () => {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   const dateFontSize = Math.round(width * (hasPhoto ? 0.036 : 0.044))
-  ctx.font = `900 ${dateFontSize}px 'Alfa Slab One', 'Arvo', serif`
+  ctx.font = `${selectedFontWeight} ${dateFontSize}px ${selectedFontStack}`
   ctx.fillStyle = theme.accent
   ctx.letterSpacing = '0.08em'
   ctx.fillText(dateStr, width / 2, currentY)
@@ -595,6 +1109,8 @@ watch(
     () => props.gig,
     selectedTheme,
     selectedFormat,
+    selectedFont,
+    topPresenter,
     headline,
     subheadline,
     customNotes,
@@ -619,7 +1135,7 @@ watch(
   { deep: true },
 )
 
-const formatGigDate = (dateVal: any) => {
+const formatGigDate = (dateVal: string | number | Date | null | undefined) => {
   if (!dateVal) return ''
   try {
     const d = new Date(dateVal)
@@ -636,7 +1152,7 @@ const formatGigDate = (dateVal: any) => {
   }
 }
 
-const formatGigTime = (dateVal: any) => {
+const formatGigTime = (dateVal: string | number | Date | null | undefined) => {
   if (!dateVal) return ''
   try {
     const d = new Date(dateVal)
@@ -747,7 +1263,7 @@ const publishStory = async () => {
     const uploadedUrl = await uploadAdminFile(file)
     if (!uploadedUrl) throw new Error('Kunde inte ladda upp affischen')
 
-    const res = await $fetch<{ success: boolean; social: any }>('/api/admin/social/broadcast', {
+    const res = await $fetch<{ success: boolean; social?: { success?: boolean; message?: string } }>('/api/admin/social/broadcast', {
       method: 'POST',
       body: {
         type: 'gig',
@@ -770,9 +1286,10 @@ const publishStory = async () => {
       }
     }
   } catch (err: unknown) {
+    const errWithData = err as { data?: { message?: string } }
     const errorMsg =
-      err && typeof err === 'object' && 'data' in err && (err as any).data?.message
-        ? (err as any).data.message
+      errWithData?.data?.message
+        ? errWithData.data.message
         : err instanceof Error
           ? err.message
           : 'Ett serverfel uppstod vid Story-publicering'
@@ -820,10 +1337,6 @@ const saveAsOfficialPoster = async () => {
       },
     })
 
-    if (props.gig) {
-      props.gig.posterUrl = uploadedUrl
-    }
-
     emit('posterSaved', props.gig.id, uploadedUrl)
 
     officialPosterSavedResult.value = {
@@ -831,9 +1344,10 @@ const saveAsOfficialPoster = async () => {
       message: '✓ Sparad som officiell affisch för giget!',
     }
   } catch (err: unknown) {
+    const errWithData = err as { data?: { message?: string } }
     const errorMsg =
-      err && typeof err === 'object' && 'data' in err && (err as any).data?.message
-        ? (err as any).data.message
+      errWithData?.data?.message
+        ? errWithData.data.message
         : err instanceof Error
           ? err.message
           : 'Kunde inte spara affischen'
@@ -923,10 +1437,19 @@ const generatePosterWithAi = async () => {
         <div class="space-y-4 text-xs">
           <!-- 1. Theme & Format -->
           <div class="space-y-2 p-3.5 rounded-2xl bg-base-200/60 border border-primary/20">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between gap-2">
               <label class="font-bold text-secondary uppercase tracking-wider text-[11px]">
                 1. Retrostil & Format
               </label>
+              <button
+                v-if="selectedTheme === 'sunburst'"
+                type="button"
+                class="btn btn-ghost btn-xs text-[10px] text-primary hover:bg-primary/15 rounded-lg h-6 min-h-0 px-2 font-bold"
+                title="Ladda ner den rengjorda affischmallen helt utan text"
+                @click="downloadBlankSunburstTemplate"
+              >
+                📥 Ladda ner ren mall (utan text)
+              </button>
             </div>
 
             <!-- Theme Buttons -->
@@ -936,15 +1459,17 @@ const generatePosterWithAi = async () => {
                 :key="key"
                 type="button"
                 class="p-2 rounded-xl border text-left transition-all flex items-center gap-2.5 cursor-pointer text-xs"
-                :class="
+                :class="[
                   selectedTheme === key
                     ? 'border-primary bg-primary/10 shadow-md font-bold'
-                    : 'border-base-content/10 bg-base-200/60 hover:bg-base-200'
-                "
-                @click="selectedTheme = key"
+                    : 'border-base-content/10 bg-base-200/60 hover:bg-base-200',
+                  key === 'sunburst' ? 'col-span-2' : '',
+                ]"
+                @click="selectThemeOption(key)"
               >
                 <div class="w-4 h-4 rounded-full border border-base-content/20 flex-shrink-0" :style="{ backgroundColor: tItem.primary }" />
                 <span class="truncate">{{ tItem.name }}</span>
+                <span v-if="key === 'sunburst'" class="ml-auto badge badge-xs badge-primary font-mono">★ Favorit</span>
               </button>
             </div>
 
@@ -974,6 +1499,33 @@ const generatePosterWithAi = async () => {
               >
                 ⬛ Kvadrat (1:1)
               </button>
+            </div>
+
+            <!-- Font Selector Dropdown (7 Vintage & Rounded Fonts) -->
+            <div class="pt-1.5 space-y-1">
+              <div class="flex items-center justify-between">
+                <label class="font-semibold text-base-content/80 text-[11px] flex items-center gap-1.5">
+                  <span>🔤</span>
+                  <span>Affisch-typsnitt (7 rundade vintage-stilar)</span>
+                </label>
+                <span class="text-[10px] font-mono text-primary font-bold">
+                  {{ activeFontOption.name }}
+                </span>
+              </div>
+              <select
+                v-model="selectedFont"
+                class="select select-bordered select-sm w-full bg-base-100 text-xs font-semibold rounded-xl border-primary/30 focus:border-primary"
+                :style="{ fontFamily: `'${activeFontOption.family}', sans-serif`, fontWeight: activeFontOption.weight }"
+              >
+                <option
+                  v-for="fOpt in posterFonts"
+                  :key="fOpt.key"
+                  :value="fOpt.key"
+                  :style="{ fontFamily: `'${fOpt.family}', sans-serif`, fontWeight: fOpt.weight }"
+                >
+                  {{ fOpt.label }}
+                </option>
+              </select>
             </div>
           </div>
 
@@ -1315,33 +1867,51 @@ const generatePosterWithAi = async () => {
               3. Text & Affischdetaljer
             </label>
 
+            <div v-if="selectedTheme === 'sunburst'">
+              <label class="block font-semibold text-base-content/80 mb-0.5 text-[11px]">
+                Arrangör / Topprad i solstrålarna (valfritt)
+              </label>
+              <input
+                v-model="topPresenter"
+                type="text"
+                class="input input-bordered input-sm w-full bg-base-100 text-xs"
+                placeholder="t.ex. PUB 666 PRESENTS (lämna tom för ren sol)"
+              >
+            </div>
+
             <div>
-              <label class="block font-semibold text-base-content/80 mb-0.5 text-[11px]">Topprubrik / Kallelse</label>
+              <label class="block font-semibold text-base-content/80 mb-0.5 text-[11px]">
+                {{ selectedTheme === 'sunburst' ? 'Kallelse före spelställe (t.ex. LIVE PÅ / LIVE AT)' : 'Topprubrik / Kallelse' }}
+              </label>
               <input
                 v-model="headline"
                 type="text"
                 class="input input-bordered input-sm w-full bg-base-100 text-xs"
-                placeholder="LIVE PÅ SCEN"
+                :placeholder="selectedTheme === 'sunburst' ? 'LIVE PÅ' : 'LIVE PÅ SCEN'"
               >
             </div>
 
             <div>
-              <label class="block font-semibold text-base-content/80 mb-0.5 text-[11px]">Bandets undertitel</label>
+              <label class="block font-semibold text-base-content/80 mb-0.5 text-[11px]">
+                {{ selectedTheme === 'sunburst' ? 'Gatuadress eller hålltider under datum (valfritt)' : 'Bandets undertitel' }}
+              </label>
               <input
                 v-model="subheadline"
                 type="text"
                 class="input input-bordered input-sm w-full bg-base-100 text-xs"
-                placeholder="ÄKTA BLUES & SVÄNGIG ROCK 'N' ROLL"
+                :placeholder="selectedTheme === 'sunburst' ? 't.ex. IDROTTSGATAN 11 eller KL 20:00' : 'ÄKTA BLUES & SVÄNGIG ROCK \'N\' ROLL'"
               >
             </div>
 
             <div>
-              <label class="block font-semibold text-base-content/80 mb-0.5 text-[11px]">Biljett- & entréinfo (valfritt)</label>
+              <label class="block font-semibold text-base-content/80 mb-0.5 text-[11px]">
+                {{ selectedTheme === 'sunburst' ? 'Nedersta rader mellan mikrofonerna (valfritt)' : 'Biljett- & entréinfo (valfritt)' }}
+              </label>
               <input
                 v-model="customNotes"
                 type="text"
                 class="input input-bordered input-sm w-full bg-base-100 text-xs"
-                placeholder="t.ex. Fri entré • Dörrarna öppnar kl 19"
+                :placeholder="selectedTheme === 'sunburst' ? 't.ex. BBQ, LIVE MUSIC, KARAOKE • PARTY TILL YOU DROP!' : 't.ex. Fri entré • Dörrarna öppnar kl 19'"
               >
             </div>
 
@@ -1351,7 +1921,9 @@ const generatePosterWithAi = async () => {
                 type="checkbox"
                 class="checkbox checkbox-primary checkbox-xs"
               >
-              <span class="font-bold text-base-content/80 text-[11px]">Inkludera medlemsrad (Janis, Marcus, Bosse, Jonas)</span>
+              <span class="font-bold text-base-content/80 text-[11px]">
+                {{ selectedTheme === 'sunburst' ? 'Visa webbadress (WWW.SJUNDEGUNGET.SE) längst ner' : 'Inkludera medlemsrad (Janis, Marcus, Bosse, Jonas)' }}
+              </span>
             </label>
           </div>
 

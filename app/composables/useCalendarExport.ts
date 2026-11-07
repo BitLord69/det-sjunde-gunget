@@ -11,6 +11,7 @@ export interface CalendarGig {
 
 export function useCalendarExport() {
   const { locale } = useI18n()
+  const { trackPublicEvent } = usePublicAnalytics()
 
   const getGoogleCalendarUrl = (gig: CalendarGig) => {
     const d = new Date(gig.date)
@@ -76,6 +77,10 @@ export function useCalendarExport() {
 
   const downloadIcsFile = (gig: CalendarGig) => {
     if (import.meta.server) return
+    trackPublicEvent('gig_calendar_export', {
+      targetId: gig.id || gig.venue,
+      targetLabel: `${gig.venue}, ${gig.city}`,
+    })
     const icsContent = generateIcsContent(gig)
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' })
     const url = URL.createObjectURL(blob)

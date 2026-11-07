@@ -365,6 +365,26 @@ export const videos = sqliteTable('videos', {
   ...timestamps,
 })
 
+export const analyticsEvents = sqliteTable('analytics_events', {
+  id: text('id').primaryKey(),
+  eventType: text('event_type').notNull().default('pageview'),
+  path: text('path').notNull().default('/'),
+  visitorHash: text('visitor_hash').notNull(),
+  referrer: text('referrer'),
+  campaign: text('campaign'),
+  country: text('country'),
+  city: text('city'),
+  deviceType: text('device_type'),
+  os: text('os'),
+  browser: text('browser'),
+  locale: text('locale').default('sv'),
+  targetId: text('target_id'),
+  targetLabel: text('target_label'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .default(sql`(unixepoch() * 1000)`),
+})
+
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),

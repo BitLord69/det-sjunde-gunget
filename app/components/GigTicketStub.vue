@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { locale, t } = useI18n()
 const { getGoogleCalendarUrl, downloadIcsFile } = useCalendarExport()
+const { trackPublicEvent } = usePublicAnalytics()
 
 export interface GigItem {
   id: string
@@ -275,6 +276,7 @@ const exportGigSetlistAsTxt = () => {
               target="_blank"
               rel="noopener noreferrer"
               class="btn btn-primary btn-sm rounded-full font-bold px-5 shadow-md text-xs"
+              @click="trackPublicEvent('gig_ticket_click', { targetId: gig.id, targetLabel: `${gig.venue}, ${gig.city}` })"
             >
               🎫 {{ t('gigs.buy_ticket') }} →
             </a>
@@ -288,7 +290,7 @@ const exportGigSetlistAsTxt = () => {
               type="button"
               class="btn btn-warning btn-sm rounded-full text-xs font-bold border border-warning/30 hover:bg-warning/20 flex items-center gap-1.5 cursor-pointer text-stone-900 shadow-sm"
               title="Visa officiell affisch"
-              @click="showOfficialPosterModal = true"
+              @click="showOfficialPosterModal = true; trackPublicEvent('gig_poster_view', { targetId: gig.id, targetLabel: `${gig.venue}, ${gig.city}` })"
             >
               <span>🖼️</span>
               <span>Officiell affisch</span>
@@ -300,7 +302,7 @@ const exportGigSetlistAsTxt = () => {
               class="btn btn-ghost btn-sm rounded-full text-xs font-bold border border-primary/20 hover:bg-primary/10 flex items-center gap-1 cursor-pointer"
               :class="isTorn ? 'text-primary' : 'text-stone-700'"
               :title="t('gigs.poster_btn') || 'Affisch'"
-              @click="emit('openPoster', gig)"
+              @click="emit('openPoster', gig); trackPublicEvent('gig_poster_view', { targetId: gig.id, targetLabel: `${gig.venue}, ${gig.city}` })"
             >
               <span>🎨</span>
               <span>{{ gig.posterUrl ? 'Egen affisch' : (t('gigs.poster_btn') || 'Affisch') }}</span>
@@ -326,7 +328,7 @@ const exportGigSetlistAsTxt = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     class="font-bold flex items-center gap-2"
-                    @click="tearTicket"
+                    @click="tearTicket(); trackPublicEvent('gig_calendar_export', { targetId: gig.id, targetLabel: `${gig.venue}, ${gig.city}` })"
                   >
                     <span class="text-base">📅</span>
                     <span>{{ t('gigs.google_calendar') }}</span>

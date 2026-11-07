@@ -5,6 +5,7 @@
  */
 
 export function useJukeboxAudio() {
+  const { trackPublicEvent } = usePublicAnalytics()
   const isAudioPlaying = useState<boolean>('jukebox_is_audio_playing', () => false)
   const currentSongId = useState<string | null>('jukebox_current_song_id', () => null)
   const currentTime = useState<number>('jukebox_current_time', () => 0)
@@ -302,6 +303,10 @@ export function useJukeboxAudio() {
   const playTrack = (song: { id: string; code?: string; title: string; audioUrl?: string | null }) => {
     currentPlayingSong = song
     currentSongId.value = song.id
+    trackPublicEvent('jukebox_play', {
+      targetId: song.id,
+      targetLabel: song.title,
+    })
     stopSynth()
     if (htmlAudio) {
       htmlAudio.pause()

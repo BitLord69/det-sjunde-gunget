@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { locale } = useI18n()
+const { trackPublicEvent } = usePublicAnalytics()
 
 const { data: settingsData } = await useFetch<any>('/api/settings', {
   default: () => ({ landingMerchCount: 4 }),
@@ -57,6 +58,7 @@ const displayedProducts = computed(() => {
           target="_blank"
           rel="noopener noreferrer"
           class="relative overflow-hidden aspect-square bg-[#1a1614] flex items-center justify-center p-2 block cursor-pointer"
+          @click="trackPublicEvent('merch_click', { targetId: item.id, targetLabel: item.typeSv || item.name })"
         >
           <NuxtImg
             :src="item.image"
@@ -91,6 +93,7 @@ const displayedProducts = computed(() => {
             rel="noopener noreferrer"
             class="btn btn-xs btn-primary font-bold rounded-full px-2.5 flex-shrink-0 text-[11px]"
             :title="locale === 'en' ? 'Buy on Spreadshop' : 'Köp på Spreadshop'"
+            @click="trackPublicEvent('merch_click', { targetId: item.id, targetLabel: item.typeSv || item.name })"
           >
             <span>{{ locale === 'en' ? 'Buy' : 'Köp' }}</span>
             <span>↗</span>

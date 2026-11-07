@@ -4,8 +4,17 @@ import { eq } from 'drizzle-orm'
 import JSZip from 'jszip'
 import { db } from '../../db/client'
 import { epkDocuments, galleryItems, siteSettings } from '../../db/schema'
+import { recordPublicAnalyticsEvent } from '../../utils/analytics'
 
 export default defineEventHandler(async (event) => {
+  // Record EPK ZIP download in Arrangörsradar (ignores admin & bots automatically)
+  recordPublicAnalyticsEvent(event, {
+    eventType: 'epk_zip_download',
+    path: '/epk',
+    targetId: 'epk-zip',
+    targetLabel: 'Komplett Presskit (.zip)',
+  }).catch(() => {})
+
   const zip = new JSZip()
 
   // 1. Fetch active EPK press photos

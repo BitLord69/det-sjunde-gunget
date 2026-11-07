@@ -55,6 +55,7 @@ const navItems = computed(() => [
     icon: '📬',
     badge: unreadMessagesCount.value > 0 ? `${unreadMessagesCount.value}` : null,
   },
+  { path: '/admin/analytics', label: 'Statistik', icon: '📊' },
   { path: '/admin/admins', label: 'Admins', icon: '👤' },
   { path: '/admin/subscribers', label: 'Nyhetsbrev', icon: '💌' },
   { path: '/admin/merch', label: 'Merch', icon: '👕' },

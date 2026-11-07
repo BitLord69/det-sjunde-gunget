@@ -57,6 +57,12 @@ export default defineNuxtConfig({
       { name: 'Crete Round', provider: 'google', weights: [400], styles: ['normal', 'italic'] },
       { name: 'Rye', provider: 'google' },
       { name: 'Ultra', provider: 'google' },
+      { name: 'Poetsen One', provider: 'google', weights: [400] },
+      { name: 'Righteous', provider: 'google', weights: [400] },
+      { name: 'Calistoga', provider: 'google', weights: [400] },
+      { name: 'Caprasimo', provider: 'google', weights: [400] },
+      { name: 'Oleo Script', provider: 'google', weights: [700] },
+      { name: 'Lemon', provider: 'google', weights: [400] },
     ],
   },
   i18n: {

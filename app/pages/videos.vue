@@ -14,10 +14,12 @@ const { data: videosList, pending: isLoading } = await useFetch<VideoItem[]>('/a
   default: () => [],
 })
 
+const { trackEvent } = usePublicAnalytics()
 const selectedVideo = ref<VideoItem | null>(null)
 
 const playVideo = (video: VideoItem) => {
   selectedVideo.value = video
+  trackEvent('video_play', video.title, video.id)
 }
 
 const closePlayer = () => {

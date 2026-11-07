@@ -4,6 +4,7 @@ import type { GalleryItem } from '~/types'
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const { contactEmail } = useSiteSettings()
+const { trackPublicEvent } = usePublicAnalytics()
 
 useSeoMeta({
   title: computed(() => `${t('epk.page_title')} | Det 7:e Gunget`),
@@ -24,6 +25,10 @@ const copyToClipboard = async (text: string, successMsg: string) => {
   if (import.meta.server) return
   try {
     await navigator.clipboard.writeText(text)
+    trackPublicEvent('epk_copy_bio', {
+      targetId: 'epk-bio',
+      targetLabel: successMsg,
+    })
     showToast(successMsg)
   } catch {
     showToast('Kunde inte kopiera text automatiskt.')
@@ -164,6 +169,10 @@ const printPage = () => {
 // Plain Text Export
 const exportTechRiderAsTxt = () => {
   if (import.meta.server) return
+  trackPublicEvent('epk_rider_download', {
+    targetId: 'tech-rider-txt',
+    targetLabel: 'Teknisk Rider (.txt)',
+  })
 
   const dateStr = new Date().toLocaleDateString('sv-SE', {
     year: 'numeric',

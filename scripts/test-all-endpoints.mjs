@@ -28,7 +28,7 @@ import { createClient } from '@libsql/client'
 import 'dotenv/config'
 
 const isLiveArg = process.argv.includes('--live')
-const BASE_URL = process.env.TEST_BASE_URL || (isLiveArg ? 'https://sjundegunget.se' : 'http://localhost:3000')
+let BASE_URL = process.env.TEST_BASE_URL || (isLiveArg ? 'https://sjundegunget.se' : 'http://localhost:3000')
 
 const dbClient = createClient({
   url: process.env.TURSO_DATABASE_URL || 'file:local.db',
@@ -41,19 +41,29 @@ const results = []
 let spawnedServerProcess = null
 
 async function ensureServer() {
-  try {
-    const res = await fetch(`${BASE_URL}/api/band`, { signal: AbortSignal.timeout(1500) })
-    if (res.status === 200) {
-      return
+  const candidates = process.env.TEST_BASE_URL
+    ? [process.env.TEST_BASE_URL]
+    : isLiveArg
+      ? ['https://sjundegunget.se']
+      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002']
+
+  for (const candidate of candidates) {
+    try {
+      const res = await fetch(`${candidate}/api/band`, { signal: AbortSignal.timeout(1500) })
+      if (res.status === 200) {
+        BASE_URL = candidate
+        return
+      }
+    } catch (_) {
+      // Try next port
     }
-  } catch (_) {
-    // Server is not running
   }
 
-  console.log(`ℹ Ingen aktiv server svarade på ${BASE_URL}. Startar temporär server för testkörning...`)
+  BASE_URL = 'http://localhost:3005'
+  console.log(`ℹ Ingen aktiv server svarade. Startar temporär server på ${BASE_URL} för testkörning...`)
   const isWindows = process.platform === 'win32'
-  spawnedServerProcess = spawn('node', ['./node_modules/nuxt/bin/nuxt.mjs', 'dev', '--port', '3000'], {
-    env: { ...process.env, PORT: '3000' },
+  spawnedServerProcess = spawn('node', ['./node_modules/nuxt/bin/nuxt.mjs', 'dev', '--port', '3005'], {
+    env: { ...process.env, PORT: '3005' },
     stdio: 'ignore',
     shell: isWindows,
   })

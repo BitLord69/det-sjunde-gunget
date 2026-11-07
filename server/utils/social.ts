@@ -53,7 +53,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       formattedDate ? `📅 Datum: ${formattedDate}` : '',
       params.notes ? `\n"${params.notes}"` : '',
       '',
-      params.ticketUrl ? `🎟️ Biljetter & info: ${params.ticketUrl}` : `👉 Mer info: https://sjundegunget.se/gigs`,
+      params.ticketUrl ? `🎟️ Biljetter & info: ${params.ticketUrl}` : `👉 Mer info: https://sjundegunget.se/gigs?ref=fb`,
       '',
       `Kom och sväng med oss! 🎶`,
       `${activeTags} ${cityTag}`,
@@ -67,7 +67,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       '',
       params.notes ? `"${params.notes}"\n` : '',
       `Länk i bion för biljetter och alla turnédatum! 🎟️👇`,
-      `https://sjundegunget.se/gigs`,
+      `https://sjundegunget.se/gigs?ref=ig`,
       '',
       `${activeTags} ${cityTag}`,
     ].filter(Boolean)
@@ -79,7 +79,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
   }
 
   if (params.type === 'video') {
-    const vUrl = params.videoUrl || params.embedUrl || 'https://sjundegunget.se/videos'
+    const vUrl = params.videoUrl || params.embedUrl || 'https://sjundegunget.se/videos?ref=fb'
     const fbText = [
       `🎬 NY VIDEO FRÅN DET 7:e GUNGET! 🎬`,
       '',
@@ -87,7 +87,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       params.notes ? `\n"${params.notes}"` : '',
       '',
       `Kolla in videon här: ${vUrl}`,
-      'Eller spana in vårt videogalleri på hemsidan: https://sjundegunget.se/videos',
+      'Eller spana in vårt videogalleri på hemsidan: https://sjundegunget.se/videos?ref=fb',
       '',
       `Dela gärna och höj volymen! 🎸💥`,
       `${activeTags}`,
@@ -100,7 +100,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       '',
       params.notes ? `"${params.notes}"\n` : '',
       `Se hela videon på YouTube eller i vårt videogalleri via länken i bio! 🎶👇`,
-      `https://sjundegunget.se/videos`,
+      `https://sjundegunget.se/videos?ref=ig`,
       '',
       `${activeTags}`,
     ]
@@ -119,7 +119,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       '',
       `"${params.title}" ${params.subtitle ? `(${params.subtitle})` : ''} finns nu att lyssna på i vår retro jukebox på hemsidan!`,
       '',
-      params.embedUrl ? `Lyssna direkt: ${params.embedUrl}` : `👉 Lyssna här: https://sjundegunget.se/music`,
+      params.embedUrl ? `Lyssna direkt: ${params.embedUrl}` : `👉 Lyssna här: https://sjundegunget.se/music?ref=fb`,
       '',
       `Släpp i en slant och höj volymen till 11! ⚡`,
       `${activeTags}`,
@@ -131,6 +131,7 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
       `🎵 NY LÅT! "${params.title}" 🎵`,
       '',
       `Klicka in på länken i vår bio och dra igång vår interaktiva jukebox! 🎶`,
+      `https://sjundegunget.se/music?ref=ig`,
       '',
       `${activeTags}`,
     ].join('\n')
@@ -142,13 +143,26 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
   }
 
   // Default news/general update
-  const defaultText = [
+  const fbDefaultText = [
     `📢 NYHET FRÅN DET 7:e GUNGET!`,
     '',
     params.title,
     params.notes || '',
     '',
-    `Läs mer på https://sjundegunget.se`,
+    `Läs mer på https://sjundegunget.se?ref=fb`,
+    '',
+    activeTags,
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  const igDefaultText = [
+    `📢 NYHET FRÅN DET 7:e GUNGET!`,
+    '',
+    params.title,
+    params.notes || '',
+    '',
+    `Läs mer via länken i bio: https://sjundegunget.se?ref=ig`,
     '',
     activeTags,
   ]
@@ -156,8 +170,8 @@ export function formatSocialPost(params: SocialPostParams): { facebookText: stri
     .join('\n')
 
   return {
-    facebookText: defaultText,
-    instagramText: defaultText,
+    facebookText: fbDefaultText,
+    instagramText: igDefaultText,
   }
 }
 

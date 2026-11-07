@@ -5,6 +5,7 @@
 
 export function useBluesHarp() {
   const isPlayingHarp = useState<boolean>('blues_harp_playing', () => false)
+  const { trackPublicEvent } = usePublicAnalytics()
 
   let audioCtx: AudioContext | null = null
 
@@ -142,6 +143,11 @@ export function useBluesHarp() {
 
     if (isPlayingHarp.value) return
     isPlayingHarp.value = true
+
+    trackPublicEvent('easter_egg_harp', {
+      targetId: 'blues-harp',
+      targetLabel: 'Blues Harp Munspelslogga',
+    })
 
     const now = ctx.currentTime
     const masterGain = ctx.createGain()

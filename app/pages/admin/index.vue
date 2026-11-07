@@ -20,6 +20,7 @@ const routeMap: Record<string, string> = {
   messages: '/admin/messages',
   subscribers: '/admin/subscribers',
   hashtags: '/admin/hashtags',
+  analytics: '/admin/analytics',
   settings: '/admin/settings',
   help: '/admin/help',
 }

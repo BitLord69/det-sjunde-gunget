@@ -8,8 +8,6 @@ useSeoMeta({
   title: 'Hjälp & Bandmanual | Det 7:e Gunget Admin',
 })
 
-const searchQuery = ref('')
-
 const printManual = () => {
   if (import.meta.client) {
     window.print()
@@ -336,7 +334,7 @@ const scrollTo = (id: string) => {
         <ul class="space-y-1.5 text-xs sm:text-sm text-base-content/85 pl-1">
           <li class="flex items-start gap-2">
             <span class="text-primary font-bold">🍔</span>
-            <span><strong>Enkel mobilmeny:</strong> Högst upp finns snabbväxling för mörkt/ljust läge och användarmeny. Alla 15 moduler nås smidigt via hamburgermenyn (<strong>☰</strong>).</span>
+            <span><strong>Enkel mobilmeny:</strong> Högst upp finns snabbväxling för mörkt/ljust läge och användarmeny. Alla 16 moduler nås smidigt via hamburgermenyn (<strong>☰</strong>).</span>
           </li>
           <li class="flex items-start gap-2">
             <span class="text-primary font-bold">🛡️</span>
@@ -376,7 +374,7 @@ const scrollTo = (id: string) => {
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
-                <span><strong>🎨 Vintage Affisch-studio & Officiell Konsertaffisch:</strong> Klicka på <em>Affisch</em>-knappen på valfritt gig (även tillgänglig för publiken på startsidan och i Biljettluckan) för att skapa autentiska konsertaffischer i 4 retrostilar (Sonet, Chess, Sun, Neon) och 3 format (Affisch 3:4, Story 9:16, Kvadrat). Du kan välja bandets officiella logotyp, motiv ur bandets 7 photoshoot-bilder, sajtens galleri, <strong>🤖 Gemini AI-konst</strong> (med 5 anpassade blues- och konsertmiljöer som rökig bluesklubb, scen & stärkare, svensk folkpark, svettig rockbar eller egen prompt, med valfri bandmedlemslikhet), ladda upp tidigare affisch/eget foto, eller köra ren vintage-typografi. Bilden kan stylas med vintage sepia, svartvitt, tematonad duotone eller naturlig färg. Som inloggad administratör kan du klicka på <strong>💾 Spara som officiell affisch</strong> – då sparas affischen direkt till giget i databasen och blir tillgänglig som klickbar affisch på biljetterna för alla fans. Dessutom finns knappen <strong>🚀 Publicera Story</strong> som sänder affischen till både Facebook Story och Instagram Story med 24 timmars livslängd.</span>
+                <span><strong>🎨 Vintage Affisch-studio & Officiell Konsertaffisch:</strong> Klicka på <em>Affisch</em>-knappen på valfritt gig (även tillgänglig för publiken på startsidan och i Biljettluckan) för att skapa autentiska konsertaffischer i 5 retrostilar – inklusive <strong>Retro Sunburst (Originalmall)</strong> med bandets klassiska runda vinyl-emblem, solstrålar, stadssiluett och hörnmikrofoner (samt 1-klicks nedladdning av den rena mallen helt utan text), utöver Sonet, Chess, Sun och Neon – i 3 format (Affisch 3:4, Story 9:16, Kvadrat). Via rullgardinsmenyn <strong>🔤 Affisch-typsnitt</strong> kan du välja mellan 7 rundade vintage- och roots-typsnitt med fullt Å/Ä/Ö-stöd (<em>Poetsen One</em> som standard, samt <em>Righteous</em>, <em>Calistoga</em>, <em>Caprasimo</em>, <em>Oleo Script Bold</em>, <em>Lemon</em> och <em>Rye</em>). Du kan även välja bandets officiella logotyp, motiv ur bandets 7 photoshoot-bilder, sajtens galleri, <strong>🤖 Gemini AI-konst</strong> (med 5 anpassade blues- och konsertmiljöer som rökig bluesklubb, scen & stärkare, svensk folkpark, svettig rockbar eller egen prompt, med valfri bandmedlemslikhet), ladda upp tidigare affisch/eget foto, eller köra ren vintage-typografi. Bilden kan stylas med vintage sepia, svartvitt, tematonad duotone eller naturlig färg. Som inloggad administratör kan du klicka på <strong>💾 Spara som officiell affisch</strong> – då sparas affischen direkt till giget i databasen och blir tillgänglig som klickbar affisch på biljetterna för alla fans. Dessutom finns knappen <strong>🚀 Publicera Story</strong> som sänder affischen till både Facebook Story och Instagram Story med 24 timmars livslängd.</span>
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
@@ -666,6 +664,41 @@ const scrollTo = (id: string) => {
           </div>
           <NuxtLink to="/admin/messages" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
             Gå till Bokningar →
+          </NuxtLink>
+        </div>
+
+        <!-- Besöksstatistik & Publikpuls -->
+        <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="badge badge-primary font-mono font-bold text-xs">/admin/analytics</span>
+              <span class="text-xl">📊</span>
+            </div>
+            <h3 class="font-heading text-lg font-bold text-primary">Besöksstatistik & Publikpuls</h3>
+            <p class="text-xs text-base-content/90 font-medium">
+              100 % egen, GDPR-säker förstapartsanalys som enbart mäter sajtens publika sidor (inloggade admins och botar filtreras bort automatiskt).
+            </p>
+            <ul class="space-y-1.5 text-xs text-base-content/80">
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📈 Trafik- & Konsertpuls:</strong> Unika besökare, sidvisningar, live-publik (senaste 5 min) och trafikgraf där inbokade speldagar markeras med 🎸.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📍 Geografi & Källor:</strong> Se toppstäder och länder (via Vercel Edge), enheter, språkval (SV/EN) samt trafikkällor (Facebook, Instagram, Google, QR/Affisch).</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>🏆 Jukebox- & Gig-toppen:</strong> Mest spelade låtarna i Jukeboxen, karaokevisningar samt vilka gig som fått flest biljettklick, kalenderexporter och affischvisningar.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>💼 Arrangörsradar & Spårningslänkar:</strong> Realtidslogg över när och från vilken stad arrangörer laddar ner Presskit (.zip) eller Tech Rider på <code>/epk</code>, samt länkbyggare för <code>?ref=poster</code> / <code>?ref=fb</code>.</span>
+              </li>
+            </ul>
+          </div>
+          <NuxtLink to="/admin/analytics" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
+            Gå till Besöksstatistik →
           </NuxtLink>
         </div>
 

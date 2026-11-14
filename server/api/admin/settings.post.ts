@@ -65,6 +65,16 @@ export default defineEventHandler(async (event) => {
     tasks.push(upsertSetting('discord_notify_guestbook', body.discordNotifyGuestbook ? 'true' : 'false'))
   }
 
+  if (body.discordNotifyDailyStats !== undefined) {
+    tasks.push(upsertSetting('discord_notify_daily_stats', body.discordNotifyDailyStats ? 'true' : 'false'))
+  }
+
+  if (body.discordStatsRange !== undefined) {
+    const validRanges = ['today', '7d', '30d', '90d', 'all']
+    const cleanRange = validRanges.includes(String(body.discordStatsRange)) ? String(body.discordStatsRange) : '7d'
+    tasks.push(upsertSetting('discord_stats_range', cleanRange))
+  }
+
   if (body.notificationEmail !== undefined) {
     tasks.push(upsertSetting('notification_email', body.notificationEmail.trim()))
   }

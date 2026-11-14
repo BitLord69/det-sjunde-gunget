@@ -28,6 +28,8 @@ const { data: adminSettings, refresh: refreshSettings } = await useFetch<{
   discordNotifyBookings?: boolean
   discordNotifyFanPhotos?: boolean
   discordNotifyGuestbook?: boolean
+  discordNotifyDailyStats?: boolean
+  discordStatsRange?: 'today' | '7d' | '30d' | '90d' | 'all'
   socialMockMode?: boolean
   notificationEmail?: string
   youtubeChannelId?: string
@@ -48,6 +50,8 @@ const settingsForm = reactive({
   discordNotifyBookings: true,
   discordNotifyFanPhotos: false,
   discordNotifyGuestbook: false,
+  discordNotifyDailyStats: true,
+  discordStatsRange: '7d' as 'today' | '7d' | '30d' | '90d' | 'all',
   notificationEmail: 'info@det7egunget.se',
   socialMockMode: false,
   youtubeChannelId: '@det7egunget',
@@ -68,6 +72,8 @@ watch(
       settingsForm.discordNotifyBookings = newVal.discordNotifyBookings ?? true
       settingsForm.discordNotifyFanPhotos = newVal.discordNotifyFanPhotos ?? false
       settingsForm.discordNotifyGuestbook = newVal.discordNotifyGuestbook ?? false
+      settingsForm.discordNotifyDailyStats = newVal.discordNotifyDailyStats ?? true
+      settingsForm.discordStatsRange = newVal.discordStatsRange ?? '7d'
       settingsForm.notificationEmail = newVal.notificationEmail || 'info@det7egunget.se'
       settingsForm.socialMockMode = newVal.socialMockMode ?? false
       settingsForm.youtubeChannelId = newVal.youtubeChannelId || '@det7egunget'
@@ -91,6 +97,8 @@ const isSettingsDirty = computed(() => {
     settingsForm.discordNotifyBookings !== (orig.discordNotifyBookings ?? true) ||
     settingsForm.discordNotifyFanPhotos !== (orig.discordNotifyFanPhotos ?? false) ||
     settingsForm.discordNotifyGuestbook !== (orig.discordNotifyGuestbook ?? false) ||
+    settingsForm.discordNotifyDailyStats !== (orig.discordNotifyDailyStats ?? true) ||
+    settingsForm.discordStatsRange !== (orig.discordStatsRange ?? '7d') ||
     settingsForm.notificationEmail !== (orig.notificationEmail || 'info@det7egunget.se') ||
     settingsForm.socialMockMode !== (orig.socialMockMode ?? false) ||
     settingsForm.youtubeChannelId !== (orig.youtubeChannelId || '@det7egunget') ||
@@ -142,6 +150,36 @@ const testDiscordWebhook = async () => {
     showToast(`⚠️ ${msg}`)
   } finally {
     isTestingDiscord.value = false
+  }
+}
+
+const isSendingStatsReport = ref(false)
+const statsReportStatus = ref<{ success: boolean; message: string } | null>(null)
+
+const sendDiscordStatsReport = async () => {
+  if (!settingsForm.discordWebhookUrl.trim()) {
+    showToast('⚠️ Ange en Discord Webhook URL först.')
+    return
+  }
+  isSendingStatsReport.value = true
+  statsReportStatus.value = null
+  try {
+    const res = await $fetch<{ success: boolean; message: string }>('/api/admin/discord-stats', {
+      method: 'POST',
+      body: {
+        webhookUrl: settingsForm.discordWebhookUrl.trim(),
+        range: settingsForm.discordStatsRange,
+      },
+    })
+    statsReportStatus.value = { success: true, message: res.message || '✓ Statistikrapport publicerad i Discord!' }
+    showToast('📊 Statistikrapport publicerad i Discord!')
+  } catch (err: unknown) {
+    const errorObj = err as { data?: { statusMessage?: string }; message?: string }
+    const msg = errorObj.data?.statusMessage || errorObj.message || 'Kunde inte skicka statistikrapport'
+    statsReportStatus.value = { success: false, message: `⚠️ ${msg}` }
+    showToast(`⚠️ ${msg}`)
+  } finally {
+    isSendingStatsReport.value = false
   }
 }
 
@@ -198,6 +236,8 @@ const resetSettings = () => {
     settingsForm.discordNotifyBookings = orig.discordNotifyBookings ?? true
     settingsForm.discordNotifyFanPhotos = orig.discordNotifyFanPhotos ?? false
     settingsForm.discordNotifyGuestbook = orig.discordNotifyGuestbook ?? false
+    settingsForm.discordNotifyDailyStats = orig.discordNotifyDailyStats ?? true
+    settingsForm.discordStatsRange = orig.discordStatsRange ?? '7d'
     settingsForm.notificationEmail = orig.notificationEmail || 'info@det7egunget.se'
     settingsForm.socialMockMode = orig.socialMockMode ?? false
     settingsForm.youtubeChannelId = orig.youtubeChannelId || '@det7egunget'
@@ -359,6 +399,62 @@ const resetSettings = () => {
                   class="toggle toggle-accent toggle-sm flex-shrink-0 mt-0.5"
                 >
               </label>
+
+              <!-- Trigger 4: Daily Analytics Report (Cron + Manual Dispatch) -->
+              <div class="p-3 bg-base-200/85 rounded-2xl border border-primary/20 space-y-3">
+                <label class="flex items-start justify-between gap-3 cursor-pointer">
+                  <div class="space-y-0.5">
+                    <span class="text-xs font-bold text-base-content flex items-center gap-1.5">
+                      <span>📊</span> Daglig statistikrapport (Dygnscron kl. 04:00)
+                    </span>
+                    <p class="text-[11px] text-base-content/65">
+                      Publicerar en visuell dashboard-bild (PNG) med grafer, unika besökare, topplåtar och trafik till Discord en gång om dygnet.
+                    </p>
+                  </div>
+                  <input
+                    v-model="settingsForm.discordNotifyDailyStats"
+                    type="checkbox"
+                    class="toggle toggle-primary toggle-sm flex-shrink-0 mt-0.5"
+                  >
+                </label>
+
+                <div class="grid sm:grid-cols-2 gap-2.5 pt-2 border-t border-primary/10 items-end">
+                  <div>
+                    <label class="block text-[10px] font-bold text-secondary uppercase tracking-wider mb-1">
+                      Tidsperiod för statistikrapport
+                    </label>
+                    <select
+                      v-model="settingsForm.discordStatsRange"
+                      class="select select-bordered select-sm w-full bg-base-100 text-xs font-bold"
+                    >
+                      <option value="today">Senaste 24 timmarna (Idag)</option>
+                      <option value="7d">Senaste 7 dagarna (Standard)</option>
+                      <option value="30d">Senaste 30 dagarna</option>
+                      <option value="90d">Senaste 90 dagarna</option>
+                      <option value="all">All tid</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm rounded-xl font-bold flex items-center justify-center gap-1.5 cursor-pointer w-full"
+                    :disabled="isSendingStatsReport || !settingsForm.discordWebhookUrl.trim()"
+                    @click="sendDiscordStatsReport"
+                  >
+                    <span v-if="isSendingStatsReport" class="loading loading-spinner loading-xs"/>
+                    <span v-else>📊</span>
+                    <span>{{ isSendingStatsReport ? 'Skapar rapport...' : 'Skicka statistikrapport' }}</span>
+                  </button>
+                </div>
+
+                <div
+                  v-if="statsReportStatus"
+                  class="p-2.5 rounded-xl text-xs font-bold"
+                  :class="statsReportStatus.success ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'"
+                >
+                  {{ statsReportStatus.message }}
+                </div>
+              </div>
             </div>
           </div>
 

@@ -11,6 +11,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const isMockDefault = process.env.SOCIAL_MOCK_MODE === 'true' || process.env.SOCIAL_DRY_RUN === 'true'
+  const validRanges = ['today', '7d', '30d', '90d', 'all']
+  const savedRange = map.discord_stats_range || '7d'
 
   return {
     newsletterEnabled: map.newsletter_enabled === 'true',
@@ -23,6 +25,8 @@ export default defineEventHandler(async (event) => {
     discordNotifyBookings: map.discord_notify_bookings !== 'false',
     discordNotifyFanPhotos: map.discord_notify_fan_photos === 'true',
     discordNotifyGuestbook: map.discord_notify_guestbook === 'true',
+    discordNotifyDailyStats: map.discord_notify_daily_stats !== 'false',
+    discordStatsRange: validRanges.includes(savedRange) ? savedRange : '7d',
     notificationEmail: map.notification_email || process.env.BREVO_CONTACT_EMAIL || 'info@det7egunget.se',
     socialMockMode: map.social_mock_mode !== undefined ? map.social_mock_mode === 'true' : isMockDefault,
     youtubeChannelId: map.youtube_channel_id || '@det7egunget',

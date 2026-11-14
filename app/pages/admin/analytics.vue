@@ -156,6 +156,25 @@ const copyCampaignUrl = async () => {
     showCopyToast('⚠️ Kunde inte kopiera automatiskt')
   }
 }
+
+const isSendingDiscordReport = ref(false)
+const publishStatsToDiscord = async () => {
+  isSendingDiscordReport.value = true
+  try {
+    const res = await $fetch<{ success: boolean; message: string }>('/api/admin/discord-stats', {
+      method: 'POST',
+      body: {
+        range: selectedRange.value,
+      },
+    })
+    showCopyToast(res.message || '📊 Statistikrapport har publicerats i Discord!')
+  } catch (err: any) {
+    const msg = err?.data?.statusMessage || err?.message || 'Kunde inte skicka statistikrapport till Discord'
+    showCopyToast(`⚠️ ${msg}`)
+  } finally {
+    isSendingDiscordReport.value = false
+  }
+}
 </script>
 
 <template>
@@ -221,6 +240,17 @@ const copyCampaignUrl = async () => {
           >
             <span :class="isLoading ? 'animate-spin' : ''">🔄</span>
             <span class="hidden sm:inline">Uppdatera</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary btn-sm rounded-xl font-bold flex items-center gap-1.5 cursor-pointer"
+            :disabled="isSendingDiscordReport || isLoading"
+            title="Skicka aktuell statistikvy som rapport till Discord"
+            @click="publishStatsToDiscord"
+          >
+            <span v-if="isSendingDiscordReport" class="loading loading-spinner loading-xs" />
+            <span v-else>📊</span>
+            <span class="hidden sm:inline">{{ isSendingDiscordReport ? 'Skickar...' : 'Skicka statistikrapport' }}</span>
           </button>
         </div>
       </div>

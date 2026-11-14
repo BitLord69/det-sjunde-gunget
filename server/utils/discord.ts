@@ -1,3 +1,11 @@
+import { db } from '../db/client'
+import { siteSettings } from '../db/schema'
+import {
+  generateAnalyticsDashboardPng,
+  getAnalyticsDashboardData,
+  RANGE_LABELS,
+} from './analyticsReport'
+
 export interface DiscordEmbedField {
   name: string
   value: string
@@ -14,13 +22,17 @@ export interface DiscordNotificationOptions {
   footerText?: string
   authorName?: string
   authorIcon?: string
+  attachment?: {
+    buffer: Buffer
+    filename: string
+  }
 }
 
 const DEFAULT_AVATAR = 'https://sjundegunget.se/favicon.ico'
 const EMBED_GOLD_COLOR = 0xe2bd72 // #e2bd72 brand gold
 
 /**
- * Sends a rich embed message to a Discord Webhook
+ * Sends a rich embed message to a Discord Webhook (with optional PNG image attachment)
  */
 export async function sendDiscordWebhook(
   webhookUrl: string,
@@ -30,39 +42,59 @@ export async function sendDiscordWebhook(
     return { success: false, error: 'Ogiltig Discord Webhook URL' }
   }
 
+  const embedObj: Record<string, unknown> = {
+    title: options.title,
+    description: options.description || undefined,
+    url: options.url || undefined,
+    color: options.color || EMBED_GOLD_COLOR,
+    fields: options.fields || [],
+    author: options.authorName
+      ? {
+          name: options.authorName,
+          icon_url: options.authorIcon || DEFAULT_AVATAR,
+        }
+      : undefined,
+    footer: {
+      text: options.footerText || 'Det 7:e Gunget • Notissystem',
+      icon_url: DEFAULT_AVATAR,
+    },
+    timestamp: new Date().toISOString(),
+  }
+
+  if (options.attachment) {
+    embedObj.image = {
+      url: `attachment://${options.attachment.filename}`,
+    }
+  }
+
   const payload = {
     username: 'Det 7:e Gunget Alert',
     avatar_url: DEFAULT_AVATAR,
-    embeds: [
-      {
-        title: options.title,
-        description: options.description || undefined,
-        url: options.url || undefined,
-        color: options.color || EMBED_GOLD_COLOR,
-        fields: options.fields || [],
-        author: options.authorName
-          ? {
-              name: options.authorName,
-              icon_url: options.authorIcon || DEFAULT_AVATAR,
-            }
-          : undefined,
-        footer: {
-          text: options.footerText || 'Det 7:e Gunget • Notissystem',
-          icon_url: DEFAULT_AVATAR,
-        },
-        timestamp: new Date().toISOString(),
-      },
-    ],
+    embeds: [embedObj],
   }
 
   try {
-    const res = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
+    let res: Response
+
+    if (options.attachment) {
+      const formData = new FormData()
+      formData.append('payload_json', JSON.stringify(payload))
+      const blob = new Blob([new Uint8Array(options.attachment.buffer)], { type: 'image/png' })
+      formData.append('files[0]', blob, options.attachment.filename)
+
+      res = await fetch(webhookUrl, {
+        method: 'POST',
+        body: formData,
+      })
+    } else {
+      res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+    }
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => '')
@@ -74,6 +106,112 @@ export async function sendDiscordWebhook(
   } catch (err: unknown) {
     console.error('[Discord Webhook] Network exception:', err)
     return { success: false, error: err instanceof Error ? err.message : 'Nätverksfel vid anrop till Discord' }
+  }
+}
+
+/**
+ * Generates and sends the visual Analytics Dashboard PNG + summary embed to Discord
+ */
+export async function sendDiscordAnalyticsReport(options?: {
+  webhookUrl?: string
+  range?: string
+  forceSend?: boolean
+}): Promise<{ success: boolean; skipped?: boolean; reason?: string; range?: string; error?: string }> {
+  const rows = await db.select().from(siteSettings)
+  const settingsMap: Record<string, string> = {}
+  for (const r of rows) {
+    settingsMap[r.key] = r.value
+  }
+
+  const isEnabled = settingsMap.discord_notify_daily_stats !== 'false'
+  if (!options?.forceSend && !isEnabled) {
+    return { success: true, skipped: true, reason: 'Daglig statistikrapport är avstängd i inställningar' }
+  }
+
+  const webhookUrl = (options?.webhookUrl || settingsMap.discord_webhook_url || '').trim()
+  if (!webhookUrl) {
+    if (!options?.forceSend) {
+      return { success: true, skipped: true, reason: 'Ingen Discord Webhook URL konfigurerad' }
+    }
+    return { success: false, error: 'Ingen Discord Webhook URL angiven. Fyll i fältet under Inställningar först.' }
+  }
+
+  const targetRange = options?.range || settingsMap.discord_stats_range || '7d'
+  const rangeLabel = RANGE_LABELS[targetRange] || 'Senaste 7 dagarna'
+
+  const data = await getAnalyticsDashboardData(targetRange)
+  const pngBuffer = await generateAnalyticsDashboardPng(data)
+
+  const visGrowthStr =
+    data.summary.visitorsGrowthPct !== null && data.summary.visitorsGrowthPct !== undefined
+      ? ` (${data.summary.visitorsGrowthPct >= 0 ? `+${data.summary.visitorsGrowthPct}%` : `${data.summary.visitorsGrowthPct}%`})`
+      : ''
+
+  const pvGrowthStr =
+    data.summary.pageviewsGrowthPct !== null && data.summary.pageviewsGrowthPct !== undefined
+      ? ` (${data.summary.pageviewsGrowthPct >= 0 ? `+${data.summary.pageviewsGrowthPct}%` : `${data.summary.pageviewsGrowthPct}%`})`
+      : ''
+
+  const topPageText =
+    data.topPages.length > 0
+      ? data.topPages
+          .slice(0, 3)
+          .map((p, idx) => `${idx + 1}. **${p.label}** (${p.views} visn.)`)
+          .join('\n')
+      : 'Inga sidvisningar ännu'
+
+  const topSongText =
+    data.bandTelemetry.topSongs.length > 0
+      ? data.bandTelemetry.topSongs
+          .slice(0, 3)
+          .map((s, idx) => `${idx + 1}. **${s.title}** (${s.plays} speln. / ${s.lyricsViews} text)`)
+          .join('\n')
+      : 'Inga låtspelningar ännu'
+
+  const fields: DiscordEmbedField[] = [
+    {
+      name: '👥 Unika besökare & Sidvisningar',
+      value: `**${data.summary.uniqueVisitors}** unika besökare${visGrowthStr}\n**${data.summary.pageviews}** sidvisningar${pvGrowthStr}`,
+      inline: true,
+    },
+    {
+      name: '🎵 Jukebox, Gig & EPK',
+      value: `**${data.summary.jukeboxPlays}** låtspelningar • **${data.summary.lyricsViews}** låttexter\n**${data.summary.gigInteractions}** gig-klick • **${data.summary.epkInteractions}** EPK-laddningar`,
+      inline: true,
+    },
+    {
+      name: '🔥 Populäraste sidorna',
+      value: topPageText,
+      inline: true,
+    },
+    {
+      name: '🎸 Hetaste låtarna',
+      value: topSongText,
+      inline: true,
+    },
+    {
+      name: '📊 Öppna fullständig statistik',
+      value: '[Öppna Statistik & Publikpuls i Admin](https://sjundegunget.se/admin/analytics)',
+      inline: false,
+    },
+  ]
+
+  const sendRes = await sendDiscordWebhook(webhookUrl, {
+    title: `📊 Statistikrapport — Det 7:e Gunget (${rangeLabel})`,
+    description: `Här är en aktuell visuell sammanställning av besöksstatistiken och publikpulsen på **sjundegunget.se**.`,
+    url: 'https://sjundegunget.se/admin/analytics',
+    color: 0xe2bd72,
+    fields,
+    footerText: `Det 7:e Gunget • Besöksstatistik (${rangeLabel})`,
+    attachment: {
+      buffer: pngBuffer,
+      filename: 'statistikrapport.png',
+    },
+  })
+
+  return {
+    ...sendRes,
+    range: targetRange,
   }
 }
 
@@ -196,4 +334,3 @@ export async function sendDiscordFanPhotoAlert(
     footerText: `Det 7:e Gunget Fan Central (ID: ${data.id})`,
   })
 }
-

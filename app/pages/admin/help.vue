@@ -695,6 +695,10 @@ const scrollTo = (id: string) => {
                 <span class="text-primary font-bold">•</span>
                 <span><strong>💼 Arrangörsradar & Spårningslänkar:</strong> Realtidslogg över när och från vilken stad arrangörer laddar ner Presskit (.zip) eller Tech Rider på <code>/epk</code>, samt länkbyggare för <code>?ref=poster</code> / <code>?ref=fb</code>.</span>
               </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
+                <span><strong>📊 Statistikrapport till Discord:</strong> Publicera en visuell dashboard-bild (PNG) med grafer, nyckeltal, topplåtar och trafik direkt till bandets Discord-kanal via knappen <em>Skicka statistikrapport</em> eller automatiskt varje dygn kl. 04:00.</span>
+              </li>
             </ul>
           </div>
           <NuxtLink to="/admin/analytics" class="btn btn-sm btn-outline btn-primary rounded-xl font-bold w-full">
@@ -801,7 +805,7 @@ const scrollTo = (id: string) => {
             <ul class="space-y-1.5 text-xs text-base-content/80">
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
-                <span><strong>🔔 Discord-aviseringar:</strong> Få notiser i bandets Discord vid nya bokningar och fan-foton.</span>
+                <span><strong>🔔 Discord-aviseringar & Statistikrapport:</strong> Få notiser i bandets Discord vid nya bokningar, fan-foton och gästboksinlägg, samt en automatisk daglig visuell statistikrapport (PNG-dashboard via dygnscron kl. 04:00 eller direkt via knappen <em>Skicka statistikrapport</em>) med valbar tidsperiod (7 dagar som standard).</span>
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>

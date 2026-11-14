@@ -467,7 +467,7 @@ const exportGigSetlistAsTxt = () => {
               :src="gig.posterUrl"
               :alt="'Konsertaffisch för ' + gig.venue"
               class="w-auto h-auto max-h-[65vh] max-w-full object-contain"
-            />
+            >
           </div>
 
           <div class="flex items-center justify-between w-full pt-2 border-t border-primary/20 flex-wrap gap-2">

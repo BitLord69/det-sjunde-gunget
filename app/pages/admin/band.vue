@@ -163,7 +163,7 @@ const saveMember = async () => {
               :alt="memberForm.name"
               class="w-20 h-24 object-cover rounded-lg border border-primary/40 shadow-md flex-shrink-0 bg-base-300"
               @error="(e: any) => (e.target.src = '/media/brand/Logotyp_mini.webp')"
-            />
+            >
             <div class="flex-grow space-y-2 w-full">
               <label class="block text-xs font-bold text-secondary">Profilfoto</label>
               <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">

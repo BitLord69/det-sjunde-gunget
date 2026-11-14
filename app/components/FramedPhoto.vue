@@ -15,6 +15,10 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  altTextSv: null,
+  altTextEn: null,
+  captionSv: null,
+  captionEn: null,
   frameStyle: 'random',
   rotation: 0,
   aspectRatio: 'aspect-[4/3]',

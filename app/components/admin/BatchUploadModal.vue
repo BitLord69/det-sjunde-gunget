@@ -3,7 +3,7 @@ interface Props {
   modelValue: boolean
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 const emit = defineEmits<{
   (e: 'update:modelValue', val: boolean): void
   (e: 'uploaded', count: number): void
@@ -33,42 +33,6 @@ const batchShowOnBandPage = ref(false)
 
 const { uploadAdminFile } = useAdminUpload()
 
-// Automagisk läsning av upplösning för varje fil
-const inspectImageResolution = async (file: File): Promise<string | null> => {
-  try {
-    let width = 0
-    let height = 0
-    const sizeStr = file.size >= 1024 * 1024
-      ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-      : `${Math.round(file.size / 1024)} KB`
-
-    const objectUrl = URL.createObjectURL(file)
-    await new Promise<void>((resolve, reject) => {
-      const img = new Image()
-      img.onload = () => {
-        width = img.naturalWidth
-        height = img.naturalHeight
-        URL.revokeObjectURL(objectUrl)
-        resolve()
-      }
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl)
-        reject(new Error('Kunde inte läsa bildfilen'))
-      }
-      img.src = objectUrl
-    })
-
-    if (!width || !height) return null
-    const parts: string[] = [`${width} × ${height} px`, sizeStr]
-    if (width >= 2000 || height >= 2000) {
-      parts.push('300 DPI')
-    }
-    return parts.join(' • ')
-  } catch {
-    return null
-  }
-}
-
 const close = () => {
   if (isBatchProcessing.value) {
     if (!confirm('Uppladdning pågår. Vill du verkligen avbryta?')) return
@@ -76,7 +40,9 @@ const close = () => {
   batchQueue.value.forEach((item) => {
     try {
       URL.revokeObjectURL(item.previewUrl)
-    } catch {}
+    } catch {
+      // Ignore revoke error
+    }
   })
   batchQueue.value = []
   isBatchProcessing.value = false
@@ -126,7 +92,9 @@ const removeBatchItem = (index: number) => {
   if (item) {
     try {
       URL.revokeObjectURL(item.previewUrl)
-    } catch {}
+    } catch {
+      // Ignore revoke error
+    }
     batchQueue.value.splice(index, 1)
   }
 }
@@ -136,7 +104,9 @@ const clearBatchQueue = () => {
   batchQueue.value.forEach((item) => {
     try {
       URL.revokeObjectURL(item.previewUrl)
-    } catch {}
+    } catch {
+      // Ignore revoke error
+    }
   })
   batchQueue.value = []
 }

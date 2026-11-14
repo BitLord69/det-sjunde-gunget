@@ -1,9 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { eq } from 'drizzle-orm'
-import { db } from '../../../db/client'
-import { siteSettings } from '../../../db/schema'
 import { requireAdminAuth } from '../../../utils/auth'
+import { resolveGeminiApiKey } from '../../../utils/aiImageStudio'
 
 export default defineEventHandler(async (event) => {
   await requireAdminAuth(event)
@@ -18,37 +16,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 1. Resolve Gemini API Key (prioritera databasen siteSettings, därefter miljövariabler)
-  let apiKey = ''
-
-  try {
-    const setting = await db
-      .select()
-      .from(siteSettings)
-      .where(eq(siteSettings.key, 'gemini_api_key'))
-      .get()
-    if (setting?.value && setting.value.trim().length > 0) {
-      apiKey = setting.value.trim()
-    }
-  } catch (dbErr) {
-    console.warn('[SyncLyricsAI] Could not read gemini_api_key from database:', dbErr)
-  }
-
-  if (!apiKey) {
-    apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_API_KEY || ''
-  }
-
-  if (!apiKey) {
-    try {
-      const envContent = await fs.readFile(path.resolve(process.cwd(), '.env'), 'utf-8')
-      const match = envContent.match(/^GEMINI_API_KEY=(.+)$/m)
-      if (match?.[1]) {
-        apiKey = match[1].trim()
-      }
-    } catch {
-      // .env file might not exist or be accessible
-    }
-  }
+  const apiKey = (await resolveGeminiApiKey()) || ''
 
   if (!apiKey) {
     throw createError({
@@ -163,14 +131,14 @@ ABSOLUT OVIKLIGA REGLER:
 
     // Clean timestamp brackets for matching: [00:12.34]
     const cleanSyncedTexts = resultLines.map((l: string) =>
-      l.replace(/\[\s*(?:\d{1,2}\s*:\s*)?\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*/g, '').trim().toLowerCase()
+      l.replace(/\[\s*(?:\d{1,2}\s*:\s*)?\d{1,2}\s*:\s*\d{1,2}(?:[.,:]\d{1,3})?\s*\]\s*/g, '').trim().toLowerCase()
     )
 
     // Find the latest original line found in the synced output
     let lastMatchedOrigIdx = -1
     for (let i = 0; i < originalNonEmpty.length; i++) {
       const origClean = originalNonEmpty[i]!
-        .replace(/\[\s*(?:\d{1,2}\s*:\s*)?\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*/g, '')
+        .replace(/\[\s*(?:\d{1,2}\s*:\s*)?\d{1,2}\s*:\s*\d{1,2}(?:[.,:]\d{1,3})?\s*\]\s*/g, '')
         .trim()
         .toLowerCase()
       if (origClean && cleanSyncedTexts.some((s: string) => s.includes(origClean) || origClean.includes(s))) {
@@ -191,7 +159,7 @@ ABSOLUT OVIKLIGA REGLER:
         // Find last timestamp in resultLines to continue progression
         let lastSeconds = 120
         for (let j = resultLines.length - 1; j >= 0; j--) {
-          const match = resultLines[j]!.match(/\[\s*(\d{1,2})\s*:\s*(\d{1,2})(?:[\.,:](\d{1,3}))?\s*\]/)
+          const match = resultLines[j]!.match(/\[\s*(\d{1,2})\s*:\s*(\d{1,2})(?:[.,:](\d{1,3}))?\s*\]/)
           if (match) {
             const m = parseInt(match[1] || '0', 10)
             const s = parseInt(match[2] || '0', 10)

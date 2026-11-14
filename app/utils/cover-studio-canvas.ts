@@ -6,6 +6,8 @@
  * eller Vercel Lambda-begränsningar, och ger omedelbar (0.02s) förhandsgranskning.
  */
 
+import { drawRoundedRect as roundRect, loadCrossOriginImage as loadImage } from './studio-shared'
+
 export interface RenderCoverOptions {
   title: string
   bandName?: string
@@ -121,38 +123,8 @@ const PALETTES: Record<string, ThemePalette> = {
   },
 }
 
-const AVAILABLE_STYLES = ['sonet_gold', 'chess_crimson', 'stax_amber', 'bluenote_navy', 'vintage_cream', 'harvest_green', 'monochrome_accent']
-const AVAILABLE_LAYOUTS = ['top_bottom', 'diagonal_sash', 'sidebar_modern', 'poster_frame', 'center_badge']
-
-/**
- * Laddar en bild asynkront med crossOrigin-stöd.
- */
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    if (!src.startsWith('data:')) {
-      img.crossOrigin = 'anonymous'
-    }
-    img.onload = () => resolve(img)
-    img.onerror = (e) => reject(new Error(`Kunde inte ladda bild från ${src}: ${e}`))
-    img.src = src
-  })
-}
-
-/**
- * Hjälpfunktion för att rita en rundad rektangel i Canvas 2D
- */
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  if (w < 2 * r) r = w / 2
-  if (h < 2 * r) r = h / 2
-  ctx.beginPath()
-  ctx.moveTo(x + r, y)
-  ctx.arcTo(x + w, y, x + w, y + h, r)
-  ctx.arcTo(x + w, y + h, x, y + h, r)
-  ctx.arcTo(x, y + h, x, y, r)
-  ctx.arcTo(x, y, x + w, y, r)
-  ctx.closePath()
-}
+const AVAILABLE_STYLES = ['sonet_gold', 'chess_crimson', 'stax_amber', 'bluenote_navy', 'vintage_cream', 'harvest_green', 'monochrome_accent'] as const
+const AVAILABLE_LAYOUTS = ['top_bottom', 'diagonal_sash', 'sidebar_modern', 'poster_frame', 'center_badge'] as const
 
 /**
  * Huvudfunktion: Komponerar singelomslaget på Canvas
@@ -177,13 +149,13 @@ export async function renderCoverStudioCanvas(options: RenderCoverOptions): Prom
 
   let chosenStyle = options.stylePreset
   if (!chosenStyle || chosenStyle === 'auto') {
-    chosenStyle = AVAILABLE_STYLES[titleSeed % AVAILABLE_STYLES.length] as any
+    chosenStyle = AVAILABLE_STYLES[titleSeed % AVAILABLE_STYLES.length] || 'sonet_gold'
   }
   const palette = PALETTES[chosenStyle] || PALETTES.sonet_gold!
 
   let chosenLayout = options.layout
   if (!chosenLayout || chosenLayout === 'auto') {
-    chosenLayout = AVAILABLE_LAYOUTS[titleSeed % AVAILABLE_LAYOUTS.length] as any
+    chosenLayout = AVAILABLE_LAYOUTS[titleSeed % AVAILABLE_LAYOUTS.length] || 'top_bottom'
   }
 
   const chosenAging = options.agingEffect || 'ringwear'

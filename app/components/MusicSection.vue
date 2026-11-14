@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import type { Song } from '~/types'
+
 const { t } = useI18n()
 const localePath = useLocalePath()
 
-const { data: songsData, refresh: refreshSongs } = await useFetch<any[]>('/api/songs', {
+const { data: songsData, refresh: refreshSongs } = await useFetch<Song[]>('/api/songs', {
   default: () => [],
 })
 
@@ -11,9 +13,9 @@ const { data: settingsData, refresh: refreshSettings } = await useFetch<{ newsle
 })
 
 const songFilter = ref<'all' | 'original' | 'cover'>('all')
-const randomizedSongs = ref<any[]>([])
+const randomizedSongs = ref<Song[]>([])
 
-const shuffleArray = <T>(arr: T[]): T[] => {
+function shuffleArray<T>(arr: T[]): T[] {
   const copy = [...arr]
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
@@ -54,7 +56,7 @@ const filteredSongs = computed(() => {
   
   // Strict deduplication by unique ID
   const seenIds = new Set<string>()
-  const uniqueSongs: any[] = []
+  const uniqueSongs: Song[] = []
   for (const s of songs) {
     if (s && s.id && !seenIds.has(s.id)) {
       seenIds.add(s.id)
@@ -78,7 +80,7 @@ const {
 
 const activeSongId = ref<string | null>(null)
 
-const togglePlay = (song: any) => {
+const togglePlay = (song: { id: string; title: string; audioUrl?: string | null }) => {
   if (activeSongId.value === song.id && isAudioPlaying.value) {
     pauseTrack()
   } else if (activeSongId.value === song.id && !isAudioPlaying.value) {

@@ -1,12 +1,12 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import { nanoid } from 'nanoid'
-import { put } from '@vercel/blob'
-import { eq } from 'drizzle-orm'
 import { db } from '../../../db/client'
 import { siteSettings } from '../../../db/schema'
 import { requireAdminAuth } from '../../../utils/auth'
-import { getBlobToken } from '../../../utils/blob'
+import {
+  DEFAULT_BAND_REFERENCE_REL_PATH,
+  generateAiStudioImage,
+  loadPublicMediaBuffer,
+  persistGeneratedStudioImage,
+} from '../../../utils/aiImageStudio'
 
 export default defineEventHandler(async (event) => {
   await requireAdminAuth(event)
@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
   let usedEngine = 'vinyl'
   let chosenStyle = stylePreset || 'auto'
   let chosenLayout = layout || 'top_bottom'
-  let chosenAging = agingEffect || 'ringwear'
+  const chosenAging = agingEffect || 'ringwear'
 
   // Available style presets and layouts for 'auto' resolution
   const availableStyles = ['sonet_gold', 'chess_crimson', 'stax_amber', 'bluenote_navy', 'vintage_cream', 'harvest_green', 'monochrome_accent']
@@ -87,38 +87,8 @@ export default defineEventHandler(async (event) => {
   // ----------------------------------------------------
   if (source === 'photo') {
     try {
-      const chosenPhoto = (photoUrl || photoPath || 'media/band/21..7de Gunget photoshoot1 21-6 26-3.jpg').trim()
-
-      if (chosenPhoto.startsWith('data:image/')) {
-        const base64Data = chosenPhoto.replace(/^data:image\/\w+;base64,/, '')
-        imageBuffer = Buffer.from(base64Data, 'base64')
-      } else if (chosenPhoto.startsWith('http://') || chosenPhoto.startsWith('https://')) {
-        const fetchRes = await fetch(chosenPhoto)
-        if (!fetchRes.ok) throw new Error(`Kunde inte läsa extern bild (${fetchRes.status})`)
-        const arrBuf = await fetchRes.arrayBuffer()
-        imageBuffer = Buffer.from(arrBuf)
-      } else {
-        const cleanRel = chosenPhoto.replace(/^\/+/, '')
-        const absPath = path.resolve(process.cwd(), 'public', cleanRel)
-        try {
-          imageBuffer = await fs.readFile(absPath)
-        } catch (fsErr) {
-          // On Vercel serverless, public files are served via CDN/origin and not in Lambda cwd
-          try {
-            const reqUrl = getRequestURL(event)
-            const fallbackUrl = `${reqUrl.origin}/${cleanRel}`
-            const fetchRes = await fetch(fallbackUrl)
-            if (fetchRes.ok) {
-              const arrBuf = await fetchRes.arrayBuffer()
-              imageBuffer = Buffer.from(arrBuf)
-            } else {
-              throw fsErr
-            }
-          } catch {
-            throw fsErr
-          }
-        }
-      }
+      const chosenPhoto = (photoUrl || photoPath || DEFAULT_BAND_REFERENCE_REL_PATH).trim()
+      imageBuffer = await loadPublicMediaBuffer(event, chosenPhoto)
       usedEngine = 'vinyl'
     } catch (photoErr) {
       console.error('[GenerateCover] Failed to read band photo:', photoErr)
@@ -131,57 +101,6 @@ export default defineEventHandler(async (event) => {
     // ----------------------------------------------------
     // BRANCH B: AI GENERATION with Multimodal Likeness Reference
     // ----------------------------------------------------
-    let apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_API_KEY
-
-    if (!apiKey) {
-      try {
-        const envContent = await fs.readFile(path.resolve(process.cwd(), '.env'), 'utf-8')
-        const match = envContent.match(/^GEMINI_API_KEY=(.+)$/m)
-        if (match?.[1]) {
-          apiKey = match[1].trim()
-        }
-      } catch {
-        // .env file might not exist or be accessible
-      }
-    }
-
-    if (!apiKey) {
-      try {
-        const setting = await db
-          .select()
-          .from(siteSettings)
-          .where(eq(siteSettings.key, 'gemini_api_key'))
-          .get()
-        if (setting?.value) {
-          apiKey = setting.value
-        }
-      } catch {
-        // Site setting table might not have key
-      }
-    }
-
-    // Load authentic band reference photo for multimodal generation when includeBand is true
-    let bandRefBase64: string | null = null
-    if (includeBand) {
-      try {
-        const defaultRefPath = path.resolve(process.cwd(), 'public/media/band/21..7de Gunget photoshoot1 21-6 26-3.jpg')
-        try {
-          const refBuffer = await fs.readFile(defaultRefPath)
-          bandRefBase64 = refBuffer.toString('base64')
-        } catch {
-          const reqUrl = getRequestURL(event)
-          const refRes = await fetch(`${reqUrl.origin}/media/band/21..7de Gunget photoshoot1 21-6 26-3.jpg`)
-          if (refRes.ok) {
-            const arr = await refRes.arrayBuffer()
-            bandRefBase64 = Buffer.from(arr).toString('base64')
-          }
-        }
-      } catch (refErr) {
-        console.warn('[GenerateCover] Could not load band reference photo:', refErr)
-      }
-    }
-
-    // Accurate Prompt Construction
     let prompt: string
     if (promptMode === 'custom' && customPrompt && customPrompt.trim()) {
       prompt = customPrompt.trim()
@@ -209,61 +128,16 @@ The only 4 band members on stage:
       prompt = `Square format 1970s vintage album cover photo artwork. ${subject} Style: ${eraStyle} ${textInstr} Lighting: Warm tungsten spotlights, atmospheric haze, authentic 35mm film grain, analog color grading, masterpiece quality.`
     }
 
-    // 1. Send Multimodal (Image + Prompt) to Gemini 2.5 Flash Image
-    if (apiKey) {
-      try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`
-
-        const parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = []
-        if (bandRefBase64) {
-          parts.push({
-            inlineData: {
-              mimeType: 'image/jpeg',
-              data: bandRefBase64,
-            },
-          })
-        }
-        parts.push({ text: prompt })
-
-        const res = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts }],
-            generationConfig: { responseModalities: ['IMAGE'] },
-          }),
-        })
-
-        if (res.ok) {
-          const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }> }
-          const part = data.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)
-          if (part?.inlineData?.data) {
-            imageBuffer = Buffer.from(part.inlineData.data, 'base64')
-            usedEngine = 'gemini'
-          }
-        }
-      } catch (gErr) {
-        console.warn('[GenerateCover] Gemini direct image attempt:', gErr)
-      }
-    }
-
-    // 2. Fallback Generator (Free Pollinations)
-    if (!imageBuffer) {
-      try {
-        const seed = Math.floor(Math.random() * 900000) + 100000
-        const encodedPrompt = encodeURIComponent(prompt)
-        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=800&nologo=true&seed=${seed}`
-
-        const pollRes = await fetch(pollinationsUrl)
-        if (pollRes.ok) {
-          const arrayBuf = await pollRes.arrayBuffer()
-          imageBuffer = Buffer.from(arrayBuf)
-          usedEngine = 'fallback'
-        }
-      } catch (pollErr) {
-        console.error('[GenerateCover] Fallback generator failed:', pollErr)
-      }
-    }
+    const aiGen = await generateAiStudioImage({
+      event,
+      prompt,
+      includeBand: Boolean(includeBand),
+      width: 800,
+      height: 800,
+      logPrefix: 'GenerateCover',
+    })
+    imageBuffer = aiGen.imageBuffer
+    usedEngine = aiGen.usedEngine
   }
 
   if (!imageBuffer) {
@@ -722,38 +596,13 @@ The only 4 band members on stage:
     console.warn('[GenerateCover] Sharp compositing warning:', compErr)
   }
 
-  const safeTitle = (title || 'omslag').toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30)
-  const fileName = `cover-${safeTitle}-${nanoid(6)}.jpg`
-
-  let publicUrl = ''
-
-  // 4. Save Image: Try Vercel Blob in production, or local public/images/records/
-  const blobToken = getBlobToken()
-  if (blobToken) {
-    try {
-      const blob = await put(`records/${fileName}`, imageBuffer, {
-        access: 'public',
-        token: blobToken,
-        contentType: 'image/jpeg',
-      })
-      publicUrl = blob.url
-    } catch {
-      // Fallback to local storage if blob upload fails
-    }
-  }
-
-  if (!publicUrl) {
-    try {
-      const recordsDir = path.resolve(process.cwd(), 'public/images/records')
-      await fs.mkdir(recordsDir, { recursive: true })
-      const filePath = path.join(recordsDir, fileName)
-      await fs.writeFile(filePath, imageBuffer)
-      publicUrl = `/images/records/${fileName}`
-    } catch (fsErr) {
-      console.warn('[GenerateCover] Local disk write failed (serverless environment), falling back to base64 data URL:', fsErr)
-      publicUrl = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`
-    }
-  }
+  const publicUrl = await persistGeneratedStudioImage({
+    imageBuffer,
+    folder: 'records',
+    filePrefix: 'cover',
+    slugSource: title || 'omslag',
+    maxSlugLength: 30,
+  })
 
   return {
     success: true,

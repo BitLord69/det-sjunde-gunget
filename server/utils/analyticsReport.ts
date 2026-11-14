@@ -104,9 +104,9 @@ export async function getAnalyticsDashboardData(rawRange: string = '7d') {
     rangeParam === 'all'
       ? []
       : allFetchedEvents.filter((e) => {
-          const ts = new Date(e.createdAt).getTime()
-          return ts >= prevStartMs && ts < startMs
-        })
+        const ts = new Date(e.createdAt).getTime()
+        return ts >= prevStartMs && ts < startMs
+      })
 
   const fiveMinAgo = now - 5 * 60 * 1000
   const liveVisitorSet = new Set<string>()
@@ -642,16 +642,14 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
           ${hasGig ? `<circle cx="${Math.round(centerX)}" cy="${plotTop - 10}" r="5" fill="#f59e0b" />` : ''}
           <rect x="${pvX}" y="${pvY}" width="${Math.round(singleBarW)}" height="${pvH}" rx="3" fill="#e2bd72" />
           <rect x="${uvX}" y="${uvY}" width="${Math.round(singleBarW)}" height="${uvH}" rx="3" fill="#b4692c" />
-          ${
-            series.length <= 10 && item.pageviews > 0
-              ? `<text x="${Math.round(pvX + singleBarW / 2)}" y="${pvY - 5}" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">${item.pageviews}</text>`
-              : ''
-          }
-          ${
-            showLabel
-              ? `<text x="${Math.round(centerX)}" y="${plotBottom + 18}" fill="#a89882" font-family="DejaVu Sans, Arial, sans-serif" font-size="10.5" text-anchor="middle">${escapeXml(item.label)}</text>`
-              : ''
-          }
+          ${series.length <= 10 && item.pageviews > 0
+          ? `<text x="${Math.round(pvX + singleBarW / 2)}" y="${pvY - 5}" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">${item.pageviews}</text>`
+          : ''
+        }
+          ${showLabel
+          ? `<text x="${Math.round(centerX)}" y="${plotBottom + 18}" fill="#a89882" font-family="DejaVu Sans, Arial, sans-serif" font-size="10.5" text-anchor="middle">${escapeXml(item.label)}</text>`
+          : ''
+        }
         </g>
       `
     })
@@ -667,10 +665,10 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
   const topPagesRows =
     topPagesSlice.length > 0
       ? topPagesSlice
-          .map((p, i) => {
-            const ry = panelY + 66 + i * 41
-            const barW = Math.max(6, Math.round((p.pct / 100) * 210))
-            return `
+        .map((p, i) => {
+          const ry = panelY + 66 + i * 41
+          const barW = Math.max(6, Math.round((p.pct / 100) * 210))
+          return `
               <g transform="translate(58, ${ry})">
                 <text x="0" y="13" fill="#f7eedc" font-family="DejaVu Sans, Arial, sans-serif" font-size="12.5" font-weight="bold">${escapeXml(truncateText(p.label, 27))}</text>
                 <text x="324" y="13" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="end">${p.views} (${p.pct}%)</text>
@@ -678,8 +676,8 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
                 <rect x="0" y="21" width="${barW}" height="6" rx="3" fill="#e2bd72" />
               </g>
             `
-          })
-          .join('\n')
+        })
+        .join('\n')
       : `<text x="58" y="${panelY + 95}" fill="#8c7e6a" font-family="DejaVu Sans, Arial, sans-serif" font-size="13">Inga sidvisningar under perioden</text>`
 
   // Panel 2: Top Songs & Jukebox
@@ -687,9 +685,9 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
   const topSongsRows =
     topSongsSlice.length > 0
       ? topSongsSlice
-          .map((s, i) => {
-            const ry = panelY + 66 + i * 41
-            return `
+        .map((s, i) => {
+          const ry = panelY + 66 + i * 41
+          return `
               <g transform="translate(438, ${ry})">
                 <rect x="0" y="0" width="24" height="24" rx="6" fill="#2a2119" stroke="#e2bd72" stroke-opacity="0.3" />
                 <text x="12" y="16" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">${i + 1}</text>
@@ -697,8 +695,8 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
                 <text x="324" y="16" fill="#f59e0b" font-family="DejaVu Sans, Arial, sans-serif" font-size="11.5" font-weight="bold" text-anchor="end">${s.plays} speln. • ${s.lyricsViews} text</text>
               </g>
             `
-          })
-          .join('\n')
+        })
+        .join('\n')
       : `<text x="438" y="${panelY + 95}" fill="#8c7e6a" font-family="DejaVu Sans, Arial, sans-serif" font-size="13">Inga låtspelningar registrerade ännu</text>`
 
   // Panel 3: Traffic Sources & Locations
@@ -707,32 +705,32 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
   const refRows =
     topRefsSlice.length > 0
       ? topRefsSlice
-          .map((r, i) => {
-            const ry = panelY + 66 + i * 34
-            return `
+        .map((r, i) => {
+          const ry = panelY + 66 + i * 34
+          return `
               <g transform="translate(818, ${ry})">
                 <text x="0" y="14" fill="#f7eedc" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold">${escapeXml(truncateText(r.source, 26))}</text>
                 <text x="324" y="14" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="end">${r.count} (${r.pct}%)</text>
               </g>
             `
-          })
-          .join('\n')
+        })
+        .join('\n')
       : `<text x="818" y="${panelY + 85}" fill="#8c7e6a" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">Ingen trafikdata</text>`
 
   const cityRows =
     topCitiesSlice.length > 0
       ? topCitiesSlice
-          .map((c, i) => {
-            const ry = panelY + 198 + i * 32
-            const cleanCity = truncateText(c.city, 22)
-            return `
+        .map((c, i) => {
+          const ry = panelY + 198 + i * 32
+          const cleanCity = truncateText(c.city, 22)
+          return `
               <g transform="translate(818, ${ry})">
                 <text x="0" y="14" fill="#d6c7b2" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">${escapeXml(cleanCity)} (${escapeXml(c.country)})</text>
                 <text x="324" y="14" fill="#34d399" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="end">${c.count} (${c.pct}%)</text>
               </g>
             `
-          })
-          .join('\n')
+        })
+        .join('\n')
       : `<text x="818" y="${panelY + 215}" fill="#8c7e6a" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">Ingen ortsdata</text>`
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>

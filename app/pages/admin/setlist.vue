@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { SetlistItem } from '~/types'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'admin-auth',
@@ -16,8 +18,6 @@ const showToast = (msg: string) => {
     toastMessage.value = ''
   }, 4000)
 }
-
-import type { SetlistItem } from '~/types'
 
 const { data: setlistData, refresh: refreshSetlist } = await useFetch<SetlistItem[]>('/api/setlist', {
   default: () => [],

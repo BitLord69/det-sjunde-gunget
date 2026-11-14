@@ -356,8 +356,8 @@ const filteredVideos = computed(() => {
               type="button"
               class="badge badge-sm font-bold cursor-pointer transition-all shadow-md"
               :class="video.isActive ? 'badge-success text-success-content' : 'badge-ghost text-base-content/60'"
-              @click.stop="toggleActive(video)"
               :title="video.isActive ? 'Klicka för att dölja på sajten' : 'Klicka för att aktivera på sajten'"
+              @click.stop="toggleActive(video)"
             >
               {{ video.isActive ? '🟢 Visas' : '⚪ Dold' }}
             </button>
@@ -392,8 +392,8 @@ const filteredVideos = computed(() => {
             <button
               type="button"
               class="btn btn-outline btn-secondary btn-xs rounded-lg font-bold flex items-center gap-1 cursor-pointer"
-              @click="openSocialShare(video)"
               title="Dela videon till Facebook & Instagram"
+              @click="openSocialShare(video)"
             >
               <span>📢</span>
               <span>Dela</span>
@@ -412,8 +412,8 @@ const filteredVideos = computed(() => {
                 type="button"
                 class="btn btn-ghost btn-xs text-error hover:bg-error/10 rounded-lg font-bold"
                 :disabled="isDeletingId === video.id"
-                @click="deleteVideo(video)"
                 title="Ta bort video"
+                @click="deleteVideo(video)"
               >
                 🗑️
               </button>
@@ -475,7 +475,7 @@ const filteredVideos = computed(() => {
           <button type="button" class="btn btn-ghost btn-xs btn-circle text-lg" @click="closeModal">✕</button>
         </div>
 
-        <form @submit.prevent="saveVideo" class="space-y-4 text-xs">
+        <form class="space-y-4 text-xs" @submit.prevent="saveVideo">
           <!-- YouTube URL -->
           <div class="space-y-1">
             <label class="block font-bold text-secondary">
@@ -494,8 +494,8 @@ const filteredVideos = computed(() => {
                 type="button"
                 class="btn btn-outline btn-primary btn-sm rounded-lg font-bold flex-shrink-0"
                 :disabled="isFetchingOEmbed || !form.url.trim()"
-                @click="handleUrlChange"
                 title="Hämta titel och tumnagel automatiskt"
+                @click="handleUrlChange"
               >
                 <span v-if="isFetchingOEmbed" class="loading loading-spinner loading-xs"/>
                 <span v-else>🔍 Hämta</span>

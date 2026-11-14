@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t, locale } = useI18n()
+const { locale } = useI18n()
 
 interface BandMember {
   id: string

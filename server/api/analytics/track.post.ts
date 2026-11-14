@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   })
 
   try {
-    const body = await readBody<{
+    interface TrackBody {
       eventType?: string
       path?: string
       referrer?: string | null
@@ -19,7 +19,8 @@ export default defineEventHandler(async (event) => {
       locale?: string | null
       targetId?: string | null
       targetLabel?: string | null
-    }>(event).catch(() => ({}))
+    }
+    const body = await readBody<TrackBody>(event).catch((): TrackBody => ({}))
 
     if (!body || typeof body !== 'object') {
       return { ok: true, tracked: false }

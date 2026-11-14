@@ -344,7 +344,7 @@ const formatTime = (secs: number) => {
 const cleanDisplayLine = (text: string | null | undefined): string => {
   if (!text) return ''
   return text
-    .replace(/\[\s*(?:\d{1,2}\s*:\s*)?\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*/g, '')
+    .replace(/\[\s*(?:\d{1,2}\s*:\s*)?\d{1,2}\s*:\s*\d{1,2}(?:[.,:]\d{1,3})?\s*\]\s*/g, '')
     .replace(/^\s*(?:\d{1,2}:)?\d{1,2}:\d{2}(?:\.\d+)?\s*/, '')
     .trim()
 }

@@ -40,7 +40,7 @@ export function parseLrc(content: string | null | undefined): ParsedLrcResult {
   let lastTimestamp: number | undefined
 
   // Robust Regex matching [mm:ss], [m:ss], [m:s], [mm:ss.xx], [mm:ss,xx], [ 0:00 ] etc.
-  const timeRegex = /^\[\s*(\d{1,2})\s*:\s*(\d{1,2})(?:[\.,:](\d{1,3}))?\s*\]\s*(.*)$/
+  const timeRegex = /^\[\s*(\d{1,2})\s*:\s*(\d{1,2})(?:[.,:](\d{1,3}))?\s*\]\s*(.*)$/
   // Regex matching section headers: [Vers 1], [Refräng], [Intro], etc.
   const headerRegex = /^\[([A-Za-zÅÄÖåäö0-9\s:-]+)\]$/
 
@@ -60,7 +60,7 @@ export function parseLrc(content: string | null | undefined): ParsedLrcResult {
       const totalSecs = mins * 60 + secs + ms
       // Ensure any additional or nested timestamp prefixes are stripped from lyric text
       let lyricText = (timeMatch[4] || '').trim()
-      lyricText = lyricText.replace(/^\s*(?:\[\s*\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*)+/, '')
+      lyricText = lyricText.replace(/^\s*(?:\[\s*\d{1,2}\s*:\s*\d{1,2}(?:[.,:]\d{1,3})?\s*\]\s*)+/, '')
 
       if (firstTimestamp === undefined || totalSecs < firstTimestamp) {
         firstTimestamp = totalSecs
@@ -103,7 +103,7 @@ export function parseLrc(content: string | null | undefined): ParsedLrcResult {
     }
 
     // Fallback: strip any accidental timestamp prefix so raw numbers never leak to UI
-    const cleanFallback = trimmed.replace(/^\s*(?:\[\s*\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*)+/, '')
+    const cleanFallback = trimmed.replace(/^\s*(?:\[\s*\d{1,2}\s*:\s*\d{1,2}(?:[.,:]\d{1,3})?\s*\]\s*)+/, '')
     lines.push({
       id: idx,
       raw,
@@ -128,7 +128,7 @@ export function stripLrcTimestamps(text: string | null | undefined): string {
     .split('\n')
     .map((l) =>
       l
-        .replace(/\[\s*(?:\d{1,2}\s*:\s*)?\d{1,2}\s*:\s*\d{1,2}(?:[\.,:]\d{1,3})?\s*\]\s*/g, '')
+        .replace(/\[\s*(?:\d{1,2}\s*:\s*)?\d{1,2}\s*:\s*\d{1,2}(?:[.,:]\d{1,3})?\s*\]\s*/g, '')
         .replace(/^\s*(?:\d{1,2}:)?\d{1,2}:\d{2}(?:\.\d+)?\s*/, '')
         .trimEnd()
     )

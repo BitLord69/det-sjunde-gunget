@@ -18,11 +18,11 @@ interface Props {
   isPlaying?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   isPlaying: false,
 })
 
-const emit = defineEmits<{
+defineEmits<{
   togglePlay: [song: Song]
 }>()
 

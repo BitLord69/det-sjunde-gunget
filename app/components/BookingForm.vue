@@ -31,7 +31,8 @@ const fieldErrors = ref<Record<string, string>>({})
 
 const clearFieldError = (fieldName: string) => {
   if (fieldErrors.value[fieldName]) {
-    delete fieldErrors.value[fieldName]
+    const { [fieldName]: _removed, ...rest } = fieldErrors.value
+    fieldErrors.value = rest
   }
   if (Object.keys(fieldErrors.value).length === 0) {
     formError.value = ''

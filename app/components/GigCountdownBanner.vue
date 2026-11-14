@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import type { Gig } from '~/types'
+interface BannerGig {
+  id?: string
+  date: number | string | Date
+  venue: string
+  city: string
+  ticketUrl?: string | null
+  status?: string | null
+}
 
 const props = defineProps<{
-  gigs?: any[]
+  gigs?: BannerGig[]
 }>()
 
 const { t } = useI18n()
@@ -71,7 +78,7 @@ const countdown = computed(() => {
   return { days, hours, minutes, seconds }
 })
 
-const formatGigDate = (dateVal: any) => {
+const formatGigDate = (dateVal: number | string | Date) => {
   try {
     const d = new Date(dateVal)
     return d.toLocaleDateString('sv-SE', {
@@ -84,7 +91,7 @@ const formatGigDate = (dateVal: any) => {
   }
 }
 
-const formatGigTime = (dateVal: any) => {
+const formatGigTime = (dateVal: number | string | Date) => {
   try {
     const d = new Date(dateVal)
     return d.toLocaleTimeString('sv-SE', {

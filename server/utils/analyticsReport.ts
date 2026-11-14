@@ -1,8 +1,10 @@
 import { desc, gte } from 'drizzle-orm'
+import opentype from 'opentype.js'
 import sharp from 'sharp'
 import { db } from '../db/client'
 import { analyticsEvents, gigs } from '../db/schema'
 import { ensureAnalyticsTable } from './analytics'
+import { DASHBOARD_FONT_BOLD_BASE64, DASHBOARD_FONT_MEDIUM_BASE64 } from './dashboardFontData'
 
 export const PAGE_LABELS: Record<string, string> = {
   '/': 'Hem (Startsidan)',
@@ -493,30 +495,123 @@ export async function getAnalyticsDashboardData(rawRange: string = '7d') {
 
 export type AnalyticsDashboardData = Awaited<ReturnType<typeof getAnalyticsDashboardData>>
 
-function escapeXml(unsafe: string): string {
-  return String(unsafe || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
+let cachedMediumFont: opentype.Font | null = null
+let cachedBoldFont: opentype.Font | null = null
+
+function getDashboardFonts(): { medium: opentype.Font; bold: opentype.Font } {
+  if (!cachedMediumFont) {
+    const buf = Buffer.from(DASHBOARD_FONT_MEDIUM_BASE64, 'base64')
+    const parsed = opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength))
+    delete (parsed.tables as Record<string, unknown>).gsub
+    cachedMediumFont = parsed
+  }
+  if (!cachedBoldFont) {
+    const buf = Buffer.from(DASHBOARD_FONT_BOLD_BASE64, 'base64')
+    const parsed = opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength))
+    delete (parsed.tables as Record<string, unknown>).gsub
+    cachedBoldFont = parsed
+  }
+  return { medium: cachedMediumFont, bold: cachedBoldFont }
 }
 
-function truncateText(str: string, maxLen: number): string {
-  const clean = String(str || '')
-    // Strip flag/emoji symbols so librsvg on Linux never renders missing glyph boxes
+function sanitizeText(str: string): string {
+  return String(str || '')
     .replace(/\p{Extended_Pictographic}/gu, '')
+    .replace(/[\u{1F1E6}-\u{1F1FF}\uFE0F]/gu, '')
+    .replace(/\s+/g, ' ')
     .trim()
-  if (clean.length <= maxLen) return clean
-  return `${clean.slice(0, maxLen - 1)}…`
+}
+
+interface VectorTextOptions {
+  x: number
+  y: number
+  size: number
+  fill: string
+  weight?: 'medium' | 'bold'
+  align?: 'left' | 'center' | 'right'
+  letterSpacing?: number
+  maxWidth?: number
+  opacity?: number
+}
+
+function commandsToSvgPath(commands: opentype.PathCommand[]): string {
+  const parts: string[] = []
+  const r = (n: number) => Number(n.toFixed(2))
+  for (const cmd of commands) {
+    if (cmd.type === 'M') {
+      parts.push(`M${r(cmd.x)} ${r(cmd.y)}`)
+    } else if (cmd.type === 'L') {
+      parts.push(`L${r(cmd.x)} ${r(cmd.y)}`)
+    } else if (cmd.type === 'C') {
+      parts.push(`C${r(cmd.x1)} ${r(cmd.y1)} ${r(cmd.x2)} ${r(cmd.y2)} ${r(cmd.x)} ${r(cmd.y)}`)
+    } else if (cmd.type === 'Q') {
+      parts.push(`Q${r(cmd.x1)} ${r(cmd.y1)} ${r(cmd.x)} ${r(cmd.y)}`)
+    } else if (cmd.type === 'Z') {
+      parts.push('Z')
+    }
+  }
+  return parts.join('')
 }
 
 /**
- * Generates a crisp 1200x820 PNG visual dashboard card of the analytics data using SVG + Sharp
+ * Converts text into an exact SVG <path> using embedded OpenType fonts.
+ * Works identically on Windows, macOS, and Vercel Linux serverless with zero OS font dependencies.
+ */
+function renderVectorText(rawText: string, opts: VectorTextOptions): string {
+  const { medium, bold } = getDashboardFonts()
+  const font = opts.weight === 'bold' ? bold : medium
+  const size = opts.size
+  const letterSpacing = opts.letterSpacing ?? 0
+
+  let text = sanitizeText(rawText)
+  if (!text) return ''
+
+  const measureWidth = (s: string): number => {
+    if (!s) return 0
+    const baseW = font.getAdvanceWidth(s, size)
+    const extraTracking = letterSpacing > 0 ? Math.max(0, s.length - 1) * letterSpacing : 0
+    return baseW + extraTracking
+  }
+
+  if (opts.maxWidth && measureWidth(text) > opts.maxWidth) {
+    let trimmed = text
+    while (trimmed.length > 1 && measureWidth(`${trimmed}...`) > opts.maxWidth) {
+      trimmed = trimmed.slice(0, -1).trimEnd()
+    }
+    text = `${trimmed}...`
+  }
+
+  const totalW = measureWidth(text)
+  let startX = opts.x
+  if (opts.align === 'center') {
+    startX = opts.x - totalW / 2
+  } else if (opts.align === 'right') {
+    startX = opts.x - totalW
+  }
+
+  let pathData = ''
+  if (letterSpacing > 0) {
+    let cursorX = startX
+    for (const ch of text) {
+      const chPath = commandsToSvgPath(font.getPath(ch, cursorX, opts.y, size).commands)
+      if (chPath) pathData += `${chPath} `
+      cursorX += font.getAdvanceWidth(ch, size) + letterSpacing
+    }
+  } else {
+    pathData = commandsToSvgPath(font.getPath(text, startX, opts.y, size).commands)
+  }
+
+  if (!pathData.trim()) return ''
+  const opacityAttr = opts.opacity !== undefined ? ` fill-opacity="${opts.opacity}"` : ''
+  return `<path d="${pathData.trim()}" fill="${opts.fill}"${opacityAttr} />`
+}
+
+/**
+ * Generates a crisp 1400x940 PNG visual dashboard card of the analytics data using vector SVG paths + Sharp
  */
 export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData): Promise<Buffer> {
-  const width = 1200
-  const height = 820
+  const width = 1400
+  const height = 940
   const rangeLabel = RANGE_LABELS[data.range] || 'Senaste 7 dagarna'
   const generatedAtStr = new Date().toLocaleString('sv-SE', {
     year: 'numeric',
@@ -528,9 +623,13 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
 
   // KPI Card definitions
   const formatGrowth = (pct: number | null) => {
-    if (pct === null || pct === undefined) return { text: 'Ingen föreg. period', color: '#8c7e6a' }
-    if (pct >= 0) return { text: `+${pct}% mot föreg. period`, color: '#34d399' }
-    return { text: `${pct}% mot föreg. period`, color: '#fb7185' }
+    if (pct === null || pct === undefined) {
+      return { text: 'Ingen föreg. period', color: '#a89882', pillBg: '#272018' }
+    }
+    if (pct >= 0) {
+      return { text: `+${pct}% mot föreg. period`, color: '#34d399', pillBg: '#0f2920' }
+    }
+    return { text: `${pct}% mot föreg. period`, color: '#fb7185', pillBg: '#2c1419' }
   }
 
   const visGrowth = formatGrowth(data.summary.visitorsGrowthPct)
@@ -542,6 +641,7 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
       value: String(data.summary.uniqueVisitors),
       sub: visGrowth.text,
       subColor: visGrowth.color,
+      pillBg: visGrowth.pillBg,
       accent: '#e2bd72',
     },
     {
@@ -549,20 +649,23 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
       value: String(data.summary.pageviews),
       sub: pvGrowth.text,
       subColor: pvGrowth.color,
+      pillBg: pvGrowth.pillBg,
       accent: '#e2bd72',
     },
     {
       title: 'JUKEBOX & MUSIK',
       value: String(data.summary.jukeboxPlays),
       sub: `${data.summary.lyricsViews} låttextvisningar`,
-      subColor: '#c8a96e',
+      subColor: '#fbbf24',
+      pillBg: '#2b2012',
       accent: '#f59e0b',
     },
     {
       title: 'GIG & BILJETTKLICK',
       value: String(data.summary.gigInteractions),
-      sub: `${data.summary.merchClicks} merch • ${data.summary.videoPlays} videoklick`,
-      subColor: '#c8a96e',
+      sub: `${data.summary.merchClicks} merch • ${data.summary.videoPlays} videor`,
+      subColor: '#fdba74',
+      pillBg: '#2b1c12',
       accent: '#fb923c',
     },
     {
@@ -570,42 +673,65 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
       value: String(data.summary.epkInteractions),
       sub: 'Presskit & Tech Rider',
       subColor: '#34d399',
+      pillBg: '#0f2920',
       accent: '#34d399',
     },
   ]
 
   const kpiSvg = kpiCards
     .map((card, idx) => {
-      const cardW = 212
-      const gap = 15
-      const x = 40 + idx * (cardW + gap)
-      const y = 115
+      const cardW = 248
+      const gap = 18
+      const x = 44 + idx * (cardW + gap)
+      const y = 126
       return `
         <g transform="translate(${x}, ${y})">
-          <rect width="${cardW}" height="118" rx="16" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.28" stroke-width="1.5" />
-          <rect x="0" y="0" width="${cardW}" height="4" rx="2" fill="${card.accent}" fill-opacity="0.85" />
-          <text x="18" y="30" fill="#a89882" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="bold" letter-spacing="1">${escapeXml(card.title)}</text>
-          <text x="18" y="76" fill="#f7eedc" font-family="DejaVu Sans, Arial, sans-serif" font-size="36" font-weight="bold">${escapeXml(card.value)}</text>
-          <text x="18" y="102" fill="${card.subColor}" font-family="DejaVu Sans, Arial, sans-serif" font-size="11.5" font-weight="bold">${escapeXml(card.sub)}</text>
+          <rect width="${cardW}" height="134" rx="18" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.32" stroke-width="1.5" />
+          <rect x="0" y="0" width="${cardW}" height="5" rx="2.5" fill="${card.accent}" />
+          ${renderVectorText(card.title, {
+            x: 20,
+            y: 32,
+            size: 12.5,
+            fill: '#b8a790',
+            weight: 'bold',
+            letterSpacing: 0.9,
+            maxWidth: cardW - 36,
+          })}
+          ${renderVectorText(card.value, {
+            x: 20,
+            y: 84,
+            size: 44,
+            fill: '#fdf8ee',
+            weight: 'bold',
+          })}
+          <rect x="18" y="98" width="${cardW - 36}" height="24" rx="8" fill="${card.pillBg}" />
+          ${renderVectorText(card.sub, {
+            x: 28,
+            y: 114,
+            size: 12.5,
+            fill: card.subColor,
+            weight: 'bold',
+            maxWidth: cardW - 56,
+          })}
         </g>
       `
     })
     .join('\n')
 
-  // Daily Bar Chart (up to 30 bars, or 7 bars for 7d)
+  // Daily Bar Chart
   const series = data.dailySeries.slice(-30)
-  const chartX = 40
-  const chartY = 252
-  const chartW = 1120
-  const chartH = 235
-  const plotLeft = chartX + 48
-  const plotRight = chartX + chartW - 24
-  const plotTop = chartY + 54
-  const plotBottom = chartY + chartH - 34
+  const chartX = 44
+  const chartY = 282
+  const chartW = 1312
+  const chartH = 278
+  const plotLeft = chartX + 58
+  const plotRight = chartX + chartW - 30
+  const plotTop = chartY + 66
+  const plotBottom = chartY + chartH - 42
   const plotW = plotRight - plotLeft
   const plotH = plotBottom - plotTop
 
-  const maxVal = Math.max(5, ...series.map((d) => Math.max(d.pageviews, d.uniqueVisitors)))
+  const maxVal = Math.max(4, ...series.map((d) => Math.max(d.pageviews, d.uniqueVisitors)))
 
   // Horizontal grid lines
   const gridSteps = [0, 0.25, 0.5, 0.75, 1]
@@ -614,23 +740,30 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
       const gy = Math.round(plotBottom - step * plotH)
       const labelVal = Math.round(step * maxVal)
       return `
-        <line x1="${plotLeft}" y1="${gy}" x2="${plotRight}" y2="${gy}" stroke="#e2bd72" stroke-opacity="0.12" stroke-dasharray="4 4" />
-        <text x="${plotLeft - 10}" y="${gy + 4}" fill="#8c7e6a" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" text-anchor="end">${labelVal}</text>
+        <line x1="${plotLeft}" y1="${gy}" x2="${plotRight}" y2="${gy}" stroke="#e2bd72" stroke-opacity="0.14" stroke-dasharray="5 5" />
+        ${renderVectorText(String(labelVal), {
+          x: plotLeft - 14,
+          y: gy + 4,
+          size: 12,
+          fill: '#9e8f7b',
+          weight: 'medium',
+          align: 'right',
+        })}
       `
     })
     .join('\n')
 
   const slotW = series.length > 0 ? plotW / series.length : plotW
-  const barPairW = Math.min(48, Math.max(8, slotW * 0.62))
-  const singleBarW = Math.max(3, (barPairW - 3) / 2)
+  const barPairW = Math.min(64, Math.max(10, slotW * 0.58))
+  const singleBarW = Math.max(4, (barPairW - 4) / 2)
 
   const barsSvg = series
     .map((item, idx) => {
       const centerX = plotLeft + idx * slotW + slotW / 2
-      const pvH = Math.max(2, Math.round((item.pageviews / maxVal) * plotH))
-      const uvH = Math.max(2, Math.round((item.uniqueVisitors / maxVal) * plotH))
-      const pvX = Math.round(centerX - singleBarW - 1.5)
-      const uvX = Math.round(centerX + 1.5)
+      const pvH = item.pageviews > 0 ? Math.max(5, Math.round((item.pageviews / maxVal) * plotH)) : 2
+      const uvH = item.uniqueVisitors > 0 ? Math.max(5, Math.round((item.uniqueVisitors / maxVal) * plotH)) : 2
+      const pvX = Math.round(centerX - singleBarW - 2)
+      const uvX = Math.round(centerX + 2)
       const pvY = plotBottom - pvH
       const uvY = plotBottom - uvH
 
@@ -639,65 +772,148 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
 
       return `
         <g>
-          ${hasGig ? `<circle cx="${Math.round(centerX)}" cy="${plotTop - 10}" r="5" fill="#f59e0b" />` : ''}
-          <rect x="${pvX}" y="${pvY}" width="${Math.round(singleBarW)}" height="${pvH}" rx="3" fill="#e2bd72" />
-          <rect x="${uvX}" y="${uvY}" width="${Math.round(singleBarW)}" height="${uvH}" rx="3" fill="#b4692c" />
-          ${series.length <= 10 && item.pageviews > 0
-          ? `<text x="${Math.round(pvX + singleBarW / 2)}" y="${pvY - 5}" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">${item.pageviews}</text>`
-          : ''
-        }
-          ${showLabel
-          ? `<text x="${Math.round(centerX)}" y="${plotBottom + 18}" fill="#a89882" font-family="DejaVu Sans, Arial, sans-serif" font-size="10.5" text-anchor="middle">${escapeXml(item.label)}</text>`
-          : ''
-        }
+          ${hasGig ? `<circle cx="${Math.round(centerX)}" cy="${plotTop - 16}" r="6" fill="#f59e0b" />` : ''}
+          <rect x="${pvX}" y="${pvY}" width="${Math.round(singleBarW)}" height="${pvH}" rx="4" fill="#e2bd72" />
+          <rect x="${uvX}" y="${uvY}" width="${Math.round(singleBarW)}" height="${uvH}" rx="4" fill="#c87837" />
+          ${
+            series.length <= 14 && item.pageviews > 0
+              ? renderVectorText(String(item.pageviews), {
+                  x: Math.round(pvX + singleBarW / 2),
+                  y: pvY - 7,
+                  size: 11.5,
+                  fill: '#f7eedc',
+                  weight: 'bold',
+                  align: 'center',
+                })
+              : ''
+          }
+          ${
+            series.length <= 14 && item.uniqueVisitors > 0
+              ? renderVectorText(String(item.uniqueVisitors), {
+                  x: Math.round(uvX + singleBarW / 2),
+                  y: uvY - 7,
+                  size: 11,
+                  fill: '#e5a46c',
+                  weight: 'bold',
+                  align: 'center',
+                })
+              : ''
+          }
+          ${
+            showLabel
+              ? renderVectorText(item.label, {
+                  x: Math.round(centerX),
+                  y: plotBottom + 23,
+                  size: 12.5,
+                  fill: '#c2b39e',
+                  weight: 'bold',
+                  align: 'center',
+                })
+              : ''
+          }
         </g>
       `
     })
     .join('\n')
 
-  // Bottom 3 Panels (y = 505, height = 275)
-  const panelY = 505
-  const panelH = 275
-  const panelW = 360
+  // Bottom 3 Panels (y = 582, height = 314)
+  const panelY = 582
+  const panelH = 314
+  const panelW = 422
+  const panelGap = 23
+
+  const panel1X = 44
+  const panel2X = 44 + panelW + panelGap
+  const panel3X = 44 + (panelW + panelGap) * 2
+  const innerW = panelW - 44
 
   // Panel 1: Top Pages
   const topPagesSlice = data.topPages.slice(0, 5)
   const topPagesRows =
     topPagesSlice.length > 0
       ? topPagesSlice
-        .map((p, i) => {
-          const ry = panelY + 66 + i * 41
-          const barW = Math.max(6, Math.round((p.pct / 100) * 210))
-          return `
-              <g transform="translate(58, ${ry})">
-                <text x="0" y="13" fill="#f7eedc" font-family="DejaVu Sans, Arial, sans-serif" font-size="12.5" font-weight="bold">${escapeXml(truncateText(p.label, 27))}</text>
-                <text x="324" y="13" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="end">${p.views} (${p.pct}%)</text>
-                <rect x="0" y="21" width="324" height="6" rx="3" fill="#2a2119" />
-                <rect x="0" y="21" width="${barW}" height="6" rx="3" fill="#e2bd72" />
+          .map((p, i) => {
+            const ry = panelY + 70 + i * 47
+            const barW = Math.max(8, Math.round((p.pct / 100) * innerW))
+            return `
+              <g transform="translate(${panel1X + 22}, ${ry})">
+                ${renderVectorText(`${i + 1}. ${p.label}`, {
+                  x: 0,
+                  y: 14,
+                  size: 14,
+                  fill: '#fdf8ee',
+                  weight: 'bold',
+                  maxWidth: innerW - 95,
+                })}
+                ${renderVectorText(`${p.views} (${p.pct}%)`, {
+                  x: innerW,
+                  y: 14,
+                  size: 13.5,
+                  fill: '#e2bd72',
+                  weight: 'bold',
+                  align: 'right',
+                })}
+                <rect x="0" y="23" width="${innerW}" height="8" rx="4" fill="#2a2119" />
+                <rect x="0" y="23" width="${barW}" height="8" rx="4" fill="#e2bd72" />
               </g>
             `
+          })
+          .join('\n')
+      : renderVectorText('Inga sidvisningar under perioden', {
+          x: panel1X + 22,
+          y: panelY + 110,
+          size: 14,
+          fill: '#9e8f7b',
+          weight: 'medium',
         })
-        .join('\n')
-      : `<text x="58" y="${panelY + 95}" fill="#8c7e6a" font-family="DejaVu Sans, Arial, sans-serif" font-size="13">Inga sidvisningar under perioden</text>`
 
   // Panel 2: Top Songs & Jukebox
   const topSongsSlice = data.bandTelemetry.topSongs.slice(0, 5)
   const topSongsRows =
     topSongsSlice.length > 0
       ? topSongsSlice
-        .map((s, i) => {
-          const ry = panelY + 66 + i * 41
-          return `
-              <g transform="translate(438, ${ry})">
-                <rect x="0" y="0" width="24" height="24" rx="6" fill="#2a2119" stroke="#e2bd72" stroke-opacity="0.3" />
-                <text x="12" y="16" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">${i + 1}</text>
-                <text x="34" y="16" fill="#f7eedc" font-family="DejaVu Sans, Arial, sans-serif" font-size="12.5" font-weight="bold">${escapeXml(truncateText(s.title, 24))}</text>
-                <text x="324" y="16" fill="#f59e0b" font-family="DejaVu Sans, Arial, sans-serif" font-size="11.5" font-weight="bold" text-anchor="end">${s.plays} speln. • ${s.lyricsViews} text</text>
+          .map((s, i) => {
+            const ry = panelY + 68 + i * 47
+            return `
+              <g transform="translate(${panel2X + 22}, ${ry})">
+                <rect x="0" y="0" width="28" height="28" rx="8" fill="#2b2118" stroke="#e2bd72" stroke-opacity="0.4" />
+                ${renderVectorText(String(i + 1), {
+                  x: 14,
+                  y: 19,
+                  size: 13.5,
+                  fill: '#e2bd72',
+                  weight: 'bold',
+                  align: 'center',
+                })}
+                ${renderVectorText(s.title, {
+                  x: 38,
+                  y: 19,
+                  size: 14.5,
+                  fill: '#fdf8ee',
+                  weight: 'bold',
+                  maxWidth: innerW - 165,
+                })}
+                <rect x="${innerW - 122}" y="2" width="122" height="24" rx="7" fill="#271d14" />
+                ${renderVectorText(`${s.plays} speln. • ${s.lyricsViews} text`, {
+                  x: innerW - 61,
+                  y: 18,
+                  size: 12,
+                  fill: '#fbbf24',
+                  weight: 'bold',
+                  align: 'center',
+                  maxWidth: 114,
+                })}
               </g>
             `
+          })
+          .join('\n')
+      : renderVectorText('Inga låtspelningar registrerade ännu', {
+          x: panel2X + 22,
+          y: panelY + 110,
+          size: 14,
+          fill: '#9e8f7b',
+          weight: 'medium',
         })
-        .join('\n')
-      : `<text x="438" y="${panelY + 95}" fill="#8c7e6a" font-family="DejaVu Sans, Arial, sans-serif" font-size="13">Inga låtspelningar registrerade ännu</text>`
 
   // Panel 3: Traffic Sources & Locations
   const topRefsSlice = data.referrers.slice(0, 3)
@@ -705,63 +921,126 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
   const refRows =
     topRefsSlice.length > 0
       ? topRefsSlice
-        .map((r, i) => {
-          const ry = panelY + 66 + i * 34
-          return `
-              <g transform="translate(818, ${ry})">
-                <text x="0" y="14" fill="#f7eedc" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold">${escapeXml(truncateText(r.source, 26))}</text>
-                <text x="324" y="14" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="end">${r.count} (${r.pct}%)</text>
+          .map((r, i) => {
+            const ry = panelY + 68 + i * 38
+            return `
+              <g transform="translate(${panel3X + 22}, ${ry})">
+                ${renderVectorText(r.source, {
+                  x: 0,
+                  y: 16,
+                  size: 14,
+                  fill: '#fdf8ee',
+                  weight: 'bold',
+                  maxWidth: innerW - 90,
+                })}
+                ${renderVectorText(`${r.count} (${r.pct}%)`, {
+                  x: innerW,
+                  y: 16,
+                  size: 13.5,
+                  fill: '#e2bd72',
+                  weight: 'bold',
+                  align: 'right',
+                })}
               </g>
             `
+          })
+          .join('\n')
+      : renderVectorText('Ingen trafikdata', {
+          x: panel3X + 22,
+          y: panelY + 95,
+          size: 13.5,
+          fill: '#9e8f7b',
+          weight: 'medium',
         })
-        .join('\n')
-      : `<text x="818" y="${panelY + 85}" fill="#8c7e6a" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">Ingen trafikdata</text>`
 
   const cityRows =
     topCitiesSlice.length > 0
       ? topCitiesSlice
-        .map((c, i) => {
-          const ry = panelY + 198 + i * 32
-          const cleanCity = truncateText(c.city, 22)
-          return `
-              <g transform="translate(818, ${ry})">
-                <text x="0" y="14" fill="#d6c7b2" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">${escapeXml(cleanCity)} (${escapeXml(c.country)})</text>
-                <text x="324" y="14" fill="#34d399" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="end">${c.count} (${c.pct}%)</text>
+          .map((c, i) => {
+            const ry = panelY + 222 + i * 38
+            return `
+              <g transform="translate(${panel3X + 22}, ${ry})">
+                ${renderVectorText(`${c.city} (${c.country})`, {
+                  x: 0,
+                  y: 16,
+                  size: 14,
+                  fill: '#e5d8c5',
+                  weight: 'medium',
+                  maxWidth: innerW - 90,
+                })}
+                ${renderVectorText(`${c.count} (${c.pct}%)`, {
+                  x: innerW,
+                  y: 16,
+                  size: 13.5,
+                  fill: '#34d399',
+                  weight: 'bold',
+                  align: 'right',
+                })}
               </g>
             `
+          })
+          .join('\n')
+      : renderVectorText('Ingen ortsdata', {
+          x: panel3X + 22,
+          y: panelY + 245,
+          size: 13.5,
+          fill: '#9e8f7b',
+          weight: 'medium',
         })
-        .join('\n')
-      : `<text x="818" y="${panelY + 215}" fill="#8c7e6a" font-family="DejaVu Sans, Arial, sans-serif" font-size="12">Ingen ortsdata</text>`
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#120e0a" />
-      <stop offset="50%" stop-color="#17120d" />
+      <stop offset="0%" stop-color="#130e0a" />
+      <stop offset="50%" stop-color="#18120d" />
       <stop offset="100%" stop-color="#0f0b08" />
-    </linearGradient>
-    <linearGradient id="goldHeader" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#e2bd72" />
-      <stop offset="100%" stop-color="#c87f3f" />
     </linearGradient>
   </defs>
 
   <!-- Background -->
   <rect width="${width}" height="${height}" fill="url(#bgGrad)" />
-  <rect x="16" y="16" width="${width - 32}" height="${height - 32}" rx="24" fill="none" stroke="#e2bd72" stroke-opacity="0.22" stroke-width="1.5" />
+  <rect x="18" y="18" width="${width - 36}" height="${height - 36}" rx="26" fill="none" stroke="#e2bd72" stroke-opacity="0.26" stroke-width="1.5" />
 
   <!-- Top Header -->
-  <g transform="translate(40, 42)">
-    <rect x="0" y="0" width="180" height="24" rx="12" fill="#e2bd72" fill-opacity="0.15" stroke="#e2bd72" stroke-opacity="0.4" />
-    <text x="90" y="16" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="10.5" font-weight="bold" text-anchor="middle" letter-spacing="1.2">DET 7:E GUNGET • TELEMETRI</text>
-    <text x="0" y="54" fill="#f7eedc" font-family="DejaVu Sans, Arial, sans-serif" font-size="28" font-weight="bold">Besöksstatistik &amp; Publikpuls</text>
+  <g transform="translate(44, 40)">
+    <rect x="0" y="0" width="224" height="28" rx="14" fill="#e2bd72" fill-opacity="0.16" stroke="#e2bd72" stroke-opacity="0.45" />
+    ${renderVectorText('DET 7:E GUNGET • TELEMETRI', {
+      x: 112,
+      y: 19,
+      size: 12,
+      fill: '#e2bd72',
+      weight: 'bold',
+      align: 'center',
+      letterSpacing: 1.2,
+    })}
+    ${renderVectorText('Besöksstatistik & Publikpuls', {
+      x: 0,
+      y: 64,
+      size: 34,
+      fill: '#fdf8ee',
+      weight: 'bold',
+    })}
 
     <!-- Period Badge on Right -->
-    <g transform="translate(820, 8)">
-      <rect x="0" y="0" width="300" height="48" rx="14" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.35" />
-      <text x="150" y="21" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Period: ${escapeXml(rangeLabel)}</text>
-      <text x="150" y="38" fill="#8c7e6a" font-family="DejaVu Sans, Arial, sans-serif" font-size="10.5" text-anchor="middle">Rapport skapad ${escapeXml(generatedAtStr)}</text>
+    <g transform="translate(972, 6)">
+      <rect x="0" y="0" width="340" height="58" rx="16" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.38" stroke-width="1.5" />
+      ${renderVectorText(`Period: ${rangeLabel}`, {
+        x: 170,
+        y: 25,
+        size: 15,
+        fill: '#e2bd72',
+        weight: 'bold',
+        align: 'center',
+      })}
+      ${renderVectorText(`Rapport skapad ${generatedAtStr}`, {
+        x: 170,
+        y: 45,
+        size: 12,
+        fill: '#a89882',
+        weight: 'medium',
+        align: 'center',
+      })}
     </g>
   </g>
 
@@ -770,17 +1049,42 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
 
   <!-- Row 2: Daily Timeline Chart -->
   <g>
-    <rect x="${chartX}" y="${chartY}" width="${chartW}" height="${chartH}" rx="18" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.25" stroke-width="1.5" />
-    <text x="${chartX + 24}" y="${chartY + 30}" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="14" font-weight="bold">DAGLIG TRAFIKUTVECKLING</text>
+    <rect x="${chartX}" y="${chartY}" width="${chartW}" height="${chartH}" rx="20" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.28" stroke-width="1.5" />
+    ${renderVectorText('DAGLIG TRAFIKUTVECKLING', {
+      x: chartX + 26,
+      y: chartY + 34,
+      size: 15.5,
+      fill: '#e2bd72',
+      weight: 'bold',
+      letterSpacing: 0.9,
+    })}
 
     <!-- Legend -->
-    <g transform="translate(${chartX + chartW - 330}, ${chartY + 18})">
-      <rect x="0" y="2" width="12" height="12" rx="3" fill="#e2bd72" />
-      <text x="18" y="12" fill="#d6c7b2" font-family="DejaVu Sans, Arial, sans-serif" font-size="11.5">Sidvisningar</text>
-      <rect x="115" y="2" width="12" height="12" rx="3" fill="#b4692c" />
-      <text x="133" y="12" fill="#d6c7b2" font-family="DejaVu Sans, Arial, sans-serif" font-size="11.5">Unika besökare</text>
-      <circle cx="248" cy="8" r="5" fill="#f59e0b" />
-      <text x="258" y="12" fill="#d6c7b2" font-family="DejaVu Sans, Arial, sans-serif" font-size="11.5">Speldag</text>
+    <g transform="translate(${chartX + chartW - 380}, ${chartY + 19})">
+      <rect x="0" y="2" width="14" height="14" rx="4" fill="#e2bd72" />
+      ${renderVectorText('Sidvisningar', {
+        x: 22,
+        y: 14,
+        size: 13,
+        fill: '#e5d8c5',
+        weight: 'bold',
+      })}
+      <rect x="130" y="2" width="14" height="14" rx="4" fill="#c87837" />
+      ${renderVectorText('Unika besökare', {
+        x: 152,
+        y: 14,
+        size: 13,
+        fill: '#e5d8c5',
+        weight: 'bold',
+      })}
+      <circle cx="282" cy="9" r="6" fill="#f59e0b" />
+      ${renderVectorText('Speldag', {
+        x: 295,
+        y: 14,
+        size: 13,
+        fill: '#e5d8c5',
+        weight: 'bold',
+      })}
     </g>
 
     ${gridSvg}
@@ -789,24 +1093,52 @@ export async function generateAnalyticsDashboardPng(data: AnalyticsDashboardData
 
   <!-- Row 3: 3 Detail Panels -->
   <!-- Panel 1: Top Pages -->
-  <rect x="40" y="${panelY}" width="${panelW}" height="${panelH}" rx="18" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.25" stroke-width="1.5" />
-  <text x="58" y="${panelY + 32}" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="13.5" font-weight="bold" letter-spacing="0.8">POPULÄRASTE SIDORNA</text>
-  <line x1="58" y1="${panelY + 44}" x2="382" y2="${panelY + 44}" stroke="#e2bd72" stroke-opacity="0.15" />
+  <rect x="${panel1X}" y="${panelY}" width="${panelW}" height="${panelH}" rx="20" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.28" stroke-width="1.5" />
+  ${renderVectorText('POPULÄRASTE SIDORNA', {
+    x: panel1X + 22,
+    y: panelY + 34,
+    size: 15,
+    fill: '#e2bd72',
+    weight: 'bold',
+    letterSpacing: 0.9,
+  })}
+  <line x1="${panel1X + 22}" y1="${panelY + 48}" x2="${panel1X + panelW - 22}" y2="${panelY + 48}" stroke="#e2bd72" stroke-opacity="0.18" />
   ${topPagesRows}
 
   <!-- Panel 2: Top Songs -->
-  <rect x="420" y="${panelY}" width="${panelW}" height="${panelH}" rx="18" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.25" stroke-width="1.5" />
-  <text x="438" y="${panelY + 32}" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="13.5" font-weight="bold" letter-spacing="0.8">TOPPLÅTAR I JUKEBOX &amp; TEXT</text>
-  <line x1="438" y1="${panelY + 44}" x2="762" y2="${panelY + 44}" stroke="#e2bd72" stroke-opacity="0.15" />
+  <rect x="${panel2X}" y="${panelY}" width="${panelW}" height="${panelH}" rx="20" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.28" stroke-width="1.5" />
+  ${renderVectorText('TOPPLÅTAR I JUKEBOX & TEXT', {
+    x: panel2X + 22,
+    y: panelY + 34,
+    size: 15,
+    fill: '#e2bd72',
+    weight: 'bold',
+    letterSpacing: 0.9,
+  })}
+  <line x1="${panel2X + 22}" y1="${panelY + 48}" x2="${panel2X + panelW - 22}" y2="${panelY + 48}" stroke="#e2bd72" stroke-opacity="0.18" />
   ${topSongsRows}
 
   <!-- Panel 3: Referrers & Cities -->
-  <rect x="800" y="${panelY}" width="${panelW}" height="${panelH}" rx="18" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.25" stroke-width="1.5" />
-  <text x="818" y="${panelY + 32}" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="13.5" font-weight="bold" letter-spacing="0.8">TRAFIKKÄLLOR &amp; ORTER</text>
-  <line x1="818" y1="${panelY + 44}" x2="1142" y2="${panelY + 44}" stroke="#e2bd72" stroke-opacity="0.15" />
+  <rect x="${panel3X}" y="${panelY}" width="${panelW}" height="${panelH}" rx="20" fill="#1b1510" stroke="#e2bd72" stroke-opacity="0.28" stroke-width="1.5" />
+  ${renderVectorText('TRAFIKKÄLLOR & WEBBHÄNVISNING', {
+    x: panel3X + 22,
+    y: panelY + 34,
+    size: 15,
+    fill: '#e2bd72',
+    weight: 'bold',
+    letterSpacing: 0.9,
+  })}
+  <line x1="${panel3X + 22}" y1="${panelY + 48}" x2="${panel3X + panelW - 22}" y2="${panelY + 48}" stroke="#e2bd72" stroke-opacity="0.18" />
   ${refRows}
-  <text x="818" y="${panelY + 180}" fill="#e2bd72" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" font-weight="bold" letter-spacing="0.8">TOPP-ORTER / LÄNDER</text>
-  <line x1="818" y1="${panelY + 188}" x2="1142" y2="${panelY + 188}" stroke="#e2bd72" stroke-opacity="0.15" />
+  ${renderVectorText('TOPP-ORTER & LÄNDER', {
+    x: panel3X + 22,
+    y: panelY + 196,
+    size: 14,
+    fill: '#e2bd72',
+    weight: 'bold',
+    letterSpacing: 0.9,
+  })}
+  <line x1="${panel3X + 22}" y1="${panelY + 208}" x2="${panel3X + panelW - 22}" y2="${panelY + 208}" stroke="#e2bd72" stroke-opacity="0.18" />
   ${cityRows}
 </svg>`
 

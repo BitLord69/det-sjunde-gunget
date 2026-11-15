@@ -41,7 +41,7 @@ watch(() => route.path, () => {
   <div class="min-h-screen bg-base-100 text-base-content flex flex-col font-sans transition-colors duration-300">
     <div v-if="offlineProofStatus" role="alert" class="alert alert-warning rounded-none text-sm">{{ offlineProofStatus }}</div>
     <!-- Admin Top Header Bar -->
-    <header class="sticky top-0 z-40 bg-neutral/95 backdrop-blur-md border-b border-primary/20 shadow-md">
+    <header class="sticky top-0 z-50 bg-neutral/95 backdrop-blur-md border-b border-primary/20 shadow-md">
       <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
         <!-- Brand & CMS Badge -->
         <div class="flex items-center gap-2 sm:gap-3 min-w-0">

@@ -1,0 +1,22 @@
+{
+  "id": "/admin",
+  "name": "Det 7:e Gunget – Band Admin",
+  "short_name": "Gunget Admin",
+  "description": "Bandets administrationspanel",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#120e0b",
+  "theme_color": "#120e0b",
+  "icons": [
+    { "src": "/media/admin-pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/media/admin-pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/media/admin-pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Låtar", "url": "/admin/songs", "icons": [{ "src": "/media/admin-pwa/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Spelningar", "url": "/admin/gigs", "icons": [{ "src": "/media/admin-pwa/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Galleri", "url": "/admin/gallery", "icons": [{ "src": "/media/admin-pwa/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Statistik", "url": "/admin/analytics", "icons": [{ "src": "/media/admin-pwa/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
+}

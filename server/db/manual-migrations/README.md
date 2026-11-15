@@ -1,0 +1,11 @@
+# Personlig adminstartsida: manuell migrering
+
+Ingen migrering körs automatiskt. Den separata tabellen används inte av inloggning eller vanliga profiluppdateringar. Före migrering fungerar administrationen som tidigare med Låtar som startsida; profilvalet kan inte sparas. Befintliga och nya konton utan en inställningsrad får Låtar utan backfill.
+
+1. Bekräfta målmiljö och databasidentitet separat och ta en verifierad backup eller återställningspunkt enligt driftens Turso-rutin. Testa först i en isolerad databas eller staging.
+2. Kontrollera att tabellen `admins` finns och undersök om `admin_home_preferences` redan finns, till exempel med `SELECT sql FROM sqlite_master WHERE type = 'table' AND name IN ('admins', 'admin_home_preferences')`. Om inställningstabellen redan finns, kontrollera att dess definition och data är kompatibla; `IF NOT EXISTS` reparerar inte en avvikande tabell. Avbryt vid osäkerhet.
+3. När produktionsändringen uttryckligen har godkänts, kör endast innehållet i `001-admin-home-preferences.sql` mot den avsedda databasen med ett godkänt Turso-verktyg. Skriptet är upprepningsbart om tabellen har rätt definition; det skapar eller ändrar inga administratörer och skriver inte över befintliga val.
+4. Kontrollera tabellens definition och främmande nyckel med `PRAGMA table_info(admin_home_preferences)` och `PRAGMA foreign_key_list(admin_home_preferences)`. Verifiera i staging med minst två konton att standardvärdet, individuella val, inloggning och äldre länkar fungerar. Säkerställ att databasens främmande nycklar är aktiverade om automatisk radering av inställningar när ett konto tas bort förväntas.
+5. Migreringen kan utföras före eller efter koddriftsättningen. Vid återgång till äldre kod lämnas tabellen och sparade val kvar; inga konton behöver ändras. Ta inte bort tabellen utan separat beslut och backup, eftersom sparade val då försvinner. Om fel uppstår, stoppa och återställ enligt den verifierade backup- och driftplanen.
+
+Detta är en fristående manuell SQL-migrering, inte en post i Drizzles migrationsjournal. Befintliga generella synk- eller migreringsskript ska inte antas tillämpa den och kan påverka andra tabeller.

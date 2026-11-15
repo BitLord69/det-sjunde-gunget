@@ -1,6 +1,9 @@
 <script setup lang="ts">
 const { adminUser, logout } = useAdminAuth()
 const route = useRoute()
+const offlineStatus = useState<string>('adminOfflineStatus', () => 'Inte förberedd')
+const offlineProofStatus = useState<string>('adminOfflineProofStatus', () => '')
+const offlineWorkerReady = useState<boolean>('adminOfflineWorkerReady', () => false)
 
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
@@ -36,6 +39,7 @@ watch(() => route.path, () => {
 
 <template>
   <div class="min-h-screen bg-base-100 text-base-content flex flex-col font-sans transition-colors duration-300">
+    <div v-if="offlineProofStatus" role="alert" class="alert alert-warning rounded-none text-sm">{{ offlineProofStatus }}</div>
     <!-- Admin Top Header Bar -->
     <header class="sticky top-0 z-40 bg-neutral/95 backdrop-blur-md border-b border-primary/20 shadow-md">
       <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
@@ -61,6 +65,7 @@ watch(() => route.path, () => {
 
         <!-- Desktop Right Side Actions & Profile (md and up) -->
         <div class="hidden md:flex items-center gap-2 sm:gap-3">
+          <AdminPwaInstall />
           <!-- Active Logged In Admin Profile Link (Navigates to /admin/profile) -->
           <NuxtLink
             v-if="adminUser"
@@ -156,7 +161,9 @@ watch(() => route.path, () => {
             :class="isMobileUserMenuOpen
               ? 'bg-primary text-primary-content border-primary ring-2 ring-primary/40'
               : 'bg-base-200/90 hover:bg-base-300 border-primary/30 text-base-content'"
-            aria-label="Öppna användarmeny"
+            :aria-label="isMobileUserMenuOpen ? 'Stäng användarmeny' : 'Öppna användarmeny'"
+            :aria-expanded="isMobileUserMenuOpen"
+            aria-controls="admin-user-menu"
             @click="toggleMobileUserMenu"
           >
             <div class="avatar placeholder">
@@ -181,6 +188,7 @@ watch(() => route.path, () => {
           <!-- Mobile User Dropdown Sheet / Popover -->
           <div
             v-if="isMobileUserMenuOpen && adminUser"
+            id="admin-user-menu"
             class="absolute right-0 top-12 z-50 w-64 rounded-2xl bg-base-100 border border-primary/40 shadow-2xl p-3 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-150"
           >
             <!-- User Info Header -->
@@ -200,6 +208,7 @@ watch(() => route.path, () => {
 
             <!-- Action Links -->
             <div class="space-y-1 text-xs font-semibold">
+              <AdminPwaInstall variant="menu" />
               <NuxtLink
                 to="/admin/profile"
                 class="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl transition-colors"
@@ -247,6 +256,10 @@ watch(() => route.path, () => {
         </div>
       </div>
     </header>
+
+    <div v-if="adminUser" class="mx-auto w-full max-w-7xl px-3 sm:px-6 lg:px-8 pt-2 text-xs text-base-content/70" role="status">
+      {{ offlineStatus }} · Offline-start: {{ offlineWorkerReady ? 'förberedd' : 'inte förberedd' }} · <a href="/admin/offline.html" class="link link-primary">Öppna separat läsläge</a>
+    </div>
 
     <!-- Admin Content Slot -->
     <main class="flex-grow">

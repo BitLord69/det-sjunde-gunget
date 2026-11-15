@@ -343,6 +343,18 @@ const scrollTo = (id: string) => {
         </ul>
       </div>
 
+      <div class="bg-base-200/70 p-4 sm:p-5 rounded-2xl border border-primary/30 space-y-2">
+        <h3 class="font-heading text-base font-bold text-primary">📲 Installera admin som app</h3>
+        <p class="text-xs sm:text-sm text-base-content/85">Välj Installera admin eller Installationsguide i datorns adminhuvud, mobilens användarmeny eller kortet Admin som app under Min profil. Om webbläsaren erbjuder en installationsruta kan du bekräfta den där.</p>
+        <p class="text-xs sm:text-sm text-base-content/85">På iPhone eller iPad: öppna adminsidan i Safari, tryck på Dela och välj Lägg till på hemskärmen. I andra webbläsare kan motsvarande alternativ finnas i webbläsarens meny; det stöds inte överallt.</p>
+        <p class="text-xs sm:text-sm text-base-content/85">Efter inloggning förbereds automatiskt ett separat offline-läsläge. Status och länk till läsläget visas under adminhuvudet. Låt sidan vara öppen tills förberedelsen är klar. Vid nätverksbortfall öppnas läsläget; direktstart och appens genvägar kan också öppna det när appen har förberetts på enheten.</p>
+        <p class="text-xs sm:text-sm text-base-content/85">Läsläget innehåller låtar, texter och ackord, setlist, spelningar, galleribeskrivningar och sammanfattad statistik. Sju dagar förbereds automatiskt. För att förbereda ett annat intervall, välj det i statistikvyn online och vänta på beskedet att offlinekopian är förberedd. I läsläget kan du välja mellan 24 timmar, 7, 30 och 90 dagar samt all tid; intervall som saknas eller har gått ut markeras. Endast antal unika besökare, sidvisningar, låttextvisningar och jukeboxspelningar sparas, inte detaljerade statistikuppgifter. Siffrorna visar läget när kopian förbereddes och uppdateras inte offline.</p>
+        <p class="text-xs sm:text-sm text-base-content/85">Upp till 40 miniatyrer, totalt högst 4 MB, förbereds separat efter textkopian; status och läsläget visar hur många som finns. Bilder för samma galleriobjekt och bildkälla återanvänds. Saknade bilder försöks normalt igen tidigast efter en timme; högst cirka 8 MiB bilddata per förberedelse och 2 MiB per källbild hämtas, med viss nätverksöverskjutning möjlig. Endast godkända bildkällor används och fullstora bilder sparas inte. Om bildhämtning eller lagring misslyckas fungerar textkopian ändå. Idéer, meddelanden, konton och inställningar ingår inte. Ingen redigering, uppladdning eller kö för senare synkronisering finns. Osparade ändringar kan gå förlorade när nätverket bryts.</p>
+        <p class="text-xs sm:text-sm text-base-content/85">Den lokala kopian gäller högst sju dagar och aldrig längre än serverns sessionsutgång, förutsatt att enhetens klocka fortsätter gå korrekt. Utloggning, kontobyte och nekad serverbehörighet rensar kopian när lokal lagring fungerar. Offline är inte en ny serverinloggning: återkallad behörighet kan inte upptäckas utan nätverk, och data kan läsas av den som har lokal åtkomst till enheten. Skydda därför enheten och undvik delade datorer. Webbläsaren kan också rensa eller blockera lagringen.</p>
+        <p class="text-xs sm:text-sm text-base-content/85">Utloggning rensar först den lokala kopian och försöker sedan återkalla sessionen på servern, även i läsläget. Om återkallelsen inte kan bekräftas visas en varning: anslut och använd knappen för nytt försök innan du loggar in på nytt. Vid databasfel behålls sessionscookien för återförsöket. Om cookien saknas kan återkallelsen av den tidigare sessionen inte bekräftas; kontakta en administratör. Om kopian inte kan rensas, rensa webbplatsens lagring manuellt på enheten. Vid misstänkt stulen cookie, kontakta en administratör för manuell återkallelse av sessionen i databasen; lösenordsbyte återkallar inte befintliga sessioner. Tills återkallelsen lyckas kan sessionen gälla till sin utgång.</p>
+        <p class="text-xs sm:text-sm text-base-content/85">Efter utloggning återaktiveras offlineförberedelse efter lyckad lösenordsinloggning, lösenordsåterställning eller social inloggning som påbörjas på inloggningssidan i samma flik. Om social offlineverifiering misslyckas tillfälligt visas en varning och ett nytt försök görs vid nästa adminnavigering. Om servern hann använda engångsbeviset men svaret försvann kan återförsöket inte lyckas: starta en ny inloggning. Om webbläsaren blockerar lokal lagring eller säker kryptografi kan social inloggning fungera utan offlineförberedelse. Genvägar visas bara på plattformar som stöder dem. En tidigare installerad publik app ersätts inte automatiskt och kan behöva tas bort manuellt.</p>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- Spelningar -->
         <div class="bg-base-200/70 p-5 rounded-2xl border border-primary/30 flex flex-col justify-between space-y-3 hover:border-primary transition-all">
@@ -879,11 +891,15 @@ const scrollTo = (id: string) => {
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
+                <span><strong>🏠 Personlig startsida:</strong> Välj en sida under Min Profil och klicka på Spara startsida. Valet gäller ditt konto på alla enheter när du öppnar /admin. Låtar är standard för nya och befintliga konton. Direktlänkar och länkar till en viss flik eller bokning går fortfarande till sitt mål. Om databasuppdateringen inte är genomförd används Låtar och valet kan inte sparas.</span>
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-primary font-bold">•</span>
                 <span><strong>🔑 Lösenord:</strong> Byt lösenord eller skicka säker återställningslänk.</span>
               </li>
               <li class="flex items-start gap-1.5">
                 <span class="text-primary font-bold">•</span>
-                <span><strong>🔗 Social login:</strong> Koppla personligt Google-, GitHub- eller Facebook-konto för 1-klicks inloggning.</span>
+                <span><strong>🔗 Social inloggning:</strong> Koppla ditt Google-, GitHub- eller Facebook-konto medan du är inloggad. Endast en redan kopplad identitet kan användas för inloggning.</span>
               </li>
             </ul>
           </div>
@@ -953,7 +969,9 @@ const scrollTo = (id: string) => {
           <ol class="list-decimal list-inside text-xs sm:text-sm text-base-content/90 space-y-1.5 pl-2">
             <li><strong>Glömt lösenord:</strong> Gå till inloggningssidan (<NuxtLink to="/admin/login" class="text-primary font-bold underline">/admin/login</NuxtLink>), klicka på <strong class="text-primary">Glömt lösenord?</strong> och fyll i din e-post. Du får en säker återställningslänk i din inkorg giltig i 1 timme.</li>
             <li><strong>Byta lösenord / e-post när du är inloggad:</strong> Gå till <NuxtLink to="/admin/profile" class="text-primary font-bold underline">Min Profil (/admin/profile)</NuxtLink> genom att klicka på ditt namn uppe till höger. Där byter du e-post och lösenord direkt.</li>
-            <li><strong>Social inloggning:</strong> På samma profilsida klickar du på <strong>+ Koppla</strong> bredvid Google, GitHub eller Facebook. Därefter loggar du in med 1 klick!</li>
+            <li><strong>Social inloggning:</strong> Logga först in på ett befintligt administratörskonto. På profilsidan klickar du på <strong>+ Koppla</strong> bredvid Google, GitHub eller Facebook och bekräftar hos leverantören i samma webbläsare. Därefter kan just det kontot användas för inloggning.</li>
+            <li>En matchande e-postadress eller ett användarnamn ger inte automatiskt åtkomst och nya administratörer skapas inte via social inloggning. Ett socialt konto kan inte kopplas till flera administratörer. Vill du byta konto hos en tjänst måste den gamla kopplingen först tas bort; säkerställ att du har en annan fungerande inloggning innan du kopplar från.</li>
+            <li>Har ett äldre konto ingen fungerande koppling eller inget lösenord? Kontakta en administratör för identitetskontroll och säker återställning. Befintliga kopplingar kan ha skapats automatiskt tidigare och bör granskas.</li>
           </ol>
         </div>
 

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17110e">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src blob:; form-action 'none'; base-uri 'none'">
+  <title>Offline-läsläge | Det 7:e Gunget</title>
+  <link rel="stylesheet" href="/admin/offline-reader.css">
+</head>
+<body>
+  <header><div class="wrap"><p class="eyebrow">DET 7:E GUNGET · BAND ADMIN</p><h1>Offline-läsläge</h1><p>En lokal kopia för läsning – inga ändringar kan göras här.</p></div></header>
+  <main class="wrap">
+    <div id="status" class="notice" role="status">Kontrollerar lokal kopia …</div>
+    <nav id="navigation" aria-label="Offline-navigering" hidden>
+      <button data-view="songs">Låtar & texter</button><button data-view="setlist">Setlist</button><button data-view="gigs">Spelningar</button><button data-view="analytics">Statistik</button><button data-view="gallery">Galleri</button>
+    </nav>
+    <section id="content" aria-live="polite"></section>
+    <p class="footnote">Offlineåtkomst är inte en ny serverinloggning. Återkallad behörighet kan inte upptäckas utan nätverk. Den som har lokal åtkomst till enheten kan komma åt sparad data.</p>
+    <button id="logout" type="button">Logga ut</button>
+    <p id="logout-status" role="alert"></p>
+    <a class="back" href="/admin">Tillbaka till admin online</a>
+  </main>
+  <script type="module" src="/admin/offline-reader.js"></script>
+</body>
+</html>

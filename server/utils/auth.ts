@@ -66,8 +66,8 @@ export function verifyPassword(password: string, salt: string, expectedHash: str
 
 function getSessionCookieDomain(event: H3Event): string | undefined {
   if (process.env.NODE_ENV !== 'production') return undefined
-  const host = getRequestHeader(event, 'host') || ''
-  if (host.includes('sjundegunget.se')) {
+  const host = (getRequestHeader(event, 'host') || '').toLowerCase().split(':')[0]
+  if (host === 'sjundegunget.se' || host?.endsWith('.sjundegunget.se')) {
     return '.sjundegunget.se'
   }
   return undefined
@@ -105,18 +105,23 @@ export async function destroyAdminSession(event: H3Event) {
     try {
       await db.delete(adminSessions).where(eq(adminSessions.token, token))
     } catch {
-      // Ignore database cleanup errors on logout
+      // Keep the HTTP-only cookie so the client can retry revoking this exact session.
+      throw createError({ statusCode: 503, statusMessage: 'Session revocation failed', message: 'Sessionen kunde inte återkallas på servern. Försök igen.' })
     }
   }
 
   const domain = getSessionCookieDomain(event)
   deleteCookie(event, COOKIE_NAME, {
     path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
     ...(domain ? { domain } : {}),
   })
+  return Boolean(token)
 }
 
-export async function getAdminFromSession(event: H3Event): Promise<SafeAdminUser | null> {
+export async function getAdminSession(event: H3Event): Promise<{ user: SafeAdminUser; expiresAt: Date } | null> {
   const token = getCookie(event, COOKIE_NAME)
   if (!token) return null
 
@@ -144,22 +149,29 @@ export async function getAdminFromSession(event: H3Event): Promise<SafeAdminUser
     .limit(1)
 
   const admin = userList[0]
-  if (!admin) {
+  if (!admin || activeSession.expiresAt.getTime() <= Date.now()) {
     const domain = getSessionCookieDomain(event)
     deleteCookie(event, COOKIE_NAME, { path: '/', ...(domain ? { domain } : {}) })
     return null
   }
 
   return {
-    id: admin.id,
-    name: admin.name,
-    email: admin.email,
-    username: admin.username,
-    role: admin.role,
-    provider: admin.provider,
-    avatarUrl: admin.avatarUrl,
-    createdAt: admin.createdAt,
+    user: {
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+      username: admin.username,
+      role: admin.role,
+      provider: admin.provider,
+      avatarUrl: admin.avatarUrl,
+      createdAt: admin.createdAt,
+    },
+    expiresAt: activeSession.expiresAt,
   }
+}
+
+export async function getAdminFromSession(event: H3Event): Promise<SafeAdminUser | null> {
+  return (await getAdminSession(event))?.user ?? null
 }
 
 export async function requireAdminAuth(event: H3Event): Promise<SafeAdminUser> {

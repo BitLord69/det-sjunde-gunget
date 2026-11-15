@@ -1,9 +1,12 @@
-import { getAdminFromSession } from '../../utils/auth'
+import { getAdminSession } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
-  const admin = await getAdminFromSession(event)
+  // Session metadata is never an offline credential or a cacheable response.
+  setResponseHeader(event, 'Cache-Control', 'no-store, private')
+  const session = await getAdminSession(event)
   return {
-    authenticated: !!admin,
-    user: admin,
+    authenticated: !!session,
+    user: session?.user ?? null,
+    sessionExpiresAt: session?.expiresAt.toISOString() ?? null,
   }
 })

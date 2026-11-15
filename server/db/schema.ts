@@ -28,6 +28,11 @@ export const admins = sqliteTable('admins', {
   ...timestamps,
 })
 
+export const adminHomePreferences = sqliteTable('admin_home_preferences', {
+  adminId: text('admin_id').primaryKey().notNull().references(() => admins.id, { onDelete: 'cascade' }),
+  homePath: text('home_path').notNull().default('/admin/songs'),
+})
+
 export const adminSessions = sqliteTable('admin_sessions', {
   id: text('id').primaryKey(),
   token: text('token').notNull().unique(),

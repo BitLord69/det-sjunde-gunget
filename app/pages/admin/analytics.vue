@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { prepareOfflineAnalytics, reserveOfflineAnalytics } from '~/utils/admin-offline'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'admin-auth',
@@ -10,6 +12,9 @@ useSeoMeta({
 
 const selectedRange = ref<'today' | '7d' | '30d' | '90d' | 'all'>('30d')
 const copyToast = ref('')
+const offlineAnalyticsStatus = ref('')
+const { adminUser } = useAdminAuth()
+let analyticsRequest = 0
 
 const showCopyToast = (msg: string) => {
   copyToast.value = msg
@@ -100,11 +105,24 @@ const {
   data: analytics,
   status,
   refresh,
-} = await useFetch<AnalyticsDashboardResponse>('/api/admin/analytics', {
-  query: {
-    range: selectedRange,
-  },
-  headers: { 'Cache-Control': 'no-cache' },
+} = await useAsyncData<AnalyticsDashboardResponse>('admin-analytics', async () => {
+  const range = selectedRange.value
+  const request = ++analyticsRequest
+  offlineAnalyticsStatus.value = ''
+  const owner = adminUser.value?.id
+  const reservation = import.meta.client && owner ? await reserveOfflineAnalytics(owner, range) : null
+  const result = await $fetch<AnalyticsDashboardResponse>('/api/admin/analytics', {
+    query: { range }, headers: { 'Cache-Control': 'no-cache' }, retry: 0,
+  })
+  if (import.meta.client) {
+    void prepareOfflineAnalytics(reservation).then((saved) => {
+      if (request === analyticsRequest && selectedRange.value === range) offlineAnalyticsStatus.value = saved
+        ? 'Den sammanfattade statistiken för intervallet är förberedd offline.'
+        : 'Intervallet kunde inte förberedas offline. Försök uppdatera online.'
+    })
+  }
+  return result
+}, {
   watch: [selectedRange],
 })
 
@@ -168,8 +186,9 @@ const publishStatsToDiscord = async () => {
       },
     })
     showCopyToast(res.message || '📊 Statistikrapport har publicerats i Discord!')
-  } catch (err: any) {
-    const msg = err?.data?.statusMessage || err?.message || 'Kunde inte skicka statistikrapport till Discord'
+  } catch (err: unknown) {
+    const error = err as { data?: { statusMessage?: string }; message?: string }
+    const msg = error?.data?.statusMessage || error?.message || 'Kunde inte skicka statistikrapport till Discord'
     showCopyToast(`⚠️ ${msg}`)
   } finally {
     isSendingDiscordReport.value = false
@@ -199,7 +218,7 @@ const publishStatsToDiscord = async () => {
             </span>
             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span>{{ analytics?.summary?.liveVisitorsNow || 0 }} live i publiken nu</span>
+              <span>{{ status === 'success' ? (analytics?.summary?.liveVisitorsNow ?? '–') : '–' }} live i publiken nu</span>
             </span>
             <span class="badge badge-outline badge-secondary text-[10px] font-mono">
               🛡️ Endast publik trafik (Admins & botar exkluderade)
@@ -254,8 +273,12 @@ const publishStatsToDiscord = async () => {
           </button>
         </div>
       </div>
+      <p v-if="offlineAnalyticsStatus" class="mt-3 text-xs text-base-content/75" role="status">{{ offlineAnalyticsStatus }}</p>
     </div>
 
+    <p v-if="status === 'error'" class="alert alert-error" role="alert">Statistiken kunde inte hämtas. Försök igen online.</p>
+    <p v-else-if="isLoading" class="text-sm text-base-content/70" role="status">Hämtar statistik …</p>
+    <template v-else-if="analytics">
     <!-- Row 1: Top KPI Cards (VU-Meter Style) -->
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
       <!-- 1. Unique Visitors -->
@@ -815,5 +838,6 @@ const publishStatsToDiscord = async () => {
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>

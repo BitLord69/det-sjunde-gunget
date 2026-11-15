@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { offlineStore } from '~/utils/admin-offline'
+
 definePageMeta({
   layout: false,
 })
@@ -38,6 +40,14 @@ const handleResetPassword = async () => {
 
   isLoading.value = true
 
+  let generation: number | null = null
+  try { sessionStorage.removeItem('admin-offline-login') } catch { /* Storage may be disabled. */ }
+  try {
+    const store = await offlineStore()
+    await store.clear(true)
+    generation = await store.epoch()
+  } catch { /* Password reset remains available without local storage. */ }
+
   try {
     const res = await $fetch<{ success: boolean; message: string }>('/api/auth/reset-password', {
       method: 'POST',
@@ -46,6 +56,10 @@ const handleResetPassword = async () => {
         newPassword: newPassword.value,
       },
     })
+
+    if (generation !== null) {
+      try { await (await offlineStore()).unlock(generation) } catch { /* Offline preparation remains disabled. */ }
+    }
 
     successMessage.value = res.message || 'Lösenordet har uppdaterats! Loggar in...'
     setTimeout(() => {

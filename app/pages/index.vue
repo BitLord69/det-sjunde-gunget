@@ -16,7 +16,6 @@ const { data: gigsData } = await useFetch<GigsApiResponse>('/api/gigs')
 
 const upcomingGigs = computed(() => gigsData.value?.upcoming || [])
 const pastGigs = computed(() => gigsData.value?.past || [])
-
 // Schema.org Structured Data (MusicGroup & MusicEvents for Google Knowledge Graph / Rich Snippets)
 const structuredData = computed(() => {
   const musicGroupSchema = {

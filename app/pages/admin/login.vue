@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { offlineStore } from '~/utils/admin-offline'
+
 definePageMeta({
   layout: false,
 })
@@ -14,6 +16,18 @@ const { login, isLoading, authError } = useAdminAuth()
 const identifier = ref('')
 const password = ref('')
 const isSocialLoading = ref(false)
+const logoutWarning = ref('')
+const retryingLogout = ref(false)
+
+const retryLogout = async () => {
+  retryingLogout.value = true
+  try {
+    const result = await $fetch<{ revoked: boolean }>('/api/auth/logout', { method: 'POST', timeout: 8000, retry: 0 })
+    logoutWarning.value = result.revoked ? 'Servern bekräftade utloggningen.' : 'Sessionscookien saknas; den tidigare sessionens återkallelse kan inte bekräftas. Kontakta en administratör för manuell återkallelse. Lösenordsbyte återkallar inte befintliga sessioner.'
+  } catch {
+    logoutWarning.value = 'Serverutloggningen kunde inte bekräftas. Försök igen online. Vid misstänkt stulen cookie: kontakta en administratör för manuell återkallelse av sessionen; lösenordsbyte återkallar inte befintliga sessioner.'
+  } finally { retryingLogout.value = false }
+}
 
 // Forgot Password Flow
 const isForgotPasswordMode = ref(false)
@@ -29,9 +43,19 @@ const handleLogin = async () => {
   }
 }
 
-const handleSocialAuth = (provider: 'google' | 'github' | 'facebook') => {
+const handleSocialAuth = async (provider: 'google' | 'github' | 'facebook') => {
   isSocialLoading.value = true
-  window.location.href = `/api/auth/${provider}`
+  let challenge = ''
+  try {
+    const store = await offlineStore()
+    await store.clear(true)
+    const epoch = await store.epoch()
+    const nonce = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('')
+    const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(nonce))
+    challenge = Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('')
+    sessionStorage.setItem('admin-offline-login', JSON.stringify({ nonce, epoch }))
+  } catch { /* OAuth remains available if local storage or Web Crypto is unavailable. */ }
+  window.location.href = `/api/auth/${provider}${challenge ? `?offlineChallenge=${challenge}` : ''}`
 }
 
 const handleForgotPassword = async () => {
@@ -48,14 +72,21 @@ const handleForgotPassword = async () => {
       body: { email: forgotEmail.value },
     })
     forgotMsg.value = { type: 'success', text: res.message || 'Återställningslänk har skickats till din e-post!' }
-  } catch (err: any) {
-    forgotMsg.value = { type: 'error', text: err?.data?.message || 'Kunde inte skicka återställningslänk.' }
+  } catch (err: unknown) {
+    const error = err as { data?: { message?: string } }
+    forgotMsg.value = { type: 'error', text: error?.data?.message || 'Kunde inte skicka återställningslänk.' }
   } finally {
     isSendingReset.value = false
   }
 }
 
 onMounted(() => {
+  if (route.query.serverLogoutFailed) {
+    logoutWarning.value = 'Serverutloggningen kunde inte bekräftas. Sessionen kan fortfarande gälla. Försök igen online innan du loggar in på nytt. Vid misstänkt stulen cookie: kontakta en administratör för manuell återkallelse; lösenordsbyte återkallar inte befintliga sessioner.'
+  }
+  if (route.query.offlineClearFailed) {
+    authError.value = 'Den lokala offlinekopian kunde inte rensas. Rensa webbplatsens lagring i webbläsaren på denna enhet.'
+  }
   if (route.query.error) {
     if (route.query.error === 'google_auth_failed') {
       authError.value = 'Inloggning med Google misslyckades eller avbröts.'
@@ -63,6 +94,12 @@ onMounted(() => {
       authError.value = 'Inloggning med GitHub misslyckades eller avbröts.'
     } else if (route.query.error === 'facebook_auth_failed') {
       authError.value = 'Inloggning med Facebook misslyckades eller avbröts.'
+    } else if (route.query.error === 'social_not_linked') {
+      authError.value = 'Det sociala kontot är inte entydigt kopplat till en administratör. Logga in på annat sätt och koppla det i din profil, eller kontakta en administratör.'
+    } else if (route.query.error === 'social_invalid_state') {
+      authError.value = 'Inloggningsförsöket är ogiltigt eller har gått ut. Starta ett nytt försök.'
+    } else if (route.query.error === 'social_session_expired') {
+      authError.value = 'Din inloggning har ändrats eller gått ut. Logga in igen innan du kopplar ett konto.'
     }
   }
 })
@@ -97,6 +134,10 @@ onMounted(() => {
       </div>
 
       <!-- Error Alert for Login -->
+      <div v-if="logoutWarning" role="alert" class="p-3 bg-warning/20 border border-warning/40 rounded-xl text-xs space-y-2">
+        <p>{{ logoutWarning }}</p>
+        <button v-if="logoutWarning !== 'Servern bekräftade utloggningen.'" type="button" class="btn btn-warning btn-xs" :disabled="retryingLogout" @click="retryLogout">Försök serverutloggning igen</button>
+      </div>
       <div v-if="authError && !isForgotPasswordMode" class="p-3 bg-error/20 border border-error/40 text-error rounded-xl text-xs font-bold flex items-center gap-2">
         <span>⚠️</span>
         <span>{{ authError }}</span>

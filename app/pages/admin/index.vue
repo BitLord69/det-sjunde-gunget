@@ -1,39 +1,22 @@
 <script setup lang="ts">
+import { DEFAULT_ADMIN_HOME, explicitAdminDestination, normalizeAdminHome } from '#shared/utils/admin-home'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'admin-auth',
 })
 
 const route = useRoute()
-
-// Map query params cleanly to the new modular route pages
-const tab = (route.query.tab as string) || (route.query.msg || route.query.messageId ? 'messages' : 'songs')
-
-const routeMap: Record<string, string> = {
-  songs: '/admin/songs',
-  gigs: '/admin/gigs',
-  band: '/admin/band',
-  setlist: '/admin/setlist',
-  gallery: '/admin/gallery',
-  merch: '/admin/merch',
-  admins: '/admin/admins',
-  messages: '/admin/messages',
-  subscribers: '/admin/subscribers',
-  hashtags: '/admin/hashtags',
-  analytics: '/admin/analytics',
-  settings: '/admin/settings',
-  help: '/admin/help',
+let destination = explicitAdminDestination(route.query)
+if (destination === null) {
+  try {
+    const preference = await $fetch<{ homePath: string }>('/api/auth/admin-home')
+    destination = normalizeAdminHome(preference.homePath)
+  } catch {
+    destination = DEFAULT_ADMIN_HOME
+  }
 }
-
-const targetPath = routeMap[tab] || '/admin/songs'
-
-// Forward message IDs if present
-if (route.query.msg || route.query.messageId) {
-  const msgId = (route.query.msg || route.query.messageId) as string
-  await navigateTo(`/admin/messages?msg=${encodeURIComponent(msgId)}`, { replace: true })
-} else {
-  await navigateTo(targetPath, { replace: true })
-}
+await navigateTo(destination, { replace: true })
 </script>
 
 <template>

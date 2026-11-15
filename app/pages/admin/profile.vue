@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ADMIN_HOME_OPTIONS, DEFAULT_ADMIN_HOME, normalizeAdminHome } from '#shared/utils/admin-home'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'admin-auth',
@@ -10,6 +12,38 @@ useSeoMeta({
 
 const { adminUser, changePassword, updateProfile, isLoading } = useAdminAuth()
 const route = useRoute()
+
+const { data: homePreference, error: homeLoadError, pending: homeLoading, refresh: refreshHome } = await useFetch<{
+  homePath: string
+  available: boolean
+}>('/api/auth/admin-home')
+const homeSelection = ref<string>(DEFAULT_ADMIN_HOME)
+const homeMsg = ref<{ type: 'success' | 'error'; text: string } | null>(null)
+const isSavingHome = ref(false)
+
+watch(homePreference, (value) => {
+  if (value) homeSelection.value = normalizeAdminHome(value.homePath)
+}, { immediate: true })
+
+const isHomeDirty = computed(() => !!homePreference.value?.available && homeSelection.value !== normalizeAdminHome(homePreference.value.homePath))
+
+const saveHome = async () => {
+  homeMsg.value = null
+  isSavingHome.value = true
+  try {
+    const saved = await $fetch<{ homePath: string; available: boolean }>('/api/auth/admin-home', {
+      method: 'PUT',
+      body: { homePath: homeSelection.value },
+    })
+    homePreference.value = saved
+    homeMsg.value = { type: 'success', text: 'Din startsida har sparats för ditt konto.' }
+  } catch (err: unknown) {
+    const error = err as { data?: { message?: string } }
+    homeMsg.value = { type: 'error', text: error.data?.message || 'Kunde inte spara startsidan. Försök igen.' }
+  } finally {
+    isSavingHome.value = false
+  }
+}
 
 const toastMessage = ref('')
 const showToast = (msg: string) => {
@@ -63,7 +97,7 @@ const isPasswordDirty = computed(() => {
   return oldPassword.value.length > 0 || newPassword.value.length > 0 || confirmPassword.value.length > 0
 })
 
-const isDirty = computed(() => isProfileDirty.value || isPasswordDirty.value)
+const isDirty = computed(() => isProfileDirty.value || isPasswordDirty.value || isHomeDirty.value)
 
 // Populate initial values
 watch(
@@ -179,6 +213,12 @@ onMounted(() => {
     const pMap: Record<string, string> = { google: 'Google', github: 'GitHub', facebook: 'Facebook' }
     const p = pMap[route.query.connected as string] || route.query.connected
     showToast(`✓ Ditt ${p}-konto har kopplats till din profil!`)
+  } else if (route.query.error === 'social_conflict') {
+    showToast('⚠️ Kontot är redan kopplat till en annan administratör.')
+  } else if (route.query.error === 'social_already_connected') {
+    showToast('⚠️ Koppla först från ditt befintliga konto hos denna tjänst.')
+  } else if (route.query.error === 'social_auth_failed') {
+    showToast('⚠️ Kopplingen misslyckades eller avbröts. Försök igen.')
   }
 })
 
@@ -192,6 +232,7 @@ const discardProfileChanges = () => {
   oldPassword.value = ''
   newPassword.value = ''
   confirmPassword.value = ''
+  homeSelection.value = normalizeAdminHome(homePreference.value?.homePath)
 }
 </script>
 
@@ -232,6 +273,33 @@ const discardProfileChanges = () => {
     <div class="grid lg:grid-cols-3 gap-6">
       <!-- COLUMN 1 & 2: PROFILE & PASSWORD -->
       <div class="lg:col-span-2 space-y-6">
+        <AdminPwaInstall variant="card" />
+        <div class="stage-card p-6 sm:p-7 rounded-3xl border border-primary/30 shadow-xl space-y-4 bg-base-100/95">
+          <div class="border-b border-primary/20 pb-3">
+            <h3 class="font-heading text-lg text-primary font-bold">🏠 Personlig startsida</h3>
+            <p class="text-xs text-base-content/70">Välj vilken sida som öppnas när du går till administrationens startsida. Valet följer ditt konto mellan enheter.</p>
+          </div>
+          <p v-if="homeLoadError" class="text-sm text-error" role="alert">
+            Kunde inte läsa startsidan.
+            <button type="button" class="link link-primary" @click="refreshHome()">Försök igen</button>
+          </p>
+          <p v-else-if="homePreference && !homePreference.available" class="text-sm text-warning" role="status">
+            Startsidan är tillfälligt låst till Låtar tills databasuppdateringen har genomförts.
+          </p>
+          <form class="space-y-3" @submit.prevent="saveHome">
+            <label for="admin-home" class="block text-xs font-bold text-secondary">Startsida</label>
+            <select id="admin-home" v-model="homeSelection" class="select select-bordered select-sm w-full bg-base-200" :disabled="homeLoading || !!homeLoadError || !homePreference?.available || isSavingHome">
+              <option v-for="option in ADMIN_HOME_OPTIONS" :key="option.path" :value="option.path">{{ option.label }}</option>
+            </select>
+            <p v-if="homeMsg" class="text-sm" :class="homeMsg.type === 'success' ? 'text-success' : 'text-error'" role="status">{{ homeMsg.text }}</p>
+            <div class="flex justify-end">
+              <button type="submit" class="btn btn-primary btn-sm rounded-full" :disabled="!isHomeDirty || isSavingHome || homeLoading || !!homeLoadError">
+                {{ isSavingHome ? 'Sparar...' : 'Spara startsida' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
         <!-- CARD 1: EDIT PROFILE & EMAIL -->
         <div class="stage-card p-6 sm:p-7 rounded-3xl border border-primary/30 shadow-xl space-y-5 bg-base-100/95">
           <div class="flex items-center justify-between border-b border-primary/20 pb-3">

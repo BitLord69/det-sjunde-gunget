@@ -43,4 +43,5 @@ Thumbs.db
 scripts/test-*
 !scripts/test-all-endpoints.mjs
 !scripts/test-all-ui.mjs
+!scripts/test-social-auth.mjs
 public/images/records/test-*
